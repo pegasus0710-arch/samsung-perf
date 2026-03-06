@@ -10,6 +10,27 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 
+  <!-- ── Firebase SDK ── -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script>
+    // ════════════════════════════════════════
+    //  Firebase 초기화
+    //  ★ 설정값 변경 시 이 블록만 수정
+    // ════════════════════════════════════════
+    const firebaseConfig = {
+      apiKey:            "AIzaSyC0q_E-VPn_Eqp6kg38pwVyOLiQ-jp32w8",
+      authDomain:        "chungcheong-perf.firebaseapp.com",
+      projectId:         "chungcheong-perf",
+      storageBucket:     "chungcheong-perf.firebasestorage.app",
+      messagingSenderId: "5494684421",
+      appId:             "1:5494684421:web:a7e737d4c69d942b2bd56c"
+    };
+    firebase.initializeApp(firebaseConfig);
+    // 전역 db 객체 — app.js에서 window.db 로 접근
+    window.db = firebase.firestore();
+  </script>
+
   <!-- ── 스타일 (디자인 수정 시 이 파일만 교체) ── -->
   <link rel="stylesheet" href="style.css" />
 
@@ -48,28 +69,18 @@
       outline: none; font-family: inherit; letter-spacing: 0.08em;
       transition: border-color .15s, box-shadow .15s;
     }
-    .pw-input:focus {
-      border-color: #818cf8;
-      box-shadow: 0 0 0 3px #818cf820;
-    }
+    .pw-input:focus { border-color: #818cf8; box-shadow: 0 0 0 3px #818cf820; }
     .pw-btn {
       width: 100%; padding: 13px;
       background: linear-gradient(135deg, #818cf8, #38bdf8);
       border: none; border-radius: 9px;
       color: #fff; font-size: 14px; font-weight: 800;
-      font-family: inherit; cursor: pointer;
-      transition: opacity .15s;
+      font-family: inherit; cursor: pointer; transition: opacity .15s;
     }
     .pw-btn:hover  { opacity: 0.88; }
     .pw-btn:active { opacity: 0.75; }
-    .pw-error {
-      color: #f87171; font-size: 12px; font-weight: 600;
-      text-align: center; min-height: 18px;
-    }
-    .pw-hint {
-      color: #3d5f7e; font-size: 11px; text-align: center;
-      line-height: 1.6;
-    }
+    .pw-error { color: #f87171; font-size: 12px; font-weight: 600; text-align: center; min-height: 18px; }
+    .pw-hint  { color: #3d5f7e; font-size: 11px; text-align: center; line-height: 1.6; }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       20%      { transform: translateX(-8px); }
@@ -78,6 +89,21 @@
       80%      { transform: translateX(5px); }
     }
     .shake { animation: shake .4s ease; }
+    /* ── 로딩 스피너 ── */
+    #db-loading {
+      position: fixed; inset: 0; z-index: 8888;
+      background: #060e1c;
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #1a2f47;
+      border-top-color: #818cf8;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -92,7 +118,7 @@
        ════════════════════════════════ -->
   <div id="pw-gate">
     <div class="pw-box" id="pw-box">
-      <div class="pw-logo">S</div>
+      <div class="pw-logo">C</div>
       <div>
         <div class="pw-title">Chungcheong Sales Team</div>
         <div class="pw-sub">충청영업팀 실적관리 시스템 · 접근 권한 확인</div>
@@ -109,26 +135,28 @@
     </div>
   </div>
 
+  <!-- ── Firebase 데이터 로딩 중 스피너 ── -->
+  <div id="db-loading">
+    <div class="spinner"></div>
+    <span style="color:#3d5f7e; font-size:13px; font-family:'Noto Sans KR',sans-serif;">
+      데이터 불러오는 중...
+    </span>
+  </div>
+
   <!-- ── 앱 컨테이너 (인증 후 표시) ── -->
   <div id="root" style="display:none;"></div>
 
-  <!-- ════════════════════════════════
-       비밀번호 인증 스크립트
-       ════════════════════════════════ -->
   <script>
     // ──────────────────────────────────────────────
     //  ★ 현재 비밀번호: mx2025!
     //  변경하려면 위 주석 안내를 따르세요.
     // ──────────────────────────────────────────────
-    const PW_HASH = "7964106471ddb947a30a14c1f9a74a3fed4a7d6029f0047291138292c23a4c99";
+    const PW_HASH    = "7964106471ddb947a30a14c1f9a74a3fed4a7d6029f0047291138292c23a4c99";
     const SESSION_KEY = "cst_auth_v1";
 
     async function sha256(str) {
-      const buf = await crypto.subtle.digest(
-        "SHA-256", new TextEncoder().encode(str)
-      );
-      return Array.from(new Uint8Array(buf))
-        .map(b => b.toString(16).padStart(2, "0")).join("");
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
     }
 
     async function checkPw() {
@@ -139,8 +167,16 @@
       const hash = await sha256(input);
       if (hash === PW_HASH) {
         sessionStorage.setItem(SESSION_KEY, "1");
-        document.getElementById("pw-gate").style.display = "none";
-        document.getElementById("root").style.display = "block";
+        document.getElementById("pw-gate").style.display    = "none";
+        document.getElementById("db-loading").style.display = "flex";
+        // 앱 스크립트 로드 완료 대기 후 표시
+        const waitReact = setInterval(() => {
+          if (window.__appReady) {
+            clearInterval(waitReact);
+            document.getElementById("db-loading").style.display = "none";
+            document.getElementById("root").style.display = "block";
+          }
+        }, 100);
       } else {
         errEl.textContent = "비밀번호가 올바르지 않습니다.";
         boxEl.classList.remove("shake");
@@ -151,15 +187,19 @@
       }
     }
 
-    // 이미 인증된 세션이면 바로 통과
     (function() {
       if (sessionStorage.getItem(SESSION_KEY) === "1") {
-        document.getElementById("pw-gate").style.display = "none";
-        document.getElementById("root").style.display = "block";
+        document.getElementById("pw-gate").style.display    = "none";
+        document.getElementById("db-loading").style.display = "flex";
+        const waitReact = setInterval(() => {
+          if (window.__appReady) {
+            clearInterval(waitReact);
+            document.getElementById("db-loading").style.display = "none";
+            document.getElementById("root").style.display = "block";
+          }
+        }, 100);
       } else {
-        window.addEventListener("load", () =>
-          document.getElementById("pw-input").focus()
-        );
+        window.addEventListener("load", () => document.getElementById("pw-input").focus());
       }
     })();
   </script>

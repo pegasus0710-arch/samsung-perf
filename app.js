@@ -323,17 +323,38 @@ function InputTab({ data, setData }) {
               </div>
               <Chip color={C.orange}>실적</Chip>
             </div>
-            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-              {inpRows.map(r => (
-                <div key={r.key} style={{ display:"flex", alignItems:"center", gap:8, paddingLeft:r.lv*14 }}>
-                  {r.lv > 0 && <span style={{ color:C.border2, fontSize:11, flexShrink:0 }}>└</span>}
-                  <div style={{ width:52, fontSize:12, flexShrink:0, fontWeight:r.lv===0?700:400,
-                    color:r.lv===0 ? (KC[r.key]||C.text) : C.muted2 }}>{r.label}</div>
-                  <NumInput value={pD[mi]?.[r.key]} onChange={v => setP(mi, r.key, v)}
-                    color={KC[r.key]||C.text} />
-                  <span style={{ color:C.muted, fontSize:10, width:16, flexShrink:0 }}>억</span>
-                </div>
-              ))}
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+              {ALL_ROWS.map(r => {
+                if (!r.inp) {
+                  // 자동계산 항목 → 그룹 헤더 라벨로 표시
+                  return (
+                    <div key={r.key} style={{
+                      display:"flex", alignItems:"center", gap:6,
+                      paddingLeft: r.lv * 14,
+                      marginTop: r.lv === 0 ? 6 : 2, marginBottom: 0,
+                    }}>
+                      <div style={{ height:1, width:10, background:C.border2, flexShrink:0 }} />
+                      <span style={{ color:KC[r.key]||C.muted2, fontSize:10, fontWeight:700,
+                        letterSpacing:"0.04em" }}>{r.label}</span>
+                      <span style={{ color:C.muted, fontSize:9 }}>(자동)</span>
+                      <div style={{ flex:1, height:1, background:C.border2 }} />
+                    </div>
+                  );
+                }
+                // 직접 입력 항목
+                return (
+                  <div key={r.key} style={{ display:"flex", alignItems:"center", gap:8,
+                    paddingLeft: r.lv * 14 + (r.lv > 0 ? 12 : 0) }}>
+                    {r.lv > 0 && <span style={{ color:C.border2, fontSize:11, flexShrink:0 }}>└</span>}
+                    <div style={{ width:52, fontSize:12, flexShrink:0,
+                      fontWeight:r.lv===0?800:400,
+                      color:r.lv===0 ? (KC[r.key]||C.text) : C.muted2 }}>{r.label}</div>
+                    <NumInput value={pD[mi]?.[r.key]} onChange={v => setP(mi, r.key, v)}
+                      color={KC[r.key]||C.text} />
+                    <span style={{ color:C.muted, fontSize:10, width:16, flexShrink:0 }}>억</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -348,14 +369,31 @@ function InputTab({ data, setData }) {
                 </div>
                 <Chip color={C.blue}>목표</Chip>
               </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                {inpRows.map(r => {
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                {ALL_ROWS.map(r => {
+                  if (!r.inp) {
+                    return (
+                      <div key={r.key} style={{
+                        display:"flex", alignItems:"center", gap:6,
+                        paddingLeft: r.lv * 14,
+                        marginTop: r.lv === 0 ? 6 : 2,
+                      }}>
+                        <div style={{ height:1, width:10, background:C.border2, flexShrink:0 }} />
+                        <span style={{ color:KC[r.key]||C.muted2, fontSize:10, fontWeight:700,
+                          letterSpacing:"0.04em" }}>{r.label}</span>
+                        <span style={{ color:C.muted, fontSize:9 }}>(자동)</span>
+                        <div style={{ flex:1, height:1, background:C.border2 }} />
+                      </div>
+                    );
+                  }
                   const p = gNum(pD[mi]?.[r.key]), t = gNum(tD[mi]?.[r.key]);
                   const a = aRate(p, t); const as = aStyle(a);
                   return (
-                    <div key={r.key} style={{ display:"flex", alignItems:"center", gap:8, paddingLeft:r.lv*14 }}>
+                    <div key={r.key} style={{ display:"flex", alignItems:"center", gap:8,
+                      paddingLeft: r.lv * 14 + (r.lv > 0 ? 12 : 0) }}>
                       {r.lv > 0 && <span style={{ color:C.border2, fontSize:11, flexShrink:0 }}>└</span>}
-                      <div style={{ width:52, fontSize:12, flexShrink:0, fontWeight:r.lv===0?700:400,
+                      <div style={{ width:52, fontSize:12, flexShrink:0,
+                        fontWeight:r.lv===0?800:400,
                         color:r.lv===0 ? (KC[r.key]||C.text) : C.muted2 }}>{r.label}</div>
                       <NumInput value={tD[mi]?.[r.key]} onChange={v => setT(mi, r.key, v)}
                         color={C.blue} />
@@ -1220,13 +1258,27 @@ function App() {
   const [data, setData] = useState(initData);
   const [saved, setSaved] = useState(false);
 
-  // Persistent storage
+  // ── Firestore 연동 ──────────────────────────────
+  // 저장 위치: Firestore > perf > main (단일 문서)
+  const DOC_REF = () => window.db.collection("perf").doc("main");
+
+  // 앱 시작 시 Firestore에서 데이터 로드
   useEffect(() => {
     (async () => {
       try {
-        const r = await Promise.resolve({value: localStorage.getItem("perf_data_v3")});
-        if (r?.value) setData(JSON.parse(r.value));
-      } catch {}
+        const snap = await DOC_REF().get();
+        if (snap.exists()) {
+          setData(snap.data().perfData || initData());
+        }
+      } catch(e) {
+        // Firestore 실패 시 localStorage 폴백
+        try {
+          const local = localStorage.getItem("perf_data_v3");
+          if (local) setData(JSON.parse(local));
+        } catch {}
+      } finally {
+        window.__appReady = true; // 로딩 완료 신호
+      }
     })();
   }, []);
 
@@ -1235,10 +1287,18 @@ function App() {
       const next = typeof updater === "function" ? updater(prev) : updater;
       (async () => {
         try {
-          await Promise.resolve(localStorage.setItem("perf_data_v3", JSON.stringify(next)));
+          // Firestore 저장 (모든 기기에서 동기화)
+          await DOC_REF().set({ perfData: next, updatedAt: new Date().toISOString() });
+          // localStorage 백업 (오프라인 대비)
+          localStorage.setItem("perf_data_v3", JSON.stringify(next));
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
-        } catch {}
+        } catch(e) {
+          // Firestore 실패해도 localStorage에는 저장
+          try { localStorage.setItem("perf_data_v3", JSON.stringify(next)); } catch {}
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        }
       })();
       return next;
     });
