@@ -541,7 +541,7 @@ function Dashboard({ data }) {
     return (v / ce * 100).toFixed(1);
   };
 
-  const mainKeys = ["CE","대외영업","뉴홈","SAC","B2B"];
+  const mainKeys = ["CE","대외영업","혼수","뉴홈","SAC","B2B"];
 
   const monthlyBars = MONTHS.map((_, mi) => ({
     p24: gNum(fullRow(p24[mi]).CE),
@@ -638,7 +638,7 @@ function Dashboard({ data }) {
           borderRadius:12, padding:18 }}>
           <div style={{ color:C.text, fontWeight:800, fontSize:14, marginBottom:3 }}>전년비 성장률</div>
           <div style={{ color:C.muted, fontSize:11, marginBottom:14 }}>26년 vs 25년 동기 누계 기준</div>
-          {["CE","대외영업","뉴홈","SAC","B2B","혼수","SMB","농협","휴대폰"].map(key => {
+          {["CE","대외영업","혼수","뉴홈","SAC","B2B","SMB","농협","휴대폰"].map(key => {
             const v26 = yp26(key), v25 = yp25(key);
             const gr = gRate(v26, v25); const gs = gStyle(gr);
             return (
@@ -671,7 +671,7 @@ function Dashboard({ data }) {
           <div style={{ color:C.muted, fontSize:11, marginBottom:14 }}>
             실적누계 ÷ 목표누계 ({MONTHS[emi]} 기준)
           </div>
-          {["CE","대외영업","뉴홈","SAC","B2B","혼수"].map(key => {
+          {["CE","대외영업","혼수","뉴홈","SAC","B2B"].map(key => {
             const pv = yp26(key), tv = yt26(key);
             const a = aRate(pv, tv); const as_ = aStyle(a);
             return (
@@ -759,7 +759,7 @@ function Dashboard({ data }) {
           <span style={{ color:C.muted, fontSize:11, fontWeight:400, marginLeft:8 }}>25년 회색 / 26년 컬러</span>
         </div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))", gap:10 }}>
-          {["CE","대외영업","뉴홈","SAC","B2B","혼수","SMB","농협","휴대폰"].map(key => {
+          {["CE","대외영업","혼수","뉴홈","SAC","B2B","SMB","농협","휴대폰"].map(key => {
             const v25s = MONTHS.map((_,mi) => gNum(fullRow(p25[mi])[key]));
             const v26s = MONTHS.map((_,mi) => gNum(fullRow(p26[mi])[key]));
             const tot25 = v25s.reduce((a,b)=>a+b,0), tot26 = v26s.reduce((a,b)=>a+b,0);
@@ -942,7 +942,7 @@ function Analysis({ data }) {
                 </tr>
               </thead>
               <tbody>
-                {["CE","대외영업","뉴홈","SAC","B2B","혼수","SMB","농협","휴대폰"].map(key => {
+                {["CE","대외영업","혼수","뉴홈","SAC","B2B","SMB","농협","휴대폰"].map(key => {
                   const row = ALL_ROWS.find(r => r.key === key);
                   const ytdP = ytdTotal(key, pD, emi);
                   const ytdT = ytdTotal(key, tD, emi);
@@ -984,7 +984,7 @@ function Analysis({ data }) {
 
           {/* Achievement summary cards */}
           <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
-            {["CE","대외영업","뉴홈","SAC","B2B"].map(key => {
+            {["CE","대외영업","혼수","뉴홈","SAC","B2B"].map(key => {
               const ytdP = ytdTotal(key, pD, emi);
               const ytdT = ytdTotal(key, tD, emi);
               const a = aRate(ytdP, ytdT); const as_ = aStyle(a); const n = gNum(a);
@@ -1129,7 +1129,7 @@ function Analysis({ data }) {
               </span>}
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))", gap:10 }}>
-              {["CE","대외영업","뉴홈","SAC","B2B","혼수","SMB","농협","휴대폰"].map(key => {
+              {["CE","대외영업","혼수","뉴홈","SAC","B2B","SMB","농협","휴대폰"].map(key => {
                 const curr = MONTHS.map((_,mi) => gNum(monthRows[mi][key]));
                 const prev = prevRows ? MONTHS.map((_,mi) => gNum(prevRows[mi][key])) : null;
                 const totC = curr.reduce((a,b)=>a+b,0);
@@ -1177,7 +1177,7 @@ function Analysis({ data }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {["CE","대외영업","뉴홈","SAC","B2B","혼수","SMB","농협","휴대폰"].map(key => (
+                  {["CE","대외영업","혼수","뉴홈","SAC","B2B","SMB","농협","휴대폰"].map(key => (
                     <tr key={key} style={{ borderBottom:`1px solid ${C.border}18` }}>
                       <td style={{ padding:"5px 12px", color:KC[key]||C.muted2, fontWeight:600, fontSize:12 }}>{key}</td>
                       {MONTHS.map((_, mi) => {
