@@ -1320,7 +1320,7 @@ function App() {
     (async () => {
       try {
         const snap = await DOC_REF().get();
-        if (snap.exists()) {
+        if (snap.exists) {
           const raw = snap.data().perfData;
           const migrated = migrateData(raw);
           setData(migrated);
