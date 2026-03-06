@@ -1318,12 +1318,21 @@ function App() {
   useEffect(() => {
     (async () => {
       try {
+        // ── 항상 Firestore 우선 로드 ──
         const snap = await DOC_REF().get();
         if (snap.exists()) {
           const raw = snap.data().perfData;
-          setData(migrateData(raw));
+          const migrated = migrateData(raw);
+          setData(migrated);
+          // Firestore 성공 시 localStorage도 최신으로 동기화
+          localStorage.setItem("perf_data_v3", JSON.stringify(migrated));
+        } else {
+          // Firestore에 문서 없으면 localStorage 확인
+          const local = localStorage.getItem("perf_data_v3");
+          if (local) setData(migrateData(JSON.parse(local)));
         }
       } catch(e) {
+        // Firestore 실패 시에만 localStorage 폴백
         try {
           const local = localStorage.getItem("perf_data_v3");
           if (local) setData(migrateData(JSON.parse(local)));
