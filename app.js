@@ -1296,15 +1296,37 @@ function App() {
 
   const DOC_REF = () => window.db.collection("perf").doc("main");
 
+  // ── 구버전 데이터 → 신버전 자동 변환 ──────────────
+  // 구버전: data[yr].perf / data[yr].target
+  // 신버전: data[yr][매출].perf / data[yr][매출].target
+  const migrateData = (raw) => {
+    if (!raw) return initData();
+    const isOldFormat = yr => raw[yr] && raw[yr].perf && !raw[yr]["매출"];
+    if (!isOldFormat("24") && !isOldFormat("25") && !isOldFormat("26")) return raw;
+    // 구버전 감지 → 기존 데이터를 매출로 이동
+    const migrated = initData();
+    ["24","25","26"].forEach(yr => {
+      if (raw[yr]) {
+        if (raw[yr].perf)   migrated[yr]["매출"].perf   = raw[yr].perf;
+        if (raw[yr].target) migrated[yr]["매출"].target = raw[yr].target;
+      }
+    });
+    console.log("📦 데이터 구조 마이그레이션 완료 (구버전→신버전)");
+    return migrated;
+  };
+
   useEffect(() => {
     (async () => {
       try {
         const snap = await DOC_REF().get();
-        if (snap.exists()) setData(snap.data().perfData || initData());
+        if (snap.exists()) {
+          const raw = snap.data().perfData;
+          setData(migrateData(raw));
+        }
       } catch(e) {
         try {
           const local = localStorage.getItem("perf_data_v3");
-          if (local) setData(JSON.parse(local));
+          if (local) setData(migrateData(JSON.parse(local)));
         } catch {}
       } finally {
         window.__appReady = true;
