@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v2.3";
+const APP_VER = "v2.4";
 
 // ─── 상수 ─────────────────────────────────────
 const MONTHS   = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -2655,9 +2655,9 @@ function App(){
             <span style={{color:mColor,fontSize:13,fontWeight:700,marginLeft:8}}>· {mode}</span>
           </h1>
         </div>
-        {tab==="dashboard"&&<Dashboard data={data} mode={mode}/>}
-        {tab==="analysis" &&<Analysis  data={data} mode={mode}/>}
-        {tab==="input"    &&<InputTab  data={data} setData={handleSetData} mode={mode}
+        {tab==="dashboard"&&<Dashboard key={mode} data={data} mode={mode}/>}
+        {tab==="analysis" &&<Analysis  key={mode} data={data} mode={mode}/>}
+        {tab==="input"    &&<InputTab  key={mode} data={data} setData={handleSetData} mode={mode}
           onSave={handleSave} saveState={saveState} hasUnsaved={hasUnsaved}
           onImport={()=>setShowImport(true)}/>}
       </div>
