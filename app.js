@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v2.8";
+const APP_VER = "v2.9";
 
 // ─── 상수 ─────────────────────────────────────
 const MONTHS   = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -667,6 +667,110 @@ function Dashboard({data,mode}){
               );
             })}
           </div>
+
+          {/* ── 목표 잔여 현황 ── */}
+          {(()=>{
+            const selPv  = ytd(p26,selKey);
+            const selTv  = ytd(t26,selKey);
+            const selRem = Math.max(selTv - selPv, 0);
+            const selAr  = pct(selPv, selTv);
+            const color  = KC[selKey]||C.accent;
+            // 남은 월 수 (emi+1 ~ 11)
+            const remainMonths = 11 - emi; // emi는 0-indexed, 12월=11
+            const needPerMonth = remainMonths>0&&selRem>0
+              ? Math.ceil(selRem / remainMonths) : 0;
+            // 연간 목표 (12개월 전체)
+            const annualTv = (() => {
+              let s=0;
+              for(let i=0;i<12;i++) s+=gNum(fullRow(t26?.[sk(i)])?.[selKey]);
+              return s;
+            })();
+            const annualPv = (() => {
+              let s=0;
+              for(let i=0;i<12;i++) s+=gNum(fullRow(p26?.[sk(i)])?.[selKey]);
+              return s;
+            })();
+            const annualRem = Math.max(annualTv - annualPv, 0);
+            const annualAr  = pct(annualPv, annualTv);
+            if(selTv<=0) return null;
+            const pctNum = selAr ? parseFloat(selAr) : 0;
+            const r=28, stroke=6, circ=2*Math.PI*r;
+            const filled=Math.min(pctNum/100,1)*circ;
+            return (
+              <div style={{marginTop:14,padding:"14px 10px",
+                background:"rgba(0,0,0,.2)",borderRadius:10,
+                border:`1px solid ${color}30`}}>
+                <div style={{color:C.muted,fontSize:10,fontWeight:700,marginBottom:10,
+                  display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{width:6,height:6,borderRadius:2,background:color}}/>
+                  {selKey} · 목표 잔여 현황
+                </div>
+                <div style={{display:"flex",gap:12,alignItems:"center"}}>
+                  {/* 원형 도넛 — 연간 달성률 */}
+                  <div style={{position:"relative",flexShrink:0}}>
+                    <svg width={70} height={70}>
+                      <circle cx={35} cy={35} r={r}
+                        fill="none" stroke="rgba(255,255,255,.06)" strokeWidth={stroke}/>
+                      <circle cx={35} cy={35} r={r}
+                        fill="none" stroke={color} strokeWidth={stroke}
+                        strokeDasharray={`${filled} ${circ}`}
+                        strokeLinecap="round"
+                        transform="rotate(-90 35 35)"
+                        style={{transition:"stroke-dasharray .6s ease"}}/>
+                      <text x={35} y={32} textAnchor="middle"
+                        fill={color} fontSize={11} fontWeight={900}>
+                        {selAr?selAr+"%":"─"}
+                      </text>
+                      <text x={35} y={44} textAnchor="middle"
+                        fill={C.muted} fontSize={7}>
+                        누계달성
+                      </text>
+                    </svg>
+                  </div>
+                  {/* 수치 상세 */}
+                  <div style={{flex:1,display:"flex",flexDirection:"column",gap:6}}>
+                    {/* 실적 / 목표 */}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{color:C.muted,fontSize:9}}>실적</span>
+                      <span style={{color:color,fontSize:12,fontWeight:800}}>
+                        {selPv>0?Math.round(selPv).toLocaleString()+"억":"─"}
+                      </span>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{color:C.muted,fontSize:9}}>목표</span>
+                      <span style={{color:C.muted2,fontSize:11,fontWeight:700}}>
+                        {Math.round(selTv).toLocaleString()}억
+                      </span>
+                    </div>
+                    {/* 구분선 */}
+                    <div style={{height:1,background:C.b1}}/>
+                    {/* 잔여 */}
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <span style={{color:C.muted,fontSize:9}}>잔여</span>
+                      <span style={{color:selRem>0?C.orange:C.green,fontSize:12,fontWeight:900}}>
+                        {selRem>0?"-"+Math.round(selRem).toLocaleString()+"억":"✓ 달성"}
+                      </span>
+                    </div>
+                    {/* 월평균 필요 */}
+                    {needPerMonth>0&&(
+                      <div style={{background:`${C.orange}15`,borderRadius:6,
+                        padding:"5px 8px",border:`1px solid ${C.orange}30`}}>
+                        <div style={{color:C.muted,fontSize:8,marginBottom:1}}>
+                          잔여 {remainMonths}개월 · 월 {Math.round(needPerMonth).toLocaleString()}억 필요
+                        </div>
+                        <div style={{display:"flex",alignItems:"baseline",gap:3}}>
+                          <span style={{color:C.orange,fontSize:13,fontWeight:900}}>
+                            {Math.round(needPerMonth).toLocaleString()}억
+                          </span>
+                          <span style={{color:C.muted,fontSize:9}}>/월 평균 달성 시 목표 도달</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* 우측 — 월별 추이 + 누계 추이 */}
@@ -934,7 +1038,7 @@ function Dashboard({data,mode}){
                             whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{k}</span>
                         </div>
                         {/* 수치 */}
-                        <div style={{display:"flex",alignItems:"center",gap:3,width:86,flexShrink:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:3,width:130,flexShrink:0}}>
                           <span style={{color:C.muted,fontSize:9,whiteSpace:"nowrap"}}>
                             {v25>0?Math.round(v25)+"억":"─"}
                           </span>
@@ -942,6 +1046,17 @@ function Dashboard({data,mode}){
                           <span style={{color:C.text,fontSize:11,fontWeight:700,whiteSpace:"nowrap"}}>
                             {v26>0?Math.round(v26)+"억":"─"}
                           </span>
+                          {v26>0&&v25>0&&(()=>{
+                            const delta=Math.round(v26-v25);
+                            const isP=delta>0, isN=delta<0;
+                            if(delta===0) return null;
+                            return (
+                              <span style={{color:isP?C.green:C.red,fontSize:9,fontWeight:700,
+                                whiteSpace:"nowrap",opacity:.9}}>
+                                ({isP?"+":""}{delta}억)
+                              </span>
+                            );
+                          })()}
                         </div>
                         {/* 발산형 바 영역 */}
                         <div style={{flex:1,position:"relative",height:18}}>
