@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v2.5";
+const APP_VER = "v2.6";
 
 // ─── 상수 ─────────────────────────────────────
 const MONTHS   = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -330,6 +330,25 @@ function RichLineChart({series, labels, h=160, showAvg=false}){
                   r={tooltip&&tooltip.mi===activePts.indexOf(p)?4.5:(s.bold?3.5:2.5)}
                   fill={s.color} stroke={C.bg} strokeWidth={1.5} opacity={s.op||1}/>
               ))}
+              {/* 26년 실적 포인트 수치 라벨 */}
+              {s.showLabels&&activePts.map((p,i)=>{
+                const isLast = i===activePts.length-1;
+                const prevP  = activePts[i-1];
+                const nextP  = activePts[i+1];
+                // 라벨 위/아래 방향: 이전 포인트보다 올라가면 위, 내려가면 아래
+                const goUp   = !prevP || p.y < prevP.y;
+                const labelY = p.y + (goUp ? -10 : 13);
+                // 좌우 끝 처리
+                const anchor = p.x < PL+30 ? "start" : p.x > W-PR-30 ? "end" : "middle";
+                return (
+                  <text key={i} x={p.x} y={labelY}
+                    fill={s.color} fontSize={9} fontWeight={700}
+                    textAnchor={anchor}
+                    style={{filter:"drop-shadow(0 1px 2px rgba(0,0,0,.8))"}}>
+                    {Math.round(p.v).toLocaleString()}
+                  </text>
+                );
+              })}
               {/* 평균선 */}
               {showAvg&&s.bold&&(
                 <>
@@ -687,7 +706,7 @@ function Dashboard({data,mode}){
             </div>
             <RichLineChart h={140} showAvg={true} series={[
               {data:mArr(p25,selKey).map((v,i)=>i<=emi?v:null),color:"#a78bfa",op:.7,tooltipLabel:"25년"},
-              {data:mArr(p26,selKey).map((v,i)=>i<=emi?v:null),color:mColor,bold:true,fill:true,tooltipLabel:"26년"},
+              {data:mArr(p26,selKey).map((v,i)=>i<=emi?v:null),color:mColor,bold:true,fill:true,showLabels:true,tooltipLabel:"26년"},
               {data:mArr(t26,selKey).map((v,i)=>i<=emi?v:null),color:C.orange,dash:true,op:.7,tooltipLabel:"목표"},
             ]} labels={MONTHS}/>
           </div>
