@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v13";
+const APP_VER = "v14";
 
 // ─── 상수 ─────────────────────────────────────
 const MONTHS   = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -180,318 +180,507 @@ function ProgressBar({pct:p,color,h=4}){
 // ═══════════════════════════════════════════════
 //  대시보드
 // ═══════════════════════════════════════════════
-function Dashboard({data,mode}){
-  const [selKey,setSelKey] = useState("CE");
-  const isMobile = useIsMobile();
 
-  const p26=data["26"]?.[mode]?.perf   ||emptyM();
-  const t26=data["26"]?.[mode]?.target ||emptyM();
-  const p25=data["25"]?.[mode]?.perf   ||emptyM();
-  const t25=data["25"]?.[mode]?.target ||emptyM();
-  const p24=data["24"]?.[mode]?.perf   ||emptyM();
+// ═══════════════════════════════════════════════
+//  대시보드 v14 — Pinterest/Dribbble 스타일
+// ═══════════════════════════════════════════════
 
-  const lm26=lastMiOf(p26);
-  const emi=lm26>=0?lm26:new Date().getMonth();
-  const mColor=C[mode];
-
-  const yp26=k=>sumR(p26,k,0,emi);
-  const yt26=k=>sumR(t26,k,0,emi);
-  const yp25=k=>sumR(p25,k,0,emi);
-  const yt25=k=>sumR(t25,k,0,emi);
-
-  // 월별 데이터
-  const mData=k=>MONTHS.map((_,i)=>gNum(fullRow(p26[sk(i)])[k]));
-  const mData25=k=>MONTHS.map((_,i)=>gNum(fullRow(p25[sk(i)])[k]));
-  const mData24=k=>MONTHS.map((_,i)=>gNum(fullRow(p24[sk(i)])[k]));
-  const mTarget=k=>MONTHS.map((_,i)=>gNum(fullRow(t26[sk(i)])[k]));
-
-  // 누계 데이터 (파트별)
-  const cumData=(d,k)=>MONTHS.map((_,i)=>sumR(d,k,0,i));
-
+/* ── SVG 도넛 차트 ── */
+function DonutChart({pct:p, color, size=72, stroke=8, label, sub}){
+  const n = Math.min(Math.max(gNum(p),0),150);
+  const r = (size-stroke*2)/2;
+  const circ = 2*Math.PI*r;
+  const fill = Math.min(n,100)/100*circ;
+  const cx = size/2, cy = size/2;
+  const textColor = n>=100?C.green:n>=80?C.orange:C.red;
   return (
-    <div style={{display:"flex",flexDirection:"column",gap:14}}>
-
-      {/* 안내 바 */}
-      <div style={{background:C.card2,border:`1px solid ${mColor}44`,borderRadius:8,
-        padding:"8px 14px",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-        <span style={{color:mColor,fontWeight:800,fontSize:12}}>◉ {mode}</span>
-        <span style={{color:C.muted2,fontSize:11}}>
-          26년 {MONTHS[emi]} 누계 기준 · 전년동기 비교 · hover→소수점 표시
-        </span>
-        <div style={{marginLeft:"auto",display:"flex",gap:4,flexWrap:"wrap"}}>
-          <span style={{color:C.muted,fontSize:10}}>파트 선택:</span>
-          {ALL_KEYS.map(k=>(
-            <button key={k} onClick={()=>setSelKey(k)} style={{
-              padding:"2px 8px",borderRadius:4,cursor:"pointer",fontSize:10,fontWeight:700,
-              fontFamily:"inherit",border:`1px solid ${selKey===k?KC[k]||C.accent:C.b1}`,
-              background:selKey===k?(KC[k]||C.accent)+"22":"transparent",
-              color:selKey===k?(KC[k]||C.accent):C.muted}}>
-              {k}
-            </button>
-          ))}
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+      <svg width={size} height={size} style={{transform:"rotate(-90deg)"}}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={C.b1} strokeWidth={stroke}/>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={n===0?C.b2:color}
+          strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={`${fill} ${circ}`}
+          style={{transition:"stroke-dasharray .6s ease",filter:`drop-shadow(0 0 4px ${color}80)`}}/>
+        {n>100&&(
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke={C.orange}
+            strokeWidth={stroke} strokeLinecap="round" opacity={.5}
+            strokeDasharray={`${(n-100)/100*circ} ${circ}`}
+            strokeDashoffset={-(fill)}/>
+        )}
+      </svg>
+      <div style={{marginTop:-size/2-4,height:size/2,display:"flex",flexDirection:"column",
+        alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
+        <div style={{color:n===0?C.muted:textColor,fontSize:size<60?11:13,fontWeight:900,
+          letterSpacing:"-0.03em"}}>
+          {n===0?"─":n.toFixed(0)+"%"}
         </div>
       </div>
+      {label&&<div style={{color:C.muted2,fontSize:10,fontWeight:700,textAlign:"center"}}>{label}</div>}
+      {sub&&<div style={{color:C.muted,fontSize:9,textAlign:"center"}}>{sub}</div>}
+    </div>
+  );
+}
 
-      {/* KPI 카드 - 전체 항목 */}
-      <div style={{display:"grid",
-        gridTemplateColumns:isMobile?"repeat(2,1fr)":"repeat(4,1fr)",gap:8}}>
-        {ALL_KEYS.map(k=>{
-          const v26=yp26(k),v25=yp25(k),vt=yt26(k);
-          const gr=grw(v26,v25),ar=pct(v26,vt);
-          return (
-            <div key={k} onClick={()=>setSelKey(k)}
-              style={{background:C.card2,border:`1px solid ${selKey===k?(KC[k]||C.accent):C.b1}`,
-                borderRadius:10,padding:"12px 14px",borderTop:`2px solid ${KC[k]||C.accent}`,
-                cursor:"pointer",transition:"all .2s",
-                boxShadow:selKey===k?`0 0 12px ${KC[k]||C.accent}30`:"none"}}>
-              <div style={{color:C.muted,fontSize:10,marginBottom:3}}>{k}</div>
-              <div title={fmtD(v26)} style={{color:C.text,fontSize:18,fontWeight:900,
-                letterSpacing:"-0.03em",cursor:"default"}}>
-                {v26>0?Math.round(v26).toLocaleString():<span style={{color:C.muted}}>-</span>}
-                {v26>0&&<span style={{fontSize:10,color:C.muted2,marginLeft:3}}>억</span>}
-              </div>
-              <div style={{display:"flex",gap:6,marginTop:3,flexWrap:"wrap"}}>
-                {gr&&<span style={{color:grwC(gr),fontSize:10,fontWeight:700}}>{grwT(gr)}</span>}
-                {ar&&<span style={{color:pctC(ar),fontSize:10}}>달성{ar}%</span>}
-              </div>
-              {vt>0&&<ProgressBar pct={ar} color={KC[k]||C.accent} h={3}/>}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 선택 파트 상세 분석 */}
-      <div style={{background:C.card2,border:`1px solid ${KC[selKey]||C.accent}44`,
-        borderRadius:12,padding:16,borderTop:`3px solid ${KC[selKey]||C.accent}`}}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-          <div>
-            <span style={{color:KC[selKey]||C.accent,fontWeight:900,fontSize:16}}>{selKey}</span>
-            <span style={{color:C.muted,fontSize:11,marginLeft:8}}>월별 실적 추이 · {mode}</span>
-          </div>
-          <div style={{display:"flex",gap:8}}>
-            {[[C.muted2,"24년실"],[C.accent,"25년실"],[mColor,"26년실"],[C.orange,"26년목"]].map(([c,l])=>(
-              <span key={l} style={{display:"flex",alignItems:"center",gap:3}}>
-                <span style={{width:14,height:2,background:c,display:"inline-block",borderRadius:2}}/>
-                <span style={{color:C.muted,fontSize:10}}>{l}</span>
-              </span>
+/* ── 부드러운 SVG 라인 차트 (그리드+라벨 포함) ── */
+function RichLineChart({series, labels, h=160, yUnit="억", showAvg=false}){
+  const W=600, H=h, PL=36, PR=10, PT=12, PB=20;
+  const iW=W-PL-PR, iH=H-PT-PB;
+  const allV = series.flatMap(s=>s.data.map(gNum)).filter(v=>v>0);
+  if(allV.length===0) return (
+    <div style={{height:h,display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <span style={{color:C.muted,fontSize:11}}>데이터 없음</span>
+    </div>
+  );
+  const maxV = Math.max(...allV)*1.1;
+  const cx = i => PL + (i/(labels.length-1||1))*iW;
+  const cy = v => PT + (1-gNum(v)/maxV)*iH;
+  const smooth = pts => pts.reduce((p,pt,i)=>{
+    if(i===0) return `M${pt.x},${pt.y}`;
+    const prev=pts[i-1];
+    const cpx=(pt.x-prev.x)*0.4;
+    return `${p} C${prev.x+cpx},${prev.y} ${pt.x-cpx},${pt.y} ${pt.x},${pt.y}`;
+  },"");
+  const ticks = 4;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{width:"100%",height:h}} preserveAspectRatio="xMinYMid meet">
+      {/* 그리드 */}
+      {Array.from({length:ticks+1},(_,i)=>{
+        const v=maxV*(ticks-i)/ticks;
+        const y=cy(v);
+        return (
+          <g key={i}>
+            <line x1={PL} y1={y} x2={W-PR} y2={y} stroke={C.b1} strokeWidth={.5}/>
+            <text x={PL-3} y={y+3} fill={C.muted} fontSize={8} textAnchor="end">
+              {Math.round(v)>0?Math.round(v):""}
+            </text>
+          </g>
+        );
+      })}
+      {/* X 라벨 */}
+      {labels.map((l,i)=>(
+        <text key={i} x={cx(i)} y={H} fill={C.muted} fontSize={8} textAnchor="middle">
+          {l.replace("월","")}
+        </text>
+      ))}
+      {/* 시리즈 */}
+      {series.map((s,si)=>{
+        const pts=s.data.map((v,i)=>({x:cx(i),y:cy(v),v:gNum(v)}));
+        const activePts=pts.filter(p=>p.v>0);
+        if(activePts.length===0) return null;
+        const d=smooth(activePts);
+        const avg=activePts.reduce((a,p)=>a+p.v,0)/activePts.length;
+        const avgY=cy(avg);
+        const fillPath=`${d} L${activePts[activePts.length-1].x},${PT+iH} L${activePts[0].x},${PT+iH} Z`;
+        return (
+          <g key={si}>
+            {s.fill&&<path d={fillPath} fill={s.color} opacity={.08}/>}
+            <path d={d} fill="none" stroke={s.color} strokeWidth={s.bold?2.5:1.8}
+              strokeLinejoin="round" strokeLinecap="round"
+              strokeDasharray={s.dash?"6,3":undefined} opacity={s.op||1}/>
+            {/* 데이터 포인트 */}
+            {activePts.map((p,i)=>(
+              <g key={i}>
+                <circle cx={p.x} cy={p.y} r={s.bold?3.5:2.5} fill={s.color}
+                  stroke={C.bg} strokeWidth={1.5} opacity={s.op||1}/>
+                {s.showVal&&(
+                  <text x={p.x} y={p.y-7} fill={s.color} fontSize={8} textAnchor="middle" fontWeight="700">
+                    {Math.round(p.v)}
+                  </text>
+                )}
+              </g>
             ))}
+            {/* 평균선 */}
+            {showAvg&&s.bold&&(
+              <>
+                <line x1={activePts[0].x} y1={avgY} x2={activePts[activePts.length-1].x} y2={avgY}
+                  stroke={s.color} strokeWidth={1} strokeDasharray="3,3" opacity={.5}/>
+                <text x={activePts[activePts.length-1].x+4} y={avgY+3}
+                  fill={s.color} fontSize={8} opacity={.7}>
+                  avg {Math.round(avg)}
+                </text>
+              </>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ── CE 비중 가로 스택바 ── */
+function CeShareBar({data, emi}){
+  const pD = data;
+  const PARTS = [
+    {k:"혼수",  c:"#f5b942"},
+    {k:"뉴홈",  c:"#2dd488"},
+    {k:"SAC",   c:"#d97af5"},
+    {k:"거주중",c:"#b87af5"},
+    {k:"B2B",   c:"#f58f42"},
+    {k:"휴대폰",c:"#90a8c0"},
+  ];
+  const getSum = k => Array.from({length:emi+1},(_,i)=>gNum(fullRow(pD[sk(i)])[k])).reduce((a,b)=>a+b,0);
+  const ce = getSum("CE");
+  if(!ce) return <div style={{color:C.muted,fontSize:11,padding:"20px 0",textAlign:"center"}}>CE 데이터 없음</div>;
+  const vals = PARTS.map(p=>({...p,v:getSum(p.k),s:(getSum(p.k)/ce*100)}));
+  const total = vals.reduce((a,p)=>a+p.s,0);
+  return (
+    <div>
+      {/* 스택 바 */}
+      <div style={{display:"flex",borderRadius:6,overflow:"hidden",height:20,marginBottom:10,gap:1}}>
+        {vals.map(p=>p.v>0&&(
+          <div key={p.k} title={`${p.k}: ${p.s.toFixed(1)}%`}
+            style={{flex:p.s,background:p.c,display:"flex",alignItems:"center",justifyContent:"center",
+              minWidth:p.s>6?undefined:0,transition:"flex .4s",
+              boxShadow:`inset 0 1px 0 rgba(255,255,255,.1)`}}>
+            {p.s>6&&<span style={{color:"rgba(0,0,0,.7)",fontSize:9,fontWeight:700}}>{p.s.toFixed(0)}%</span>}
           </div>
-        </div>
-        <LineChart h={130} series={[
-          {data:mData24(selKey),color:C.muted2,opacity:.5},
-          {data:mData25(selKey),color:C.accent,opacity:.8},
-          {data:mData(selKey),color:mColor,bold:true,fill:true},
-          {data:mTarget(selKey),color:C.orange,dash:true,opacity:.7},
-        ]} labels={MONTHS}/>
-        <div style={{display:"flex",gap:2,marginTop:4}}>
-          {MONTHS.map((m,i)=>(
-            <div key={i} style={{flex:1,textAlign:"center",color:C.muted,fontSize:9}}>
-              {m.replace("월","")}
+        ))}
+      </div>
+      {/* 범례 그리드 */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"6px 12px"}}>
+        {vals.map(p=>(
+          <div key={p.k} style={{display:"flex",alignItems:"center",gap:7}}>
+            <div style={{width:8,height:8,borderRadius:2,background:p.c,flexShrink:0}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+                <span style={{color:C.muted2,fontSize:11}}>{p.k}</span>
+                <span style={{color:p.c,fontWeight:700,fontSize:11}}>{p.s.toFixed(1)}%</span>
+              </div>
+              <div style={{color:C.muted,fontSize:10}}>{Math.round(p.v).toLocaleString()}억</div>
             </div>
-          ))}
-        </div>
-
-        {/* 월별 상세 수치 */}
-        <div style={{marginTop:12,overflowX:"auto"}}>
-          <table style={{borderCollapse:"collapse",width:"100%",minWidth:600}}>
-            <thead>
-              <tr style={{borderBottom:`1px solid ${C.b1}`}}>
-                <th style={{padding:"4px 8px",color:C.muted,fontWeight:600,fontSize:10,textAlign:"left",width:60}}>구분</th>
-                {MONTHS.map(m=><th key={m} style={{padding:"4px 4px",color:C.muted,fontWeight:600,fontSize:10,textAlign:"right"}}>{m}</th>)}
-                <th style={{padding:"4px 8px",color:C.accent,fontWeight:700,fontSize:10,textAlign:"right"}}>합계</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                {label:"26년실",d:p26,c:mColor,bold:true},
-                {label:"26년목",d:t26,c:C.orange},
-                {label:"25년실",d:p25,c:C.accent,op:.7},
-              ].map(({label,d,c,bold,op})=>(
-                <tr key={label}>
-                  <td style={{padding:"3px 8px",color:c,fontWeight:bold?700:400,fontSize:10,opacity:op||1}}>{label}</td>
-                  {MONTHS.map((_,i)=>{
-                    const v=gNum(fullRow(d[sk(i)])[selKey]);
-                    return <td key={i} style={{padding:"3px 4px",textAlign:"right"}}>
-                      <span title={fmtD(v)} style={{color:v>0?c:C.muted,fontSize:10,opacity:op||1,cursor:"default"}}>
-                        {v>0?Math.round(v).toLocaleString():"-"}
-                      </span>
-                    </td>;
-                  })}
-                  <td style={{padding:"3px 8px",textAlign:"right"}}>
-                    <span title={fmtD(sumM(d,selKey))} style={{color:c,fontWeight:700,fontSize:10,cursor:"default"}}>
-                      {fmt(sumM(d,selKey))}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              <tr style={{borderTop:`1px solid ${C.b1}`}}>
-                <td style={{padding:"3px 8px",color:C.muted,fontSize:10}}>달성률</td>
-                {MONTHS.map((_,i)=>{
-                  const p=gNum(fullRow(p26[sk(i)])[selKey]);
-                  const t=gNum(fullRow(t26[sk(i)])[selKey]);
-                  const a=pct(p,t);
-                  return <td key={i} style={{padding:"3px 4px",textAlign:"right"}}>
-                    <span style={{color:a?pctC(a):C.muted,fontSize:10,fontWeight:a?700:400}}>
-                      {a?a+"%":"-"}
-                    </span>
-                  </td>;
-                })}
-                <td style={{padding:"3px 8px",textAlign:"right"}}>
-                  <span style={{color:pctC(pct(yp26(selKey),yt26(selKey))),fontSize:10,fontWeight:700}}>
-                    {pct(yp26(selKey),yt26(selKey))?pct(yp26(selKey),yt26(selKey))+"%":"-"}
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td style={{padding:"3px 8px",color:C.muted,fontSize:10}}>전년비</td>
-                {MONTHS.map((_,i)=>{
-                  const c=gNum(fullRow(p26[sk(i)])[selKey]);
-                  const p=gNum(fullRow(p25[sk(i)])[selKey]);
-                  const gr=grw(c,p);
-                  return <td key={i} style={{padding:"3px 4px",textAlign:"right"}}>
-                    <span style={{color:gr?grwC(gr):C.muted,fontSize:10,fontWeight:gr?600:400}}>
-                      {gr?grwT(gr):"-"}
-                    </span>
-                  </td>;
-                })}
-                <td style={{padding:"3px 8px",textAlign:"right"}}>
-                  <span style={{color:grwC(grw(yp26(selKey),yp25(selKey))),fontSize:10,fontWeight:700}}>
-                    {grw(yp26(selKey),yp25(selKey))?grwT(grw(yp26(selKey),yp25(selKey))):"-"}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 누계 비교 차트 */}
-      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12}}>
-
-        {/* 누계 성장 추이 */}
-        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:12,padding:16}}>
-          <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:4}}>
-            {selKey} 누계 추이 <span style={{color:C.muted,fontWeight:400,fontSize:11}}>24/25/26년</span>
           </div>
-          <LineChart h={110} series={[
-            {data:cumData(p24,selKey),color:C.muted2,opacity:.5},
-            {data:cumData(p25,selKey),color:C.accent,opacity:.8},
-            {data:cumData(p26,selKey),color:mColor,bold:true,fill:true},
-          ]} labels={MONTHS}/>
-          <div style={{display:"flex",gap:2,marginTop:4}}>
-            {MONTHS.map((m,i)=>(
-              <div key={i} style={{flex:1,textAlign:"center",color:C.muted,fontSize:9}}>
-                {m.replace("월","")}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* 전체 목표 달성률 현황 */}
-        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:12,padding:16}}>
-          <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:12}}>
-            목표 달성률 현황 <span style={{color:C.muted,fontWeight:400,fontSize:11}}>{MONTHS[emi]} 누계</span>
-          </div>
-          {ALL_KEYS.map(k=>{
-            const pv=yp26(k),tv=yt26(k),a=pct(pv,tv);
-            return (
-              <div key={k} style={{marginBottom:8}}>
-                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-                  <span style={{color:KC[k]||C.muted2,fontSize:11,fontWeight:600}}>{k}</span>
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <span style={{color:C.muted,fontSize:10}}>
-                      <span title={fmtD(pv)}>{pv>0?Math.round(pv).toLocaleString():"-"}</span>
-                      {tv>0&&<span style={{color:C.muted}}> / <span title={fmtD(tv)}>{Math.round(tv).toLocaleString()}</span></span>}
-                    </span>
-                    <span style={{color:a?pctC(a):C.muted,fontWeight:700,fontSize:11,minWidth:44,textAlign:"right"}}>
-                      {a?a+"%":"-"}
-                    </span>
-                  </div>
-                </div>
-                {tv>0&&<ProgressBar pct={a} color={KC[k]||C.accent} h={4}/>}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* CE 비중 + 전년비 성장 */}
-      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12}}>
-
-        {/* 전년비 성장률 */}
-        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:12,padding:16}}>
-          <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:12}}>전년비 성장률</div>
-          <table style={{borderCollapse:"collapse",width:"100%"}}>
-            <thead>
-              <tr style={{borderBottom:`1px solid ${C.b1}`}}>
-                <th style={{padding:"4px 8px",textAlign:"left",color:C.muted,fontSize:10,fontWeight:600}}>항목</th>
-                <th style={{padding:"4px 8px",textAlign:"right",color:C.muted,fontSize:10,fontWeight:600}}>25년</th>
-                <th style={{padding:"4px 8px",textAlign:"right",color:C.muted,fontSize:10,fontWeight:600}}>26년</th>
-                <th style={{padding:"4px 8px",textAlign:"right",color:C.accent,fontSize:10,fontWeight:700}}>성장률</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ALL_KEYS.map(k=>{
-                const v26=yp26(k),v25=yp25(k),gr=grw(v26,v25);
-                return (
-                  <tr key={k} style={{borderBottom:`1px solid ${C.b1}18`}}>
-                    <td style={{padding:"5px 8px"}}>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <div style={{width:6,height:6,borderRadius:"50%",background:KC[k]||C.muted,flexShrink:0}}/>
-                        <span style={{color:C.muted2,fontSize:11}}>{k}</span>
-                      </div>
-                    </td>
-                    <td style={{padding:"5px 8px",textAlign:"right"}}>
-                      <span title={fmtD(v25)} style={{color:C.muted,fontSize:11,cursor:"default"}}>
-                        {v25>0?Math.round(v25).toLocaleString():"-"}
-                      </span>
-                    </td>
-                    <td style={{padding:"5px 8px",textAlign:"right"}}>
-                      <span title={fmtD(v26)} style={{color:C.text,fontSize:11,cursor:"default"}}>
-                        {v26>0?Math.round(v26).toLocaleString():"-"}
-                      </span>
-                    </td>
-                    <td style={{padding:"5px 8px",textAlign:"right"}}>
-                      <span style={{color:gr?grwC(gr):C.muted,fontWeight:700,fontSize:11}}>
-                        {gr?grwT(gr):"-"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* CE 비중 */}
-        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:12,padding:16}}>
-          <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:12}}>
-            CE 비중 <span style={{color:C.muted,fontWeight:400,fontSize:11}}>{MONTHS[emi]} 누계</span>
-          </div>
-          {(()=>{
-            const ce=yp26("CE"),hp=yp26("휴대폰"),dw=yp26("대외영업");
-            if(!ce) return <div style={{color:C.muted,fontSize:12,padding:20,textAlign:"center"}}>CE 데이터 없음</div>;
-            return ["대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"].map(k=>{
-              const v=k==="대외영업"?(dw-hp):yp26(k);
-              const s=(v/ce*100).toFixed(1);
-              return (
-                <div key={k} style={{marginBottom:7}}>
-                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-                    <span style={{color:KC[k]||C.muted2,fontSize:11}}>
-                      {k}{k==="대외영업"&&<span style={{color:C.muted,fontSize:9}}>(폰제외)</span>}
-                    </span>
-                    <span style={{color:KC[k]||C.text,fontWeight:700,fontSize:11}}>{s}%</span>
-                  </div>
-                  <ProgressBar pct={parseFloat(s)} color={KC[k]||C.accent} h={3}/>
-                </div>
-              );
-            });
-          })()}
-        </div>
+        ))}
       </div>
     </div>
   );
 }
+
+function Dashboard({data,mode}){
+  const [selKey,setSelKey] = useState("CE");
+  const isMobile = useIsMobile();
+  const mColor = C[mode];
+
+  const p26 = data["26"]?.[mode]?.perf   ||emptyM();
+  const t26 = data["26"]?.[mode]?.target ||emptyM();
+  const p25 = data["25"]?.[mode]?.perf   ||emptyM();
+  const p24 = data["24"]?.[mode]?.perf   ||emptyM();
+
+  const lm26 = lastMiOf(p26);
+  const emi  = lm26>=0 ? lm26 : new Date().getMonth();
+
+  // 누계 합산 (emi 기준)
+  const ytd = (d,k) => sumR(d,k,0,emi);
+
+  // 월별 데이터 배열
+  const mArr   = (d,k) => MONTHS.map((_,i)=>gNum(fullRow(d[sk(i)])[k]));
+  // 누계 배열
+  const cumArr = (d,k) => {
+    let acc=0;
+    return MONTHS.map((_,i)=>{
+      if(gNum(fullRow(d[sk(i)])[k])>0 || i<=emi){
+        acc+=gNum(fullRow(d[sk(i)])[k]);
+        return acc;
+      }
+      return null;
+    });
+  };
+
+  // 주요 항목 달성률
+  const DONUT_KEYS = ["CE","대외영업","SAC","B2B","혼수","뉴홈"];
+
+  // 월별 + 월평균
+  const sel_monthly = mArr(p26,selKey).map((v,i)=>i<=emi?v:null);
+  const sel_cum26   = cumArr(p26,selKey);
+  const sel_cum25   = cumArr(p25,selKey);
+  const sel_cum24   = cumArr(p24,selKey);
+  const validMonths = sel_monthly.filter(v=>v!==null&&v>0);
+  const monthAvg    = validMonths.length>0 ? validMonths.reduce((a,b)=>a+b,0)/validMonths.length : 0;
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+
+      {/* ── 상단 헤더 카드 ── */}
+      <div style={{
+        background:`linear-gradient(135deg, #0d1f38 0%, #0a1628 60%, #061018 100%)`,
+        border:`1px solid ${mColor}33`,borderRadius:16,padding:"20px 24px",
+        boxShadow:`0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04)`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16}}>
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+              <div style={{width:6,height:6,borderRadius:"50%",background:mColor,
+                boxShadow:`0 0 8px ${mColor}`}}/>
+              <span style={{color:C.muted2,fontSize:11,fontWeight:600,letterSpacing:"0.08em",
+                textTransform:"uppercase"}}>{mode} 실적 대시보드</span>
+            </div>
+            <div style={{color:C.text,fontSize:22,fontWeight:900,letterSpacing:"-0.04em"}}>
+              26년 {MONTHS[emi]} 누계 현황
+            </div>
+            <div style={{color:C.muted,fontSize:12,marginTop:4}}>
+              입력 기준월 : {MONTHS[emi]} · 판매/매출 전환 가능 · hover 시 소수점 표시
+            </div>
+          </div>
+          {/* 핵심 지표 3개 */}
+          <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+            {[
+              {k:"CE",      label:"CE 누계",      color:KC.CE},
+              {k:"대외영업", label:"대외영업 누계", color:KC.대외영업},
+              {k:"SAC",     label:"SAC 누계",     color:KC.SAC},
+            ].map(({k,label,color})=>{
+              const v26=ytd(p26,k), v25=ytd(p25,k), vt=ytd(t26,k);
+              const gr=grw(v26,v25), ar=pct(v26,vt);
+              return (
+                <div key={k} style={{background:"rgba(255,255,255,.04)",border:`1px solid ${color}30`,
+                  borderRadius:12,padding:"12px 18px",minWidth:130,
+                  borderTop:`2px solid ${color}`}}>
+                  <div style={{color:C.muted,fontSize:10,marginBottom:4}}>{label}</div>
+                  <div title={fmtD(v26)} style={{color:C.text,fontSize:20,fontWeight:900,
+                    letterSpacing:"-0.03em",cursor:"default"}}>
+                    {v26>0?Math.round(v26).toLocaleString():<span style={{color:C.muted}}>-</span>}
+                    {v26>0&&<span style={{fontSize:11,color:C.muted2,marginLeft:2}}>억</span>}
+                  </div>
+                  <div style={{display:"flex",gap:8,marginTop:4}}>
+                    {gr&&<span style={{color:grwC(gr),fontSize:10,fontWeight:700}}>{grwT(gr)}</span>}
+                    {ar&&<span style={{color:pctC(ar),fontSize:10}}>달성 {ar}%</span>}
+                  </div>
+                  {vt>0&&(
+                    <div style={{height:2,background:"rgba(255,255,255,.08)",borderRadius:1,
+                      overflow:"hidden",marginTop:6}}>
+                      <div style={{height:"100%",width:`${Math.min(gNum(ar),100)}%`,
+                        background:color,borderRadius:1,boxShadow:`0 0 6px ${color}`,
+                        transition:"width .5s"}}/>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 파트 선택 + 도넛 달성률 ── */}
+      <div style={{display:"grid",
+        gridTemplateColumns:isMobile?"1fr":`260px 1fr`,gap:14}}>
+
+        {/* 도넛 달성률 패널 */}
+        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18,
+          boxShadow:"0 4px 20px rgba(0,0,0,.2)"}}>
+          <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:4}}>목표 달성률</div>
+          <div style={{color:C.muted,fontSize:10,marginBottom:14}}>
+            {MONTHS[emi]} 누계 기준
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+            {DONUT_KEYS.map(k=>{
+              const pv=ytd(p26,k), tv=ytd(t26,k), ar=pct(pv,tv);
+              const color=KC[k]||C.accent;
+              return (
+                <div key={k} onClick={()=>setSelKey(k)}
+                  style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                    cursor:"pointer",padding:"6px 4px",borderRadius:8,
+                    background:selKey===k?color+"15":"transparent",
+                    border:`1px solid ${selKey===k?color+"60":"transparent"}`,
+                    transition:"all .2s"}}>
+                  <DonutChart pct={ar} color={color} size={60} stroke={6}/>
+                  <div style={{color:selKey===k?color:C.muted2,fontSize:10,fontWeight:700,
+                    textAlign:"center"}}>{k}</div>
+                  <div style={{color:C.muted,fontSize:9,textAlign:"center"}}>
+                    {pv>0?Math.round(pv).toLocaleString()+"/":""}{tv>0?Math.round(tv).toLocaleString()+"억":"-"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 전체 항목 미니 리스트 */}
+          <div style={{marginTop:14,paddingTop:12,borderTop:`1px solid ${C.b1}`}}>
+            <div style={{color:C.muted,fontSize:10,fontWeight:700,marginBottom:8}}>전체 항목</div>
+            {ALL_KEYS.map(k=>{
+              const pv=ytd(p26,k),tv=ytd(t26,k),ar=pct(pv,tv);
+              const color=KC[k]||C.muted2;
+              return (
+                <div key={k} onClick={()=>setSelKey(k)}
+                  style={{display:"flex",alignItems:"center",gap:6,padding:"4px 6px",
+                    borderRadius:6,cursor:"pointer",marginBottom:2,
+                    background:selKey===k?color+"12":"transparent"}}>
+                  <div style={{width:5,height:5,borderRadius:"50%",background:color,flexShrink:0}}/>
+                  <span style={{color:selKey===k?color:C.muted2,fontSize:10,flex:1,fontWeight:selKey===k?700:400}}>
+                    {k}
+                  </span>
+                  <span style={{color:C.muted,fontSize:10}}>
+                    {pv>0?Math.round(pv).toLocaleString():"-"}억
+                  </span>
+                  <span style={{color:ar?pctC(ar):C.muted,fontSize:10,fontWeight:700,
+                    minWidth:36,textAlign:"right"}}>
+                    {ar?ar+"%":"-"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 우측 — 월별 추이 + 누계 추이 */}
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+
+          {/* 선택 파트 월별 추이 */}
+          <div style={{background:C.card2,border:`1px solid ${KC[selKey]||C.accent}44`,
+            borderRadius:14,padding:18,boxShadow:"0 4px 20px rgba(0,0,0,.2)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
+              marginBottom:12,flexWrap:"wrap",gap:8}}>
+              <div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <div style={{width:10,height:10,borderRadius:3,
+                    background:KC[selKey]||C.accent,boxShadow:`0 0 8px ${KC[selKey]||C.accent}`}}/>
+                  <span style={{color:KC[selKey]||C.accent,fontWeight:900,fontSize:16}}>{selKey}</span>
+                  <span style={{color:C.muted2,fontSize:11}}>월별 실적 추이</span>
+                </div>
+                <div style={{color:C.muted,fontSize:10,marginTop:2}}>
+                  월 평균: <span style={{color:KC[selKey]||C.accent,fontWeight:700}}>
+                    {monthAvg>0?Math.round(monthAvg).toLocaleString()+"억":"-"}
+                  </span>
+                  &nbsp;·&nbsp;
+                  {MONTHS[emi]} 누계: <span style={{color:C.text,fontWeight:700}}>
+                    {ytd(p26,selKey)>0?Math.round(ytd(p26,selKey)).toLocaleString()+"억":"─"}
+                  </span>
+                </div>
+              </div>
+              {/* 범례 */}
+              <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                {[["26년 실적",mColor,true],["26년 목표",C.orange,false,true],
+                  ["25년 실적",C.accent,false],["월평균","rgba(255,255,255,.3)",false,true]].map(([l,c,b,d])=>(
+                  <span key={l} style={{display:"flex",alignItems:"center",gap:4}}>
+                    <svg width={16} height={3}>
+                      <line x1={0} y1={1.5} x2={16} y2={1.5} stroke={c}
+                        strokeWidth={b?2:1.5} strokeDasharray={d?"4,2":undefined}/>
+                    </svg>
+                    <span style={{color:C.muted,fontSize:10}}>{l}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+            <RichLineChart h={140} showAvg={true} series={[
+              {data:mArr(p25,selKey).map((v,i)=>i<=emi?v:null),color:C.accent,op:.6},
+              {data:mArr(p26,selKey).map((v,i)=>i<=emi?v:null),color:mColor,bold:true,fill:true,showVal:true},
+              {data:mArr(t26,selKey).map((v,i)=>i<=emi?v:null),color:C.orange,dash:true,op:.7},
+            ]} labels={MONTHS}/>
+          </div>
+
+          {/* 누계 추이 */}
+          <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
+              marginBottom:12,flexWrap:"wrap",gap:8}}>
+              <div>
+                <div style={{color:C.text,fontWeight:800,fontSize:13}}>{selKey} 누계 추이</div>
+                <div style={{color:C.muted,fontSize:10,marginTop:2}}>3개년 누적 비교</div>
+              </div>
+              {/* 범례 + 금액 */}
+              <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+                {[
+                  {l:`26년 누계`,v:ytd(p26,selKey),c:mColor,b:true},
+                  {l:`25년 누계`,v:ytd(p25,selKey),c:C.accent,b:false},
+                  {l:`24년 누계`,v:ytd(p24,selKey),c:C.muted2,b:false},
+                ].map(({l,v,c,b})=>(
+                  <div key={l} style={{display:"flex",alignItems:"center",gap:5}}>
+                    <div style={{width:10,height:3,borderRadius:2,background:c}}/>
+                    <div>
+                      <div style={{color:C.muted,fontSize:9}}>{l}</div>
+                      <div style={{color:c,fontWeight:b?800:600,fontSize:12}}>
+                        {v>0?Math.round(v).toLocaleString()+"억":"─"}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <RichLineChart h={130} series={[
+              {data:sel_cum24.map((v,i)=>i<=emi?(v||0):null),color:C.muted2,op:.5,showVal:false},
+              {data:sel_cum25.map((v,i)=>i<=emi?(v||0):null),color:C.accent,op:.8,showVal:false},
+              {data:sel_cum26.map((v,i)=>i<=emi?(v||0):null),color:mColor,bold:true,fill:true,showVal:true},
+            ]} labels={MONTHS}/>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 하단 2열: 전년비 성장 + CE 비중 ── */}
+      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:14}}>
+
+        {/* 전년비 성장 표 */}
+        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18}}>
+          <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:4}}>전년비 성장률</div>
+          <div style={{color:C.muted,fontSize:10,marginBottom:14}}>26년 vs 25년 · {MONTHS[emi]} 누계</div>
+          {ALL_KEYS.map(k=>{
+            const v26=ytd(p26,k),v25=ytd(p25,k),gr=grw(v26,v25);
+            const barW=v26>0&&v25>0?Math.min(Math.abs(gNum(gr))/30,1)*100:0;
+            return (
+              <div key={k} style={{marginBottom:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3,alignItems:"center"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{width:6,height:6,borderRadius:2,background:KC[k]||C.muted2,flexShrink:0}}/>
+                    <span style={{color:C.muted2,fontSize:11}}>{k}</span>
+                  </div>
+                  <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                    <span style={{color:C.muted,fontSize:10}}>
+                      <span title={fmtD(v25)}>{v25>0?Math.round(v25).toLocaleString():"-"}</span>
+                      <span style={{color:C.b2,margin:"0 4px"}}>→</span>
+                      <span title={fmtD(v26)} style={{color:C.text}}>{v26>0?Math.round(v26).toLocaleString():"-"}</span>
+                    </span>
+                    <span style={{color:gr?grwC(gr):C.muted,fontWeight:700,fontSize:11,
+                      minWidth:52,textAlign:"right"}}>
+                      {gr?grwT(gr):"-"}
+                    </span>
+                  </div>
+                </div>
+                {gr&&(
+                  <div style={{height:2,background:C.b1,borderRadius:1,overflow:"hidden"}}>
+                    <div style={{height:"100%",width:`${barW}%`,
+                      background:grwC(gr),borderRadius:1,transition:"width .4s"}}/>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* CE 비중 */}
+        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18}}>
+          <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:4}}>CE 비중 분석</div>
+          <div style={{color:C.muted,fontSize:10,marginBottom:14}}>
+            {MONTHS[emi]} 누계 · CE = {ytd(p26,"CE")>0?Math.round(ytd(p26,"CE")).toLocaleString()+"억":"─"}
+          </div>
+          {ytd(p26,"CE")>0
+            ? <CeShareBar data={p26} emi={emi}/>
+            : <div style={{color:C.muted,fontSize:12,padding:"30px 0",textAlign:"center"}}>CE 데이터를 입력해주세요</div>
+          }
+
+          {/* 도넛 CE비중 추가 — 대외영업 vs CE */}
+          {ytd(p26,"CE")>0&&(
+            <div style={{marginTop:16,paddingTop:14,borderTop:`1px solid ${C.b1}`,
+              display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}}>
+              {[
+                {k:"대외영업(폰제외)",v:ytd(p26,"대외영업")-ytd(p26,"휴대폰"),c:KC.대외영업},
+                {k:"SAC",v:ytd(p26,"SAC"),c:KC.SAC},
+                {k:"B2B",v:ytd(p26,"B2B"),c:KC.B2B},
+              ].map(({k,v,c})=>{
+                const ce=ytd(p26,"CE");
+                const s=ce?(v/ce*100).toFixed(1):0;
+                return (
+                  <div key={k} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+                    <DonutChart pct={parseFloat(s)} color={c} size={58} stroke={6}/>
+                    <div style={{color:KC[k]||c,fontSize:10,fontWeight:700}}>{k}</div>
+                    <div style={{color:C.muted,fontSize:9}}>
+                      {Math.round(v).toLocaleString()}억 / {s}%
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
 
 // ═══════════════════════════════════════════════
 //  실적 입력
