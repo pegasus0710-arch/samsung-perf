@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v2.7";
+const APP_VER = "v2.8";
 
 // ─── 상수 ─────────────────────────────────────
 const MONTHS   = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -232,7 +232,7 @@ function DonutChart({pct:p, color, size=72, stroke=8, label, sub}){
 }
 
 /* ── 부드러운 SVG 라인 차트 (그리드+라벨 포함) ── */
-function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false}){
+function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grMode=false, zeroOffset=0}){
   const [tooltip, setTooltip] = useState(null);
   const W=600, H=h, PL=36, PR=10, PT=12, PB=20;
   const iW=W-PL-PR, iH=H-PT-PB;
@@ -271,6 +271,7 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false}){
     const items = series.map(s=>({
       label:s.tooltipLabel||s.label||"",
       v:gNum(s.data[best]),
+      rawV: s.grOffset!==undefined ? gNum(s.data[best])-s.grOffset : gNum(s.data[best]),
       color:s.color,
       unit:s.tooltipUnit||"억",
     })).filter(it=>it.v>0);
@@ -333,20 +334,20 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false}){
               ))}
               {/* 26년 실적 포인트 수치 라벨 */}
               {s.showLabels&&activePts.map((p,i)=>{
-                const isLast = i===activePts.length-1;
                 const prevP  = activePts[i-1];
                 const goUp   = !prevP || p.y < prevP.y;
                 const labelY = p.y + (goUp ? -10 : 13);
                 const anchor = p.x < PL+30 ? "start" : p.x > W-PR-30 ? "end" : "middle";
+                const realV  = s.grOffset!==undefined ? p.v - s.grOffset : p.v;
                 const dispV  = s.tooltipUnit==="%"
-                  ? (p.v % 1===0 ? p.v : p.v.toFixed(1))
-                  : Math.round(p.v).toLocaleString();
+                  ? (Number.isInteger(realV) ? String(realV) : realV.toFixed(1)) + "%"
+                  : Math.round(realV).toLocaleString();
                 return (
                   <text key={i} x={p.x} y={labelY}
                     fill={s.color} fontSize={9} fontWeight={700}
                     textAnchor={anchor}
                     style={{filter:"drop-shadow(0 1px 2px rgba(0,0,0,.8))"}}>
-                    {dispV}{s.tooltipUnit==="%"?"%":""}
+                    {dispV}
                   </text>
                 );
               })}
@@ -389,7 +390,9 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false}){
                 <span style={{color:C.muted2,fontSize:10}}>{it.label}</span>
               </div>
               <span style={{color:it.color,fontSize:11,fontWeight:800}}>
-                {Math.round(it.v).toLocaleString()}{it.unit||"억"}
+                {it.unit==="%"
+                  ? (Number.isInteger(it.rawV) ? it.rawV : it.rawV.toFixed(1)) + "%"
+                  : Math.round(it.rawV).toLocaleString()+"억"}
               </span>
             </div>
           ))}
@@ -746,17 +749,28 @@ function Dashboard({data,mode}){
             ]} labels={MONTHS}/>
           </div>
 
-          {/* 월별 달성률 추이 */}
+          {/* 월별 달성률 추이 — 당월달성률 + 누계달성률 2선 */}
           {(()=>{
-            const arData = MONTHS.map((_,i)=>{
+            // 당월 달성률
+            const monthlyAr = MONTHS.map((_,i)=>{
               if(i>emi) return null;
               const pv=gNum(fullRow(p26?.[sk(i)])?.[selKey]);
               const tv=gNum(fullRow(t26?.[sk(i)])?.[selKey]);
               return tv>0 ? parseFloat((pv/tv*100).toFixed(1)) : null;
             });
-            const avgAr = arData.filter(v=>v!==null&&v>0);
-            const avgArV = avgAr.length>0 ? (avgAr.reduce((a,b)=>a+b,0)/avgAr.length).toFixed(1) : null;
+            // 누계 달성률 (1월~i월 누적 실적 / 1월~i월 누적 목표)
+            const cumAr = MONTHS.map((_,i)=>{
+              if(i>emi) return null;
+              let sp=0, st=0;
+              for(let j=0;j<=i;j++){
+                sp+=gNum(fullRow(p26?.[sk(j)])?.[selKey]);
+                st+=gNum(fullRow(t26?.[sk(j)])?.[selKey]);
+              }
+              return st>0 ? parseFloat((sp/st*100).toFixed(1)) : null;
+            });
             const ytdAr = pct(ytd(p26,selKey), ytd(t26,selKey));
+            const avgMonthlyAr = monthlyAr.filter(v=>v!==null);
+            const avgV = avgMonthlyAr.length>0 ? (avgMonthlyAr.reduce((a,b)=>a+b,0)/avgMonthlyAr.length).toFixed(1) : null;
             return (
               <div style={{background:C.card2,border:`1px solid ${C.teal}33`,borderRadius:14,padding:18}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
@@ -769,42 +783,61 @@ function Dashboard({data,mode}){
                     </div>
                     <div style={{color:C.muted,fontSize:10,marginTop:2}}>
                       {MONTHS[emi]} 누계달성:&nbsp;
-                      <span style={{color:ytdAr?pctC(ytdAr):C.muted,fontWeight:700}}>
-                        {ytdAr?ytdAr+"%":"─"}
-                      </span>
-                      {avgArV&&<>&nbsp;·&nbsp;월평균: <span style={{color:C.orange,fontWeight:700}}>{avgArV}%</span></>}
+                      <span style={{color:ytdAr?pctC(ytdAr):C.muted,fontWeight:700}}>{ytdAr?ytdAr+"%":"─"}</span>
+                      {avgV&&<>&nbsp;·&nbsp;당월평균: <span style={{color:C.orange,fontWeight:700}}>{avgV}%</span></>}
                     </div>
                   </div>
                   <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                    {[["달성률",C.teal,true],["100% 기준",C.green,false,true]].map(([l,c,b,d])=>(
+                    {[["당월달성률",C.teal,true],["누계달성률",C.orange,false],["100% 기준",C.green,false,true]].map(([l,c,b,d])=>(
                       <span key={l} style={{display:"flex",alignItems:"center",gap:4}}>
                         <svg width={14} height={3}><line x1={0} y1={1.5} x2={14} y2={1.5}
-                          stroke={c} strokeWidth={b?2:1.2} strokeDasharray={d?"4,2":undefined}/></svg>
+                          stroke={c} strokeWidth={b?2:1.5} strokeDasharray={d?"4,2":undefined}/></svg>
                         <span style={{color:C.muted,fontSize:10}}>{l}</span>
                       </span>
                     ))}
                   </div>
                 </div>
                 <RichLineChart h={110} series={[
-                  {data:arData, color:C.teal, bold:true, fill:true, showLabels:true, tooltipLabel:"달성률", tooltipUnit:"%"},
-                  {data:MONTHS.map((_,i)=>i<=emi?100:null), color:C.green, dash:true, op:.5, tooltipLabel:"100%", tooltipUnit:"%"},
+                  {data:MONTHS.map((_,i)=>i<=emi?100:null), color:C.green, dash:true, op:.4, tooltipLabel:"100% 기준", tooltipUnit:"%"},
+                  {data:cumAr,     color:C.orange, medium:true, op:.85, showLabels:true, tooltipLabel:"누계달성률", tooltipUnit:"%"},
+                  {data:monthlyAr, color:C.teal,   bold:true,   fill:true, showLabels:false, tooltipLabel:"당월달성률", tooltipUnit:"%"},
                 ]} labels={MONTHS} pctMode={true}/>
               </div>
             );
           })()}
 
-          {/* 월별 성장률 추이 */}
+          {/* 월별 전년비 성장률 — 당월성장률 + 누계성장률 2선 */}
           {(()=>{
-            const grData = MONTHS.map((_,i)=>{
+            // 당월 성장률
+            const monthlyGr = MONTHS.map((_,i)=>{
               if(i>emi) return null;
-              const v26=gNum(fullRow(p26?.[sk(i)])?.[selKey]);
-              const v25=gNum(fullRow(p25?.[sk(i)])?.[selKey]);
-              if(v25<=0) return null;
-              return parseFloat(((v26-v25)/v25*100).toFixed(1));
+              const v26m=gNum(fullRow(p26?.[sk(i)])?.[selKey]);
+              const v25m=gNum(fullRow(p25?.[sk(i)])?.[selKey]);
+              return v25m>0 ? parseFloat(((v26m-v25m)/v25m*100).toFixed(1)) : null;
             });
-            // 음수가 있으면 offset 처리 필요 → 별도 바 차트로 표현
-            const hasData = grData.some(v=>v!==null);
+            // 누계 성장률 (1~i월 누적)
+            const cumGr = MONTHS.map((_,i)=>{
+              if(i>emi) return null;
+              let s26=0, s25=0;
+              for(let j=0;j<=i;j++){
+                s26+=gNum(fullRow(p26?.[sk(j)])?.[selKey]);
+                s25+=gNum(fullRow(p25?.[sk(j)])?.[selKey]);
+              }
+              return s25>0 ? parseFloat(((s26-s25)/s25*100).toFixed(1)) : null;
+            });
             const ytdGr = grw(ytd(p26,selKey), ytd(p25,selKey));
+            const allVals = [...monthlyGr, ...cumGr].filter(v=>v!==null);
+            const hasData = allVals.length>0;
+            // 0 기준선 위치: 음수 범위/(음수+양수)
+            const posMax = Math.max(...allVals.filter(v=>v>0), 0.1);
+            const negMax = Math.max(...allVals.filter(v=>v<0).map(v=>Math.abs(v)), 0);
+            const totalRange = posMax + negMax;
+            // 0% 위치 (아래부터 %) = negMax/total
+            const zeroPctFromBottom = totalRange>0 ? (negMax/totalRange*100) : 0;
+            // 차트용: 음수 값을 offset 처리해서 RichLineChart에 넣기 위해
+            // 모든 값을 +negMax 해서 0 기준 offset
+            const offsetVal = v => v!==null ? parseFloat((v+negMax).toFixed(1)) : null;
+            const zeroLine = totalRange>0 ? negMax : 0;
             return (
               <div style={{background:C.card2,border:`1px solid ${C.orange}33`,borderRadius:14,padding:18}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
@@ -822,94 +855,27 @@ function Dashboard({data,mode}){
                       </span>
                     </div>
                   </div>
-                  <div style={{display:"flex",gap:10}}>
-                    {[["성장률",C.orange,true],["0% 기준","rgba(255,255,255,.25)",false,true]].map(([l,c,b,d])=>(
+                  <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                    {[["당월성장률",C.orange,true],["누계성장률","#a78bfa",false],["0%","rgba(255,255,255,.3)",false,true]].map(([l,c,b,d])=>(
                       <span key={l} style={{display:"flex",alignItems:"center",gap:4}}>
                         <svg width={14} height={3}><line x1={0} y1={1.5} x2={14} y2={1.5}
-                          stroke={c} strokeWidth={b?2:1.2} strokeDasharray={d?"4,2":undefined}/></svg>
+                          stroke={c} strokeWidth={b?2:1.5} strokeDasharray={d?"4,2":undefined}/></svg>
                         <span style={{color:C.muted,fontSize:10}}>{l}</span>
                       </span>
                     ))}
                   </div>
                 </div>
                 {hasData ? (
-                  /* 바 차트: 양수=초록, 음수=빨강 */
-                  <div style={{height:110,display:"flex",alignItems:"flex-end",gap:3,padding:"0 4px",position:"relative"}}>
-                    {/* 0% 기준선 */}
-                    {(()=>{
-                      const maxAbs = Math.max(...grData.filter(v=>v!==null).map(v=>Math.abs(v)), 20);
-                      const zeroFrac = maxAbs / (maxAbs*2); // 0.5 (중앙)
-                      const hasNeg = grData.some(v=>v!==null&&v<0);
-                      const posMax = Math.max(...grData.filter(v=>v!==null&&v>0), 0.1);
-                      const negMax = Math.max(...grData.filter(v=>v!==null&&v<0).map(v=>Math.abs(v)), 0);
-                      const totalRange = posMax + negMax;
-                      const zeroPct = totalRange>0 ? (negMax/totalRange*100) : 0;
-                      return (
-                        <>
-                          {/* 0% 라인 */}
-                          <div style={{position:"absolute",left:4,right:4,
-                            bottom:`${zeroPct}%`,
-                            height:1,background:"rgba(255,255,255,.2)",zIndex:1}}/>
-                          {/* 바들 */}
-                          <div style={{display:"flex",gap:3,width:"100%",height:"100%",alignItems:"flex-end",position:"relative",zIndex:2}}>
-                            {MONTHS.map((_,i)=>{
-                              const v = grData[i];
-                              if(v===null) return (
-                                <div key={i} style={{flex:1,display:"flex",flexDirection:"column",
-                                  alignItems:"center",justifyContent:"flex-end",opacity:.2}}>
-                                  <div style={{width:"60%",height:2,background:C.b1,borderRadius:1}}/>
-                                </div>
-                              );
-                              const isUp = v>=0;
-                              const barH = totalRange>0
-                                ? `${Math.abs(v)/totalRange*100}%` : "2px";
-                              return (
-                                <div key={i} style={{flex:1,display:"flex",flexDirection:"column",
-                                  alignItems:"center",justifyContent:isUp?"flex-end":"flex-start",
-                                  position:"relative",
-                                  paddingBottom:isUp?`${zeroPct}%`:undefined,
-                                  paddingTop:!isUp?`${100-zeroPct}%`:undefined,
-                                }}>
-                                  <div style={{
-                                    width:"70%",height:barH,minHeight:2,
-                                    background:isUp
-                                      ?`linear-gradient(180deg,${C.green}cc,${C.green})`
-                                      :`linear-gradient(0deg,${C.red}cc,${C.red})`,
-                                    borderRadius:isUp?"3px 3px 0 0":"0 0 3px 3px",
-                                    boxShadow:isUp?`0 0 6px ${C.green}40`:`0 0 6px ${C.red}40`,
-                                    transition:"height .4s",
-                                  }}/>
-                                  <div style={{
-                                    position:"absolute",
-                                    [isUp?"bottom":"top"]:`calc(${zeroPct}% + ${isUp?parseFloat(barH)+2:-(parseFloat(barH)+12)}px)`,
-                                    fontSize:8,fontWeight:700,
-                                    color:isUp?C.green:C.red,
-                                    whiteSpace:"nowrap",
-                                    textShadow:"0 1px 3px rgba(0,0,0,.8)",
-                                  }}>
-                                    {isUp?"+":""}{v}%
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </>
-                      );
-                    })()}
-                  </div>
+                  <RichLineChart h={110} series={[
+                    {data:MONTHS.map((_,i)=>i<=emi?offsetVal(0):null), color:"rgba(255,255,255,.25)", dash:true, op:.5, tooltipLabel:"0%", tooltipUnit:"%"},
+                    {data:cumGr.map(offsetVal),    color:"#a78bfa", medium:true, op:.85, tooltipLabel:"누계성장률", tooltipUnit:"%", grOffset:negMax},
+                    {data:monthlyGr.map(offsetVal),color:C.orange,  bold:true,   fill:true, tooltipLabel:"당월성장률", tooltipUnit:"%", grOffset:negMax, showLabels:true},
+                  ]} labels={MONTHS} grMode={true} zeroOffset={negMax}/>
                 ) : (
                   <div style={{height:110,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     <span style={{color:C.muted,fontSize:11}}>25년 데이터 필요</span>
                   </div>
                 )}
-                {/* X 라벨 */}
-                <div style={{display:"flex",gap:3,padding:"4px 4px 0",marginTop:2}}>
-                  {MONTHS.map((m,i)=>(
-                    <div key={i} style={{flex:1,textAlign:"center",color:C.muted,fontSize:8}}>
-                      {m.replace("월","")}
-                    </div>
-                  ))}
-                </div>
               </div>
             );
           })()}
@@ -920,7 +886,7 @@ function Dashboard({data,mode}){
       {/* ── 하단 2열: 전년비 성장 카드 + CE 비중 ── */}
       <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:14}}>
 
-        {/* 전년비 성장률 — 수평 막대 그래프 */}
+          {/* 전년비 성장률 — 수평 발산형 바 (성장=오른쪽, 역성장=왼쪽) */}
         <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18}}>
           <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:2}}>전년비 성장률</div>
           <div style={{color:C.muted,fontSize:10,marginBottom:16}}>26년 vs 25년 · {MONTHS[emi]} 누계</div>
@@ -928,19 +894,39 @@ function Dashboard({data,mode}){
             const PARTS = ["대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
             const rows = PARTS.map(k=>{
               const v26=ytd(p26,k), v25=ytd(p25,k), gr=grw(v26,v25);
-              return {k, v26, v25, gr, color:KC[k]||C.muted2};
+              return {k, v26, v25, gr:gr!==null?parseFloat(gr):null, color:KC[k]||C.muted2};
             });
-            // 최대 절댓값 기준으로 바 너비 계산
-            const maxAbs = Math.max(...rows.map(r=>Math.abs(gNum(r.gr))), 50);
+            const validGr = rows.map(r=>r.gr).filter(v=>v!==null);
+            const posMax = Math.max(...validGr.filter(v=>v>0), 0.1);
+            const negMax = Math.max(...validGr.filter(v=>v<0).map(v=>Math.abs(v)), 0);
+            const totalRange = posMax + negMax;
+            // 0 기준 위치 (왼쪽부터 %)
+            const zeroLeft = totalRange>0 ? (negMax/totalRange*100) : 10;
             return (
-              <div style={{display:"flex",flexDirection:"column",gap:6}}>
-                {rows.map(({k,v26,v25,gr,color})=>{
-                  const pct = gNum(gr);
-                  const barW = Math.min(Math.abs(pct)/maxAbs*100, 100);
-                  const isUp = pct>0, isDown = pct<0, isFlat = pct===0&&v26>0;
-                  return (
-                    <div key={k}>
-                      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:3}}>
+              <div>
+                {/* 0% 헤더 라인 */}
+                <div style={{position:"relative",marginBottom:6,height:12}}>
+                  <div style={{position:"absolute",left:`${zeroLeft}%`,top:0,bottom:0,
+                    width:1,background:"rgba(255,255,255,.15)"}}/>
+                  <span style={{position:"absolute",left:`${zeroLeft}%`,
+                    transform:"translateX(-50%)",bottom:0,
+                    color:C.muted,fontSize:9}}>0%</span>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                  {rows.map(({k,v26,v25,gr,color})=>{
+                    const isUp = gr!==null&&gr>0;
+                    const isDown = gr!==null&&gr<0;
+                    const isFlat = gr===0&&v26>0;
+                    // 바 너비: 절댓값/해당방향최대 × 해당방향영역%
+                    const posArea = 100 - zeroLeft; // 오른쪽 영역
+                    const negArea = zeroLeft;        // 왼쪽 영역
+                    const barW = gr!==null
+                      ? isUp   ? Math.min(Math.abs(gr)/posMax*posArea, posArea)
+                      : isDown ? Math.min(Math.abs(gr)/negMax*negArea, negArea)
+                      : isFlat ? 1 : 0
+                      : 0;
+                    return (
+                      <div key={k} style={{display:"flex",alignItems:"center",gap:8}}>
                         {/* 항목명 */}
                         <div style={{display:"flex",alignItems:"center",gap:5,width:62,flexShrink:0}}>
                           <div style={{width:7,height:7,borderRadius:2,background:color,flexShrink:0}}/>
@@ -948,7 +934,7 @@ function Dashboard({data,mode}){
                             whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{k}</span>
                         </div>
                         {/* 수치 */}
-                        <div style={{display:"flex",alignItems:"center",gap:4,width:90,flexShrink:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:3,width:86,flexShrink:0}}>
                           <span style={{color:C.muted,fontSize:9,whiteSpace:"nowrap"}}>
                             {v25>0?Math.round(v25)+"억":"─"}
                           </span>
@@ -957,35 +943,53 @@ function Dashboard({data,mode}){
                             {v26>0?Math.round(v26)+"억":"─"}
                           </span>
                         </div>
-                        {/* 막대 + 퍼센트 */}
-                        <div style={{flex:1,position:"relative",height:18,
-                          background:"rgba(255,255,255,.03)",borderRadius:4,overflow:"hidden"}}>
-                          {(isUp||isDown||isFlat)&&(
+                        {/* 발산형 바 영역 */}
+                        <div style={{flex:1,position:"relative",height:18}}>
+                          {/* 배경 + 0% 기준선 */}
+                          <div style={{position:"absolute",inset:0,
+                            background:"rgba(255,255,255,.025)",borderRadius:3}}/>
+                          <div style={{position:"absolute",top:0,bottom:0,
+                            left:`${zeroLeft}%`,width:1,
+                            background:"rgba(255,255,255,.18)",zIndex:1}}/>
+                          {/* 바 */}
+                          {gr!==null&&(isUp||isDown||isFlat)&&(
                             <div style={{
-                              position:"absolute",left:0,top:0,bottom:0,
-                              width:`${barW}%`,minWidth:barW>0?3:0,
-                              background:isUp?`linear-gradient(90deg,${C.green}80,${C.green}cc)`:
-                                isDown?`linear-gradient(90deg,${C.red}80,${C.red}cc)`:
-                                `linear-gradient(90deg,${C.muted}40,${C.muted}60)`,
-                              borderRadius:4,
-                              transition:"width .5s ease",
+                              position:"absolute",top:2,bottom:2,
+                              ...(isUp||isFlat
+                                ? {left:`${zeroLeft}%`, width:`${barW}%`}
+                                : {right:`${100-zeroLeft}%`, width:`${barW}%`}),
+                              background:isUp
+                                ? `linear-gradient(90deg,${C.green}80,${C.green}cc)`
+                                : isDown
+                                  ? `linear-gradient(${isDown?"-90deg":"90deg"},${C.red}80,${C.red}cc)`
+                                  : `rgba(255,255,255,.15)`,
+                              borderRadius:isUp?"0 3px 3px 0":"3px 0 0 3px",
                               boxShadow:isUp?`0 0 8px ${C.green}40`:isDown?`0 0 8px ${C.red}40`:"none",
+                              transition:"width .5s ease",zIndex:2,
                             }}/>
                           )}
-                          <div style={{position:"absolute",inset:0,display:"flex",
-                            alignItems:"center",paddingLeft:6}}>
+                          {/* 수치 텍스트 */}
+                          <div style={{
+                            position:"absolute",top:0,bottom:0,zIndex:3,
+                            ...(isUp||isFlat
+                              ? {left:`calc(${zeroLeft}% + ${barW>3?6:2}px)`}
+                              : {right:`calc(${100-zeroLeft}% + ${barW>3?6:2}px)`,textAlign:"right"}),
+                            display:"flex",alignItems:"center",
+                          }}>
                             <span style={{
-                              color:gr?grwC(gr):C.muted,fontSize:11,fontWeight:900,
+                              color:gr!==null?grwC(String(gr)):C.muted,
+                              fontSize:11,fontWeight:900,
                               textShadow:"0 1px 3px rgba(0,0,0,.8)",
+                              whiteSpace:"nowrap",
                             }}>
-                              {gr?grwT(gr):v26>0?"─0%":"─"}
+                              {gr!==null?grwT(String(gr)):v26>0?"─0%":"─"}
                             </span>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             );
           })()}
@@ -1011,7 +1015,8 @@ function Dashboard({data,mode}){
           const rows = PARTS
             .map(p=>({...p, v:ytd(p26,p.k)}))
             .sort((a,b)=>b.v-a.v); // 높은 비중순 정렬
-          const maxV = rows[0]?.v || 1;
+          // CE가 기준 — 모든 바는 CE 대비 비율
+          const ceBarRef = ce>0 ? ce : 1;
           return (
             <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18}}>
               <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:2}}>CE 비중 분석</div>
@@ -1021,9 +1026,35 @@ function Dashboard({data,mode}){
               </div>
               {ce>0 ? (
                 <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                  {/* CE 행 — 항상 100% (기준선) */}
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div style={{width:58,flexShrink:0,display:"flex",alignItems:"center",gap:5}}>
+                      <div style={{width:7,height:7,borderRadius:2,background:KC.CE,flexShrink:0}}/>
+                      <span style={{color:C.text,fontSize:11,fontWeight:700}}>CE</span>
+                    </div>
+                    <div style={{flex:1,height:20,background:"rgba(255,255,255,.03)",
+                      borderRadius:5,overflow:"hidden",position:"relative"}}>
+                      <div style={{
+                        position:"absolute",left:0,top:0,bottom:0,width:"100%",
+                        background:`linear-gradient(90deg,${KC.CE}cc,${KC.CE})`,
+                        borderRadius:5,boxShadow:`0 0 12px ${KC.CE}50`,
+                      }}/>
+                      <div style={{position:"absolute",inset:0,display:"flex",
+                        alignItems:"center",paddingLeft:8}}>
+                        <span style={{color:"rgba(255,255,255,.95)",fontSize:10,fontWeight:700,
+                          textShadow:"0 1px 4px rgba(0,0,0,.8)"}}>
+                          {Math.round(ce).toLocaleString()}억
+                        </span>
+                      </div>
+                    </div>
+                    {/* CE는 비중 표시 없음 — 기준이므로 */}
+                    <div style={{width:44,flexShrink:0}}/>
+                  </div>
+                  {/* 구분선 */}
+                  <div style={{height:1,background:C.b1,margin:"2px 0"}}/>
                   {rows.map(({k,c,v})=>{
                     const share = ce>0 ? (v/ce*100) : 0;
-                    const barW = maxV>0 ? (v/maxV*100) : 0;
+                    const barW = ce>0 ? Math.min(v/ceBarRef*100, 100) : 0;
                     return (
                       <div key={k} style={{display:"flex",alignItems:"center",gap:8}}>
                         {/* 항목명 */}
