@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v2.2";
+const APP_VER = "v2.3";
 
 // ─── 상수 ─────────────────────────────────────
 const MONTHS   = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -2252,90 +2252,94 @@ function ReportModal({onClose, mode, tab}){
   };
 
   /* ─── Excel (데이터 테이블) ─── */
-  const exportExcelData = async (data, mode) => {
+  const exportExcelData = async () => {
     setStep("progress"); setProg("데이터 정리 중...");
+    // mode는 ReportModal props에서 직접 사용
+    const exportMode = mode;
+    const reportData = window.__reportData || {};
     try {
       const XLSX = window.XLSX;
+      if(!XLSX){ setError("XLSX 라이브러리 로드 실패"); setStep("select"); return; }
       const wb = XLSX.utils.book_new();
       const now = new Date().toLocaleString("ko-KR");
       const months = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
       const keys = ["CE","대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
       const yrs = ["24","25","26"];
 
+      // 값 계산 헬퍼
+      const calcVal = (m, k) => {
+        if(k==="대외영업") return Number(m.혼수||0)+Number(m.입주||0)+Number(m.이사||0)+Number(m.SMB||0)+Number(m.농협||0)+Number(m.거주중||0)+Number(m.휴대폰||0);
+        if(k==="뉴홈")    return Number(m.입주||0)+Number(m.이사||0);
+        if(k==="B2B")     return Number(m.SMB||0)+Number(m.농협||0)+Number(m.휴대폰||0);
+        return Number(m[k]||0);
+      };
+
       yrs.forEach(yr=>{
-        const pD = window.__reportData?.[yr]?.[mode]?.perf   || {};
-        const tD = window.__reportData?.[yr]?.[mode]?.target || {};
+        const pD = reportData[yr]?.[exportMode]?.perf   || {};
+        const tD = reportData[yr]?.[exportMode]?.target || {};
         const rows = [];
-        // 헤더
         rows.push(["항목", ...months, "연간합계"]);
-        // 실적
-        rows.push(["▶ 실적", ...Array(13).fill("")]);
+        // 실적 블록
+        rows.push(["▶ 실적 (억원)", ...Array(13).fill("")]);
         keys.forEach(k=>{
-          const vals = months.map((_,i)=>{
-            const m = pD[String(i)] || {};
-            // 자동계산값 처리
-            if(k==="대외영업") return (Number(m.혼수||0)+Number(m.입주||0)+Number(m.이사||0)+Number(m.SMB||0)+Number(m.농협||0)+Number(m.거주중||0)+Number(m.휴대폰||0));
-            if(k==="뉴홈") return (Number(m.입주||0)+Number(m.이사||0));
-            if(k==="B2B") return (Number(m.SMB||0)+Number(m.농협||0)+Number(m.휴대폰||0));
-            return Number(m[k]||0);
-          });
+          const vals = months.map((_,i)=>calcVal(pD[String(i)]||{}, k));
           rows.push([k, ...vals, vals.reduce((a,b)=>a+b,0)]);
         });
-        rows.push([""]); // 빈 행
-        // 목표 (25/26년만)
+        rows.push([""]);
+        // 목표 블록 (25/26년만)
         if(yr!=="24"){
-          rows.push(["▶ 목표", ...Array(13).fill("")]);
+          rows.push(["▶ 목표 (억원)", ...Array(13).fill("")]);
+          keys.forEach(k=>{
+            const vals = months.map((_,i)=>calcVal(tD[String(i)]||{}, k));
+            rows.push([k, ...vals, vals.reduce((a,b)=>a+b,0)]);
+          });
+          rows.push([""]);
+          // 달성률 블록
+          rows.push(["▶ 달성률 (%)", ...Array(13).fill("")]);
           keys.forEach(k=>{
             const vals = months.map((_,i)=>{
-              const m = tD[String(i)] || {};
-              if(k==="대외영업") return (Number(m.혼수||0)+Number(m.입주||0)+Number(m.이사||0)+Number(m.SMB||0)+Number(m.농협||0)+Number(m.거주중||0)+Number(m.휴대폰||0));
-              if(k==="뉴홈") return (Number(m.입주||0)+Number(m.이사||0));
-              if(k==="B2B") return (Number(m.SMB||0)+Number(m.농협||0)+Number(m.휴대폰||0));
-              return Number(m[k]||0);
+              const pv=calcVal(pD[String(i)]||{}, k);
+              const tv=calcVal(tD[String(i)]||{}, k);
+              return tv>0 ? parseFloat((pv/tv*100).toFixed(1)) : "";
             });
-            rows.push([k, ...vals, vals.reduce((a,b)=>a+b,0)]);
+            const sumP=keys.reduce((a,_)=>a,0); // 연간 달성률
+            const totalP = keys.map((_,idx)=>calcVal(pD[String(0)]||{},keys[idx]));
+            const annP = vals.filter(v=>v!=="").length>0 ? parseFloat((vals.filter(v=>v!=="").reduce((a,b)=>Number(a)+Number(b),0)/vals.filter(v=>v!=="").length).toFixed(1)) : "";
+            rows.push([k, ...vals, annP!==""?`${annP}%`:"─"]);
           });
         }
 
         const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws["!cols"] = [{wch:12},...Array(12).fill({wch:8}),{wch:10}];
-        // 헤더 행 스타일
-        XLSX.utils.book_append_sheet(wb, ws, `${yr}년_${mode}`);
+        ws["!cols"] = [{wch:14},...Array(12).fill({wch:7}),{wch:10}];
+        XLSX.utils.book_append_sheet(wb, ws, `${yr}년_${exportMode}`);
       });
 
       // 요약 시트
       const sumRows = [
-        [`충청영업팀 실적 레포트 — ${mode}`, "", `생성: ${now}`],
+        [`충청영업팀 실적 레포트 — ${exportMode}`, "", `생성: ${now}`],
         [],
         ["항목", "26년 누계", "25년 누계", "24년 누계", "전년비(%)", "26년 목표", "달성률(%)"],
       ];
       keys.forEach(k=>{
-        const get = (yr, type) => {
-          const d = window.__reportData?.[yr]?.[mode]?.[type] || {};
+        const getAnn = (yr, type) => {
+          const d = reportData[yr]?.[exportMode]?.[type] || {};
           let total=0;
-          for(let i=0;i<12;i++){
-            const m = d[String(i)]||{};
-            let v=0;
-            if(k==="대외영업") v=(Number(m.혼수||0)+Number(m.입주||0)+Number(m.이사||0)+Number(m.SMB||0)+Number(m.농협||0)+Number(m.거주중||0)+Number(m.휴대폰||0));
-            else if(k==="뉴홈") v=(Number(m.입주||0)+Number(m.이사||0));
-            else if(k==="B2B") v=(Number(m.SMB||0)+Number(m.농협||0)+Number(m.휴대폰||0));
-            else v=Number(m[k]||0);
-            total+=v;
-          }
+          for(let i=0;i<12;i++) total += calcVal(d[String(i)]||{}, k);
           return total;
         };
-        const v26=get("26","perf"), v25=get("25","perf"), v24=get("24","perf");
-        const t26=get("26","target");
-        const gr = v25>0 ? ((v26-v25)/v25*100).toFixed(1) : "";
-        const ar = t26>0 ? (v26/t26*100).toFixed(1) : "";
-        sumRows.push([k, v26||"", v25||"", v24||"", gr?`${gr}%`:"", t26||"", ar?`${ar}%`:""]);
+        const v26=getAnn("26","perf"), v25=getAnn("25","perf"), v24=getAnn("24","perf");
+        const t26=getAnn("26","target");
+        const gr = v25>0 ? `${((v26-v25)/v25*100).toFixed(1)}%` : "─";
+        const ar = t26>0 ? `${(v26/t26*100).toFixed(1)}%` : "─";
+        sumRows.push([k, v26||0, v25||0, v24||0, gr, t26||0, ar]);
       });
       const wsSum = XLSX.utils.aoa_to_sheet(sumRows);
-      wsSum["!cols"] = [{wch:12},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10}];
+      wsSum["!cols"] = [{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10}];
       XLSX.utils.book_append_sheet(wb, wsSum, "요약");
 
-      const fname = `충청영업_${mode}_${new Date().toLocaleDateString("ko-KR").replace(/\. /g,"-").replace(".","")}_데이터`;
-      XLSX.writeFile(wb, `${fname}.xlsx`);
+      // 파일명: mode·날짜 올바르게
+      const dateStr = new Date().toLocaleDateString("ko-KR").replace(/\. /g,"-").replace(/\.$/,"");
+      XLSX.writeFile(wb, `충청영업_${exportMode}_${dateStr}_데이터.xlsx`);
       setStep("done");
     } catch(e){ setError("Excel 생성 실패: "+e.message); setStep("select"); }
   };
