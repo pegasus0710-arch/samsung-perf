@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v18";
+const APP_VER = "v19";
 
 // ─── 상수 ─────────────────────────────────────
 const MONTHS   = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -878,6 +878,12 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved}){
   },[yr,mode,hasTgt,setData]);
 
   /* 연간 합산 */
+  // emi = 실적이 입력된 마지막 월 (누계 기준월)
+  const emi = (() => {
+    for(let i=11;i>=0;i--) if(INP_KEYS.some(k=>gNum(pD[sk(i)]?.[k])>0)) return i;
+    return new Date().getMonth();
+  })();
+
   const pYear = k => sumM(pD,k);
   const tYear = k => sumM(tD,k);
   const prevYear = k => prevP ? sumM(prevP,k) : 0;
@@ -981,13 +987,13 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved}){
     const other = type==="perf" ? tD : null;
     const clr   = colorOverride || (type==="perf"?mColor:C.blue);
 
-    // 월별 연간합계
-    const yearSum = row.auto ? sumM(d,row.key) : sumM(d,row.key);
-    const yearPrev= prevP ? sumM(prevP,row.key) : 0;
-    const yearTgt = sumM(tD,row.key);
-    const yearAr  = type==="perf"&&hasTgt&&yearTgt>0 ? pct(yearSum,yearTgt) : null;
-    const yearGr  = prevP&&yearPrev>0 ? grw(yearSum,yearPrev) : null;
-    const tgtGr   = type==="target"&&prevP&&yearPrev>0 ? grw(yearSum,yearPrev) : null;
+    // 누계 합산: emi(실적 마지막 입력월)까지만
+    const yearSum  = sumR(d,     row.key, 0, emi);
+    const yearPrev = prevP ? sumR(prevP, row.key, 0, emi) : 0;
+    const yearTgt  = sumR(tD,    row.key, 0, emi);
+    const yearAr   = type==="perf"&&hasTgt&&yearTgt>0 ? pct(yearSum,yearTgt) : null;
+    const yearGr   = prevP&&yearPrev>0 ? grw(yearSum,yearPrev) : null;
+    const tgtGr    = type==="target"&&prevP&&yearPrev>0 ? grw(yearSum,yearPrev) : null;
 
     const rowBg = type==="perf"
       ? (GROUP_BG[row.key]||"transparent")
@@ -1232,7 +1238,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved}){
                         {hasTgt&&<div style={{fontSize:8,fontWeight:400,marginTop:1}}><span style={{color:C.teal}}>달성</span><span style={{color:C.muted}}>·</span><span style={{color:C.green}}>전년비</span></div>}
                       </BulkTH>
                     ))}
-                    <BulkTH right c={C.accent} w={110}><div>연합계</div><div style={{fontSize:8,marginTop:1}}><span style={{color:C.teal}}>누계달성</span><span style={{color:C.muted}}>·</span><span style={{color:C.green}}>누계성장</span></div></BulkTH>
+                    <BulkTH right c={C.accent} w={110}><div>{MONTHS[emi]} 누계</div><div style={{fontSize:8,marginTop:1}}><span style={{color:C.teal}}>달성</span><span style={{color:C.muted}}>·</span><span style={{color:C.green}}>전년동기비</span></div></BulkTH>
                   </tr>
                 </thead>
                 <tbody>
@@ -1280,7 +1286,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved}){
                           {prevYr&&<div style={{fontSize:8,fontWeight:400,marginTop:1}}><span style={{color:C.green}}>전년비</span></div>}
                         </BulkTH>
                       ))}
-                      <BulkTH right c={C.blue} w={100}>연합계</BulkTH>
+                      <BulkTH right c={C.blue} w={110}><div>{MONTHS[emi]} 누계</div><div style={{fontSize:8,marginTop:1}}><span style={{color:C.green}}>전년동기비</span></div></BulkTH>
                     </tr>
                   </thead>
                   <tbody>
