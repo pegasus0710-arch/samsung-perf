@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v2.4";
+const APP_VER = "v2.5";
 
 // ─── 상수 ─────────────────────────────────────
 const MONTHS   = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -427,44 +427,77 @@ function CeShareBar({data, emi}){
   );
 }
 
+// ═══════════════════════════════════════════════
+//  ErrorBoundary — 렌더 에러 포착
+// ═══════════════════════════════════════════════
+class ErrorBoundary extends React.Component {
+  constructor(props){ super(props); this.state={error:null}; }
+  static getDerivedStateFromError(e){ return {error:e}; }
+  componentDidCatch(e,info){ console.error("🔴 렌더에러:", e, info); }
+  render(){
+    if(this.state.error){
+      return (
+        <div style={{padding:24,background:"#1a0a0a",border:"1px solid #f0707060",
+          borderRadius:12,color:"#f07070",margin:16}}>
+          <div style={{fontWeight:800,fontSize:14,marginBottom:8}}>⚠ 화면 렌더 오류</div>
+          <div style={{fontSize:11,color:"#7a9ab8",marginBottom:12}}>
+            모드 전환 중 에러가 발생했습니다. 아래 메시지를 확인하거나 다른 탭을 클릭 후 돌아오세요.
+          </div>
+          <div style={{fontSize:10,fontFamily:"monospace",color:"#f5b942",
+            background:"rgba(0,0,0,.3)",padding:"8px 12px",borderRadius:6,wordBreak:"break-all"}}>
+            {String(this.state.error)}
+          </div>
+          <button onClick={()=>this.setState({error:null})} style={{
+            marginTop:14,padding:"7px 18px",borderRadius:7,border:"none",
+            background:"#f07070",color:"#fff",cursor:"pointer",fontWeight:700,fontSize:12,
+            fontFamily:"inherit",
+          }}>🔄 다시 시도</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function Dashboard({data,mode}){
   const [selKey,setSelKey] = useState("대외영업");
   const isMobile = useIsMobile();
-  const mColor = C[mode];
+  const mColor = C[mode] || C.accent;
 
-  const p26 = data["26"]?.[mode]?.perf   ||emptyM();
-  const t26 = data["26"]?.[mode]?.target ||emptyM();
-  const p25 = data["25"]?.[mode]?.perf   ||emptyM();
-  const p24 = data["24"]?.[mode]?.perf   ||emptyM();
+  // 방어적 데이터 접근
+  const p26 = useMemo(()=>{ try{ return data?.["26"]?.[mode]?.perf   ||emptyM(); }catch{ return emptyM(); } },[data,mode]);
+  const t26 = useMemo(()=>{ try{ return data?.["26"]?.[mode]?.target ||emptyM(); }catch{ return emptyM(); } },[data,mode]);
+  const p25 = useMemo(()=>{ try{ return data?.["25"]?.[mode]?.perf   ||emptyM(); }catch{ return emptyM(); } },[data,mode]);
+  const p24 = useMemo(()=>{ try{ return data?.["24"]?.[mode]?.perf   ||emptyM(); }catch{ return emptyM(); } },[data,mode]);
 
   const lm26 = lastMiOf(p26);
   const emi  = lm26>=0 ? lm26 : new Date().getMonth();
 
   // 누계 합산 (emi 기준)
-  const ytd = (d,k) => sumR(d,k,0,emi);
+  const ytd = (d,k) => { try{ return sumR(d,k,0,emi); }catch{ return 0; } };
 
   // 월별 데이터 배열
-  const mArr   = (d,k) => MONTHS.map((_,i)=>gNum(fullRow(d[sk(i)])[k]));
+  const mArr   = (d,k) => { try{ return MONTHS.map((_,i)=>gNum(fullRow(d?.[sk(i)])?.[k])); }catch{ return MONTHS.map(()=>0); } };
   // 누계 배열
   const cumArr = (d,k) => {
-    let acc=0;
-    return MONTHS.map((_,i)=>{
-      if(gNum(fullRow(d[sk(i)])[k])>0 || i<=emi){
-        acc+=gNum(fullRow(d[sk(i)])[k]);
-        return acc;
-      }
-      return null;
-    });
+    try{
+      let acc=0;
+      return MONTHS.map((_,i)=>{
+        const v = gNum(fullRow(d?.[sk(i)])?.[k]);
+        if(v>0 || i<=emi){ acc+=v; return acc; }
+        return null;
+      });
+    }catch{ return MONTHS.map(()=>null); }
   };
 
   // 주요 항목 달성률
   const DONUT_KEYS = ["대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
 
   // 월별 + 월평균
-  const sel_monthly = mArr(p26,selKey).map((v,i)=>i<=emi?v:null);
-  const sel_cum26   = cumArr(p26,selKey);
-  const sel_cum25   = cumArr(p25,selKey);
-  const sel_cum24   = cumArr(p24,selKey);
+  const sel_monthly = useMemo(()=>mArr(p26,selKey).map((v,i)=>i<=emi?v:null),[p26,selKey,emi]);
+  const sel_cum26   = useMemo(()=>cumArr(p26,selKey),[p26,selKey,emi]);
+  const sel_cum25   = useMemo(()=>cumArr(p25,selKey),[p25,selKey,emi]);
+  const sel_cum24   = useMemo(()=>cumArr(p24,selKey),[p24,selKey,emi]);
   const validMonths = sel_monthly.filter(v=>v!==null&&v>0);
   const monthAvg    = validMonths.length>0 ? validMonths.reduce((a,b)=>a+b,0)/validMonths.length : 0;
 
@@ -2655,11 +2688,13 @@ function App(){
             <span style={{color:mColor,fontSize:13,fontWeight:700,marginLeft:8}}>· {mode}</span>
           </h1>
         </div>
-        {tab==="dashboard"&&<Dashboard key={mode} data={data} mode={mode}/>}
-        {tab==="analysis" &&<Analysis  key={mode} data={data} mode={mode}/>}
-        {tab==="input"    &&<InputTab  key={mode} data={data} setData={handleSetData} mode={mode}
+        <ErrorBoundary key={tab+mode}>
+          {tab==="dashboard"&&<Dashboard key={mode} data={data} mode={mode}/>}
+          {tab==="analysis" &&<Analysis  key={mode} data={data} mode={mode}/>}
+          {tab==="input"    &&<InputTab  key={mode} data={data} setData={handleSetData} mode={mode}
           onSave={handleSave} saveState={saveState} hasUnsaved={hasUnsaved}
           onImport={()=>setShowImport(true)}/>}
+        </ErrorBoundary>
       </div>
 
       {/* 푸터 */}
