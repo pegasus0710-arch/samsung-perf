@@ -517,10 +517,10 @@ function Dashboard({data,mode}){
   const DONUT_KEYS = ["대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
 
   // 월별 + 월평균
-  const sel_monthly = useMemo(()=>mArr(p26,selKey).map((v,i)=>i<=emi?v:null),[p26,selKey,emi]);
-  const sel_cum26   = useMemo(()=>cumArr(p26,selKey),[p26,selKey,emi]);
-  const sel_cum25   = useMemo(()=>cumArr(p25,selKey),[p25,selKey,emi]);
-  const sel_cum24   = useMemo(()=>cumArr(p24,selKey),[p24,selKey,emi]);
+  const sel_monthly = useMemo(()=>{try{return mArr(p26,selKey).map((v,i)=>i<=emi?v:null);}catch{return MONTHS.map(()=>null);}},[p26,selKey,emi]);
+  const sel_cum26   = useMemo(()=>{try{return cumArr(p26,selKey);}catch{return MONTHS.map(()=>null);}},[p26,selKey,emi]);
+  const sel_cum25   = useMemo(()=>{try{return cumArr(p25,selKey);}catch{return MONTHS.map(()=>null);}},[p25,selKey,emi]);
+  const sel_cum24   = useMemo(()=>{try{return cumArr(p24,selKey);}catch{return MONTHS.map(()=>null);}},[p24,selKey,emi]);
   const validMonths = sel_monthly.filter(v=>v!==null&&v>0);
   const monthAvg    = validMonths.length>0 ? validMonths.reduce((a,b)=>a+b,0)/validMonths.length : 0;
 

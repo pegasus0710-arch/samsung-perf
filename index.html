@@ -165,7 +165,8 @@
   </div>
 
   <!-- ── 앱 컨테이너 (인증 후 표시) ── -->
-  <div id="root" style="display:none;"></div>
+  <!-- root는 처음부터 visible — React 18 concurrent 모드 호환 (db-loading 오버레이가 덮음) -->
+  <div id="root"></div>
 
   <script>
     // ──────────────────────────────────────────────
@@ -195,7 +196,7 @@
           if (window.__appReady) {
             clearInterval(waitReact);
             document.getElementById("db-loading").style.display = "none";
-            document.getElementById("root").style.display = "block";
+            // root는 항상 visible — display 변경 불필요
           }
         }, 100);
       } else {
@@ -216,7 +217,7 @@
           if (window.__appReady) {
             clearInterval(waitReact);
             document.getElementById("db-loading").style.display = "none";
-            document.getElementById("root").style.display = "block";
+            // root는 항상 visible — display 변경 불필요
           }
         }, 100);
       } else {
