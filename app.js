@@ -256,7 +256,7 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
   // 각 시리즈 렌더용
   const seriesData = series.map(s=>({
     ...s,
-    pts:s.data.map((v,i)=>({x:cx(i),y:cy(v),v:gNum(v)})),
+    pts:s.data.map((v,i)=>({x:cx(i),y:cy(v),v:gNum(v),hasData:v!==null})),
   }));
 
   // 마우스 위치로 가장 가까운 X 인덱스
@@ -312,7 +312,7 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
         )}
         {/* 시리즈 */}
         {seriesData.map((s,si)=>{
-          const activePts=s.pts.filter(p=>p.v>0);
+          const activePts=s.pts.filter(p=>p.hasData||p.v>0);
           if(activePts.length===0) return null;
           const d=smooth(activePts);
           const avg=activePts.reduce((a,p)=>a+p.v,0)/activePts.length;
@@ -340,7 +340,7 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
                 const anchor = p.x < PL+30 ? "start" : p.x > W-PR-30 ? "end" : "middle";
                 const realV  = s.grOffset!==undefined ? p.v - s.grOffset : p.v;
                 const dispV  = s.tooltipUnit==="%"
-                  ? (Number.isInteger(realV) ? String(realV) : realV.toFixed(1)) + "%"
+                  ? Math.round(realV) + "%"
                   : Math.round(realV).toLocaleString();
                 return (
                   <text key={i} x={p.x} y={labelY}
@@ -391,7 +391,7 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
               </div>
               <span style={{color:it.color,fontSize:11,fontWeight:800}}>
                 {it.unit==="%"
-                  ? (Number.isInteger(it.rawV) ? it.rawV : it.rawV.toFixed(1)) + "%"
+                  ? Math.round(it.rawV) + "%"
                   : Math.round(it.rawV).toLocaleString()+"억"}
               </span>
             </div>
@@ -600,7 +600,7 @@ function Dashboard({data,mode}){
                       <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
                         <span style={{color:C.muted,fontSize:9}}>목표 {Math.round(vt).toLocaleString()}억</span>
                         <span style={{color:ar?pctC(ar):C.muted,fontSize:10,fontWeight:800}}>
-                          달성 {ar||"─"}%
+                          달성 {ar?Math.round(gNum(ar)):"─"}%
                         </span>
                       </div>
                       <div style={{height:5,background:"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
@@ -659,9 +659,11 @@ function Dashboard({data,mode}){
                   <DonutChart pct={ar} color={color} size={56} stroke={6}/>
                   <div style={{color:selKey===k?color:C.muted2,fontSize:10,fontWeight:700,
                     textAlign:"center",marginTop:1}}>{k}</div>
-                  <div style={{color:C.muted,fontSize:9,textAlign:"center",lineHeight:1.3}}>
-                    {pv>0?Math.round(pv).toLocaleString():"─"}
-                    {tv>0&&<span style={{color:C.b2}}>/{Math.round(tv).toLocaleString()}억</span>}
+                  <div style={{color:C.muted2,fontSize:9,textAlign:"center",lineHeight:1.3,marginTop:1}}>
+                    <span style={{color:selKey===k?color:C.text,fontWeight:600}}>
+                      {pv>0?Math.round(pv).toLocaleString():"─"}
+                    </span>
+                    {tv>0&&<span style={{color:C.muted}}>/{Math.round(tv).toLocaleString()}억</span>}
                   </div>
                 </div>
               );
@@ -671,8 +673,8 @@ function Dashboard({data,mode}){
           {/* ── 전체 파트 연간 목표 진척 현황 (CE 제외) ── */}
           {(()=>{
             try {
-            // CE 제외 파트 목록 (표시 순서)
-            const BAR_KEYS = ["혼수","입주","이사","SAC","거주중","SMB","농협","휴대폰"];
+            // 파트 목록 (대외영업·뉴홈·B2B 포함, CE 제외)
+            const BAR_KEYS = ["대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
             const remainMonths = 11 - emi;
 
             // 각 파트 데이터 계산
@@ -703,6 +705,10 @@ function Dashboard({data,mode}){
                       background:"linear-gradient(135deg,#818cf8,#38bdf8)"}}/>
                     <span style={{color:C.muted2,fontSize:10,fontWeight:700}}>
                       파트별 연간 목표 진척 현황
+                    </span>
+                    <span style={{color:C.muted,fontSize:9,background:"rgba(255,255,255,.06)",
+                      padding:"1px 5px",borderRadius:3}}>
+                      {MONTHS[emi]} 마감기준
                     </span>
                   </div>
                   <span style={{color:C.muted,fontSize:9}}>
@@ -808,38 +814,62 @@ function Dashboard({data,mode}){
             borderRadius:14,padding:18,boxShadow:"0 4px 20px rgba(0,0,0,.2)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
               marginBottom:12,flexWrap:"wrap",gap:8}}>
-              <div>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <div style={{width:10,height:10,borderRadius:3,
-                    background:KC[selKey]||C.accent,boxShadow:`0 0 8px ${KC[selKey]||C.accent}`}}/>
-                  <span style={{color:KC[selKey]||C.accent,fontWeight:900,fontSize:16}}>{selKey}</span>
-                  <span style={{color:C.muted2,fontSize:11}}>월별 실적 추이</span>
-                </div>
-                <div style={{color:C.muted,fontSize:10,marginTop:2}}>
-                  월 평균: <span style={{color:KC[selKey]||C.accent,fontWeight:700}}>
-                    {monthAvg>0?Math.round(monthAvg).toLocaleString()+"억":"-"}
-                  </span>
-                  &nbsp;·&nbsp;
-                  {MONTHS[emi]} 누계: <span style={{color:C.text,fontWeight:700}}>
-                    {ytd(p26,selKey)>0?Math.round(ytd(p26,selKey)).toLocaleString()+"억":"─"}
-                  </span>
-                </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:10,height:10,borderRadius:3,
+                  background:KC[selKey]||C.accent,boxShadow:`0 0 8px ${KC[selKey]||C.accent}`}}/>
+                <span style={{color:KC[selKey]||C.accent,fontWeight:900,fontSize:16}}>{selKey}</span>
+                <span style={{color:C.muted2,fontSize:11}}>월별 실적 추이</span>
               </div>
-              {/* 범례 */}
-              <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                {[["26년 실적",mColor,true],["26년 목표",C.orange,false,true],
-                  ["25년 실적",C.accent,false],["월평균","rgba(255,255,255,.3)",false,true]].map(([l,c,b,d])=>(
-                  <span key={l} style={{display:"flex",alignItems:"center",gap:4}}>
-                    <svg width={16} height={3}>
-                      <line x1={0} y1={1.5} x2={16} y2={1.5} stroke={c}
-                        strokeWidth={b?2:1.5} strokeDasharray={d?"4,2":undefined}/>
-                    </svg>
-                    <span style={{color:C.muted,fontSize:10}}>{l}</span>
-                  </span>
-                ))}
-              </div>
+              {/* 개선된 범례 — 라인 + 누계/월평균 표시 */}
+              {(()=>{
+                const ytd26 = ytd(p26,selKey);
+                const ytd25 = ytd(p25,selKey);
+                const avg26 = validMonths.length>0 ? Math.round(monthAvg) : null;
+                const p25Arr = mArr(p25,selKey).filter((v,i)=>i<=emi&&v>0);
+                const avg25 = p25Arr.length>0 ? Math.round(p25Arr.reduce((a,b)=>a+b,0)/p25Arr.length) : null;
+                // 26년 연간 목표 합계
+                const annTgt26 = (() => {let s=0; for(let i=0;i<12;i++) s+=gNum(fullRow(t26?.[sk(i)])?.[selKey]); return s;})();
+                const cumTgt26 = ytd(t26,selKey);
+                const tgtArr = mArr(t26,selKey).filter((v,i)=>i<=emi&&v>0);
+                const avgTgt = tgtArr.length>0 ? Math.round(tgtArr.reduce((a,b)=>a+b,0)/tgtArr.length) : null;
+                return (
+                  <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                    {[
+                      {l:"26년 실적", c:mColor, bold:true, dash:false,
+                        ytdVal:ytd26, avgVal:avg26},
+                      {l:"26년 목표", c:C.orange, bold:false, dash:true,
+                        ytdVal:cumTgt26>0?cumTgt26:null, avgVal:avgTgt,
+                        ytdLabel:"누계목표"},
+                      {l:"25년 실적", c:"#a78bfa", bold:false, dash:false,
+                        ytdVal:ytd25, avgVal:avg25},
+                    ].map(({l,c,bold,dash,ytdVal,avgVal,ytdLabel})=>(
+                      <div key={l} style={{display:"flex",flexDirection:"column",gap:2,
+                        padding:"5px 8px",borderRadius:7,background:"rgba(255,255,255,.04)",
+                        border:`1px solid ${c}22`}}>
+                        <span style={{display:"flex",alignItems:"center",gap:4}}>
+                          <svg width={16} height={3}>
+                            <line x1={0} y1={1.5} x2={16} y2={1.5} stroke={c}
+                              strokeWidth={bold?2.5:1.5} strokeDasharray={dash?"5,3":undefined}/>
+                          </svg>
+                          <span style={{color:c,fontSize:10,fontWeight:bold?800:600}}>{l}</span>
+                        </span>
+                        <span style={{color:C.muted2,fontSize:9}}>
+                          {ytdLabel||"누계"}: <span style={{color:c,fontWeight:700}}>
+                            {ytdVal>0?Math.round(ytdVal).toLocaleString()+"억":"─"}
+                          </span>
+                        </span>
+                        <span style={{color:C.muted,fontSize:9}}>
+                          월평균: <span style={{color:c,fontWeight:600}}>
+                            {avgVal?avgVal+"억":"─"}
+                          </span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
-            <RichLineChart h={140} showAvg={true} series={[
+            <RichLineChart h={140} series={[
               {data:mArr(p25,selKey).map((v,i)=>i<=emi?v:null),color:"#a78bfa",op:.7,tooltipLabel:"25년"},
               {data:mArr(p26,selKey).map((v,i)=>i<=emi?v:null),color:mColor,bold:true,fill:true,showLabels:true,tooltipLabel:"26년"},
               {data:mArr(t26,selKey).map((v,i)=>i<=emi?v:null),color:C.orange,dash:true,op:.7,tooltipLabel:"목표"},
@@ -914,8 +944,8 @@ function Dashboard({data,mode}){
                     </div>
                     <div style={{color:C.muted,fontSize:10,marginTop:2}}>
                       {MONTHS[emi]} 누계달성:&nbsp;
-                      <span style={{color:ytdAr?pctC(ytdAr):C.muted,fontWeight:700}}>{ytdAr?ytdAr+"%":"─"}</span>
-                      {avgV&&<>&nbsp;·&nbsp;당월평균: <span style={{color:C.orange,fontWeight:700}}>{avgV}%</span></>}
+                      <span style={{color:ytdAr?pctC(ytdAr):C.muted,fontWeight:700}}>{ytdAr?Math.round(gNum(ytdAr))+"%":"─"}</span>
+                      {avgV&&<>&nbsp;·&nbsp;당월평균: <span style={{color:C.orange,fontWeight:700}}>{Math.round(gNum(avgV))}%</span></>}
                     </div>
                   </div>
                   <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
@@ -1086,7 +1116,7 @@ function Dashboard({data,mode}){
                           })()}
                         </div>
                         {/* 발산형 바 영역 */}
-                        <div style={{flex:1,position:"relative",height:18}}>
+                        <div style={{flex:1,position:"relative",height:22}}>
                           {/* 배경 + 0% 기준선 */}
                           <div style={{position:"absolute",inset:0,
                             background:"rgba(255,255,255,.025)",borderRadius:3}}/>
@@ -1101,32 +1131,63 @@ function Dashboard({data,mode}){
                                 ? {left:`${zeroLeft}%`, width:`${barW}%`}
                                 : {right:`${100-zeroLeft}%`, width:`${barW}%`}),
                               background:isUp
-                                ? `linear-gradient(90deg,${C.green}80,${C.green}cc)`
+                                ? `linear-gradient(90deg,${C.green}60,${C.green}dd)`
                                 : isDown
-                                  ? `linear-gradient(${isDown?"-90deg":"90deg"},${C.red}80,${C.red}cc)`
+                                  ? `linear-gradient(-90deg,${C.red}60,${C.red}dd)`
                                   : `rgba(255,255,255,.15)`,
                               borderRadius:isUp?"0 3px 3px 0":"3px 0 0 3px",
                               boxShadow:isUp?`0 0 8px ${C.green}40`:isDown?`0 0 8px ${C.red}40`:"none",
                               transition:"width .5s ease",zIndex:2,
                             }}/>
                           )}
-                          {/* 수치 텍스트 */}
-                          <div style={{
-                            position:"absolute",top:0,bottom:0,zIndex:3,
-                            ...(isUp||isFlat
-                              ? {left:`calc(${zeroLeft}% + ${barW>3?6:2}px)`}
-                              : {right:`calc(${100-zeroLeft}% + ${barW>3?6:2}px)`,textAlign:"right"}),
-                            display:"flex",alignItems:"center",
-                          }}>
-                            <span style={{
-                              color:gr!==null?grwC(String(gr)):C.muted,
-                              fontSize:11,fontWeight:900,
-                              textShadow:"0 1px 3px rgba(0,0,0,.8)",
-                              whiteSpace:"nowrap",
-                            }}>
-                              {gr!==null?grwT(String(gr)):v26>0?"─0%":"─"}
-                            </span>
-                          </div>
+                          {/* 수치 텍스트: 바가 클 때 안쪽, 작을 때 바깥쪽 */}
+                          {gr!==null&&(()=>{
+                            const THRESHOLD = 18; // 이 % 이상이면 안쪽에 표시
+                            const insideBar = barW >= THRESHOLD;
+                            const label = grwT(String(gr));
+                            if(insideBar){
+                              // 안쪽 끝 — 흰색 텍스트로 배색
+                              return (
+                                <div style={{
+                                  position:"absolute",top:0,bottom:0,zIndex:4,
+                                  ...(isUp
+                                    ? {left:`calc(${zeroLeft}% + ${barW}% - 2px)`,transform:"translateX(-100%)"}
+                                    : {right:`calc(${100-zeroLeft}% + ${barW}% - 2px)`,transform:"translateX(100%)"}),
+                                  display:"flex",alignItems:"center",paddingRight:isUp?4:0,paddingLeft:isDown?4:0,
+                                }}>
+                                  <span style={{
+                                    color:"rgba(255,255,255,.95)",
+                                    fontSize:10,fontWeight:900,whiteSpace:"nowrap",
+                                    textShadow:isUp?"1px 0 3px rgba(0,100,60,.9)":"1px 0 3px rgba(150,0,0,.9)",
+                                  }}>{label}</span>
+                                </div>
+                              );
+                            } else {
+                              // 바깥쪽 — 원래 색상
+                              return (
+                                <div style={{
+                                  position:"absolute",top:0,bottom:0,zIndex:4,
+                                  ...(isUp
+                                    ? {left:`calc(${zeroLeft}% + ${barW}% + 4px)`}
+                                    : {right:`calc(${100-zeroLeft}% + ${barW}% + 4px)`,textAlign:"right"}),
+                                  display:"flex",alignItems:"center",
+                                }}>
+                                  <span style={{
+                                    color:isUp?C.green:isDown?C.red:C.muted2,
+                                    fontSize:10,fontWeight:900,whiteSpace:"nowrap",
+                                    textShadow:"0 1px 4px rgba(0,0,0,.9)",
+                                  }}>{label}</span>
+                                </div>
+                              );
+                            }
+                          })()}
+                          {/* 데이터 없음 */}
+                          {gr===null&&v26===0&&(
+                            <div style={{position:"absolute",top:0,bottom:0,left:`calc(${zeroLeft}% + 4px)`,
+                              display:"flex",alignItems:"center",zIndex:3}}>
+                              <span style={{color:C.muted,fontSize:9}}>─</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1447,7 +1508,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport}){
             {ar!==null&&(
               <span style={{display:"flex",alignItems:"center",gap:2}}>
                 <span style={{color:C.muted,fontSize:8}}>달성</span>
-                <span style={{color:pctC(ar),fontSize:10,fontWeight:800}}>{ar}%</span>
+                <span style={{color:pctC(ar),fontSize:10,fontWeight:800}}>{Math.round(gNum(ar))}%</span>
               </span>
             )}
             {gr!==null&&(
@@ -1569,7 +1630,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport}){
                   {/* 달성률 (실적) */}
                   {ar&&<div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:2,marginTop:2}}>
                     <span style={{color:C.muted,fontSize:8}}>달성</span>
-                    <span style={{color:pctC(ar),fontSize:9,fontWeight:800}}>{ar}%</span>
+                    <span style={{color:pctC(ar),fontSize:9,fontWeight:800}}>{Math.round(gNum(ar))}%</span>
                   </div>}
                   {/* 성장률 */}
                   {(gr||tgr)&&<div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:2,marginTop:1}}>
@@ -1595,7 +1656,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport}){
             {yearAr&&(
               <span style={{display:"flex",alignItems:"center",gap:2}}>
                 <span style={{color:C.muted,fontSize:8}}>누계달성</span>
-                <span style={{color:pctC(yearAr),fontSize:10,fontWeight:800}}>{yearAr}%</span>
+                <span style={{color:pctC(yearAr),fontSize:10,fontWeight:800}}>{Math.round(gNum(yearAr))}%</span>
               </span>
             )}
             {(yearGr||tgtGr)&&(
@@ -1934,336 +1995,341 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport}){
 //  실적 분석
 // ═══════════════════════════════════════════════
 function Analysis({data,mode}){
-  const [yr,setYr]   = useState("26");
-  const [view,setView] = useState("achieve");
+  const [yr,    setYr]  = useState("26");
+  const [selKey,setSel] = useState("대외영업");
   const isMobile = useIsMobile();
 
-  const pD  = data[yr]?.[mode]?.perf   ||emptyM();
-  const tD  = data[yr]?.[mode]?.target ||emptyM();
+  const ANALYSIS_KEYS = ["대외영업","CE","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
+
+  const pD   = data[yr]?.[mode]?.perf   ||emptyM();
+  const tD   = data[yr]?.[mode]?.target ||emptyM();
   const prevYr = yr==="26"?"25":yr==="25"?"24":null;
   const prevP  = prevYr?(data[prevYr]?.[mode]?.perf||emptyM()):null;
 
-  const lm=lastMiOf(pD);
-  const emi=lm>=0?lm:new Date().getMonth();
+  const lm  = lastMiOf(pD);
+  const emi = lm>=0?lm:new Date().getMonth();
+  const color = KC[selKey]||C.accent;
 
-  const mRows = MONTHS.map((_,i)=>fullRow(pD[sk(i)]));
-  const tRows = MONTHS.map((_,i)=>fullRow(tD[sk(i)]));
-  const pRows = prevP?MONTHS.map((_,i)=>fullRow(prevP[sk(i)])):null;
+  // 선택 파트 월별 데이터
+  const mPerf = MONTHS.map((_,i)=>gNum(fullRow(pD[sk(i)])?.[selKey]));
+  const mTgt  = MONTHS.map((_,i)=>gNum(fullRow(tD[sk(i)])?.[selKey]));
+  const mPrev = prevP ? MONTHS.map((_,i)=>gNum(fullRow(prevP[sk(i)])?.[selKey])) : null;
 
-  const VIEWS=[
-    {k:"achieve",l:"실적+목표+달성률"},
-    {k:"growth", l:"실적+전년+성장률"},
-    {k:"share",  l:"CE 비중"},
-    {k:"heatmap",l:"히트맵"},
-  ];
+  // 누계
+  const ytdP = mPerf.slice(0,emi+1).reduce((a,b)=>a+b,0);
+  const ytdT = mTgt.slice(0,emi+1).reduce((a,b)=>a+b,0);
+  const annT = mTgt.reduce((a,b)=>a+b,0);
+  const ytdPrev = mPrev ? mPrev.slice(0,emi+1).reduce((a,b)=>a+b,0) : 0;
 
-  const TH=({c,right,sticky,children})=>(
-    <th style={{padding:"6px 8px",textAlign:right?"right":"left",color:c||C.muted,
-      fontWeight:600,fontSize:10,whiteSpace:"nowrap",
-      ...(sticky?{position:"sticky",left:0,background:C.card2,zIndex:2}:{})}}>
-      {children}
-    </th>
+  // 월별 달성률 / 성장률
+  const mAr = MONTHS.map((_,i)=>i<=emi&&mTgt[i]>0 ? parseFloat((mPerf[i]/mTgt[i]*100).toFixed(1)) : null);
+  const mGr = MONTHS.map((_,i)=>i<=emi&&mPrev&&mPrev[i]>0 ? parseFloat(((mPerf[i]-mPrev[i])/mPrev[i]*100).toFixed(1)) : null);
+
+  // 누계 달성률 / 성장률
+  let cPerf=0,cTgt=0;
+  const cumAr = MONTHS.map((_,i)=>{
+    if(i>emi) return null;
+    cPerf+=mPerf[i]; cTgt+=mTgt[i];
+    return cTgt>0 ? parseFloat((cPerf/cTgt*100).toFixed(1)) : null;
+  });
+  let cP=0,cPv=0;
+  const cumGr = mPrev ? MONTHS.map((_,i)=>{
+    if(i>emi) return null;
+    cP+=mPerf[i]; cPv+=mPrev[i];
+    return cPv>0 ? parseFloat(((cP-cPv)/cPv*100).toFixed(1)) : null;
+  }) : null;
+
+  // 누계 차트 (3개년)
+  const makeArr26 = (d,k) => { let s=0; return MONTHS.map((_,i)=>{if(i>emi)return null;s+=gNum(fullRow(d[sk(i)])?.[k]);return s;}); };
+  const makeArr25 = (d,k) => { let s=0; return MONTHS.map((_,i)=>{if(i>emi)return null;s+=gNum(fullRow(d[sk(i)])?.[k]);return s;}); };
+  const d24P = data["24"]?.[mode]?.perf||emptyM();
+  const d25P = data["25"]?.[mode]?.perf||emptyM();
+
+  // CE 비중 (CE 키가 있고 선택 파트가 CE가 아닐 때)
+  const ceShare = selKey!=="CE" ? MONTHS.map((_,i)=>{
+    const ce=gNum(fullRow(pD[sk(i)])?.CE);
+    const hp=gNum(fullRow(pD[sk(i)])?.휴대폰);
+    const v = selKey==="대외영업" ? gNum(fullRow(pD[sk(i)])?.[selKey])-hp
+            : selKey==="B2B"    ? gNum(fullRow(pD[sk(i)])?.[selKey])-hp
+            : gNum(fullRow(pD[sk(i)])?.[selKey]);
+    return (i<=emi&&ce>0) ? parseFloat((v/ce*100).toFixed(1)) : null;
+  }) : null;
+
+  const avgPerf = ytdP>0&&emi>=0 ? Math.round(ytdP/(emi+1)) : 0;
+  const ytdAr   = ytdT>0 ? pct(ytdP,ytdT) : null;
+  const ytdGr   = ytdPrev>0 ? grw(ytdP,ytdPrev) : null;
+
+  // 그로스 차트 offset
+  const allGrVals = [...(mGr||[]),...(cumGr||[])].filter(v=>v!==null);
+  const negMaxGr = allGrVals.length>0 ? Math.max(...allGrVals.filter(v=>v<0).map(v=>Math.abs(v)),0) : 0;
+  const offsetGr = v => v!==null ? parseFloat((v+negMaxGr).toFixed(1)) : null;
+
+  const Btn = ({label,active,onClick,clr}) => (
+    <button onClick={onClick} style={{
+      padding:"5px 10px",borderRadius:6,cursor:"pointer",fontWeight:700,fontSize:11,
+      fontFamily:"inherit",whiteSpace:"nowrap",transition:"all .15s",
+      border:`1px solid ${active?(clr||color):C.b2}`,
+      background:active?(clr||color)+"28":"transparent",
+      color:active?(clr||color):C.muted,
+      boxShadow:active?`0 0 6px ${clr||color}30`:"none",
+    }}>{label}</button>
   );
 
   return (
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-        <div style={{display:"flex",gap:4,flex:1,flexWrap:"wrap"}}>
-          {VIEWS.map(v=>(
-            <button key={v.k} onClick={()=>setView(v.k)} style={{
-              padding:"7px 13px",borderRadius:7,cursor:"pointer",fontWeight:700,
-              fontSize:12,fontFamily:"inherit",
-              border:`1px solid ${view===v.k?C.accent:C.b2}`,
-              background:view===v.k?C.accent+"22":"transparent",
-              color:view===v.k?C.accent:C.muted}}>{v.l}</button>
+
+      {/* ── 컨트롤 바: 연도 + 파트 선택 ── */}
+      <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:10,
+        padding:"10px 14px",display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+        <div style={{display:"flex",gap:4}}>
+          <span style={{color:C.muted,fontSize:10,fontWeight:700,alignSelf:"center",marginRight:2}}>연도</span>
+          {["24","25","26"].map(y=>(
+            <Btn key={y} label={y+"년"} active={yr===y} onClick={()=>setYr(y)} clr={C.blue}/>
           ))}
         </div>
-        <div style={{display:"flex",gap:4}}>
-          {["24","25","26"].map(y=>(
-            <button key={y} onClick={()=>setYr(y)} style={{
-              padding:"5px 10px",borderRadius:6,cursor:"pointer",fontSize:11,fontWeight:700,
-              fontFamily:"inherit",border:`1px solid ${yr===y?C.blue:C.b2}`,
-              background:yr===y?C.blue+"22":"transparent",color:yr===y?C.blue:C.muted}}>
-              {y}년
-            </button>
+        <div style={{width:1,height:20,background:C.b1}}/>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap",flex:1}}>
+          <span style={{color:C.muted,fontSize:10,fontWeight:700,alignSelf:"center",marginRight:2}}>파트</span>
+          {ANALYSIS_KEYS.map(k=>(
+            <Btn key={k} label={k} active={selKey===k} onClick={()=>setSel(k)} clr={KC[k]}/>
           ))}
         </div>
       </div>
 
-      <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:12,
-        padding:16,overflowX:"auto"}}>
-
-        {/* 실적 + 목표 + 달성률 */}
-        {view==="achieve"&&(yr==="24"?(
-          <div style={{padding:30,textAlign:"center",color:C.muted}}>24년은 목표 데이터가 없습니다</div>
-        ):(
-          <>
-            <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:12}}>
-              실적 · 목표 · 달성률 — {yr}년 · {mode}
-              <span style={{color:C.muted,fontWeight:400,fontSize:11,marginLeft:8}}>
-                억원 · hover→소수점
-              </span>
-            </div>
-            <table style={{borderCollapse:"collapse",minWidth:900,width:"100%"}}>
-              <thead>
-                <tr style={{borderBottom:`1px solid ${C.b1}`}}>
-                  <TH sticky>항목</TH>
-                  {MONTHS.map(m=><TH key={m} right>{m}</TH>)}
-                  <TH right c={C.accent}>누계</TH>
-                </tr>
-              </thead>
-              <tbody>
-                {ALL_KEYS.map(key=>{
-                  const ytdP=sumR(pD,key,0,emi),ytdT=sumR(tD,key,0,emi);
-                  const ytdA=pct(ytdP,ytdT);
-                  return (
-                    <React.Fragment key={key}>
-                      {/* 실적 행 */}
-                      <tr style={{background:C.card+"88"}}>
-                        <td style={{padding:"4px 10px",color:KC[key]||C.text,fontWeight:700,fontSize:11,
-                          position:"sticky",left:0,background:C.card,zIndex:1,whiteSpace:"nowrap"}}>
-                          {key}
-                          <span style={{color:C[mode],fontSize:9,marginLeft:4,fontWeight:400}}>실적</span>
-                        </td>
-                        {mRows.map((r,i)=>(
-                          <td key={i} style={{padding:"4px 6px",textAlign:"right"}}>
-                            <span title={fmtD(r[key])} style={{color:C.text,fontSize:11,cursor:"default"}}>
-                              {fmt(r[key])}
-                            </span>
-                          </td>
-                        ))}
-                        <td style={{padding:"4px 8px",textAlign:"right"}}>
-                          <span title={fmtD(sumM(pD,key))} style={{color:KC[key]||C.accent,fontWeight:700,fontSize:11,cursor:"default"}}>
-                            {fmt(sumM(pD,key))}
-                          </span>
-                        </td>
-                      </tr>
-                      {/* 목표 행 */}
-                      <tr>
-                        <td style={{padding:"4px 10px",color:C.blue,fontWeight:400,fontSize:10,
-                          position:"sticky",left:0,background:C.card2,zIndex:1,whiteSpace:"nowrap"}}>
-                          {key} <span style={{fontSize:9}}>목표</span>
-                        </td>
-                        {tRows.map((r,i)=>(
-                          <td key={i} style={{padding:"4px 6px",textAlign:"right"}}>
-                            <span title={fmtD(r[key])} style={{color:C.blue,fontSize:10,opacity:.8,cursor:"default"}}>
-                              {fmt(r[key])}
-                            </span>
-                          </td>
-                        ))}
-                        <td style={{padding:"4px 8px",textAlign:"right"}}>
-                          <span title={fmtD(sumM(tD,key))} style={{color:C.blue,fontSize:10,cursor:"default"}}>
-                            {fmt(sumM(tD,key))}
-                          </span>
-                        </td>
-                      </tr>
-                      {/* 달성률 행 */}
-                      <tr style={{borderBottom:`1px solid ${C.b1}40`}}>
-                        <td style={{padding:"3px 10px",color:C.muted,fontSize:10,
-                          position:"sticky",left:0,background:C.card2,zIndex:1}}>
-                          달성률
-                        </td>
-                        {mRows.map((r,i)=>{
-                          const p=gNum(r[key]),t=gNum(tRows[i][key]);
-                          const a=t>0?pct(p,t):null;
-                          return (
-                            <td key={i} style={{padding:"3px 6px",textAlign:"right"}}>
-                              {a?<span style={{color:pctC(a),fontSize:10,fontWeight:700}}>{a}%</span>
-                                :<span style={{color:C.muted,fontSize:9}}>-</span>}
-                            </td>
-                          );
-                        })}
-                        <td style={{padding:"3px 8px",textAlign:"right"}}>
-                          {ytdA?<span style={{color:pctC(ytdA),fontWeight:700,fontSize:11}}>{ytdA}%</span>
-                            :<span style={{color:C.muted}}>-</span>}
-                        </td>
-                      </tr>
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </>
+      {/* ── 상단 KPI 카드 ── */}
+      <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?2:5},1fr)`,gap:8}}>
+        {[
+          {l:"누계 실적",    v:ytdP>0?Math.round(ytdP)+"억":"─",   c:color, big:true},
+          {l:"연간 목표",    v:annT>0?Math.round(annT)+"억":"─",    c:C.orange},
+          {l:MONTHS[emi]+" 누계달성", v:ytdAr?Math.round(gNum(ytdAr))+"%":"─", c:ytdAr?pctC(ytdAr):C.muted},
+          {l:"전년비 성장",  v:ytdGr?grwT(ytdGr):"─",              c:ytdGr?grwC(ytdGr):C.muted},
+          {l:"월평균 실적",  v:avgPerf>0?avgPerf+"억":"─",           c:C.teal},
+        ].map(({l,v,c,big})=>(
+          <div key={l} style={{background:C.card,border:`1px solid ${c}30`,borderRadius:10,
+            padding:"10px 12px",display:"flex",flexDirection:"column",gap:3}}>
+            <span style={{color:C.muted,fontSize:9,fontWeight:700}}>{l}</span>
+            <span style={{color:c,fontSize:big?18:15,fontWeight:900}}>{v}</span>
+          </div>
         ))}
+      </div>
 
-        {/* 실적 + 전년 + 성장률 */}
-        {view==="growth"&&(
-          <>
-            <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:12}}>
-              실적 · 전년실적 · 성장률 — {yr}년 vs {prevYr?"20"+prevYr+"년":"기준없음"} · {mode}
-            </div>
-            {pRows?(
-              <table style={{borderCollapse:"collapse",minWidth:900,width:"100%"}}>
-                <thead>
-                  <tr style={{borderBottom:`1px solid ${C.b1}`}}>
-                    <TH sticky>항목</TH>
-                    {MONTHS.map(m=><TH key={m} right>{m}</TH>)}
-                    <TH right c={C.accent}>누계</TH>
-                  </tr>
-                </thead>
-                <tbody>
-                  {ALL_KEYS.map(key=>{
-                    const ytdC=sumR(pD,key,0,emi),ytdP=sumR(prevP,key,0,emi);
-                    const ytdG=grw(ytdC,ytdP);
-                    return (
-                      <React.Fragment key={key}>
-                        {/* 현재 실적 */}
-                        <tr style={{background:C.card+"88"}}>
-                          <td style={{padding:"4px 10px",color:KC[key]||C.text,fontWeight:700,fontSize:11,
-                            position:"sticky",left:0,background:C.card,zIndex:1,whiteSpace:"nowrap"}}>
-                            {key} <span style={{color:C[mode],fontSize:9,fontWeight:400}}>{yr}년</span>
-                          </td>
-                          {mRows.map((r,i)=>(
-                            <td key={i} style={{padding:"4px 6px",textAlign:"right"}}>
-                              <span title={fmtD(r[key])} style={{color:C.text,fontSize:11,cursor:"default"}}>
-                                {fmt(r[key])}
-                              </span>
-                            </td>
-                          ))}
-                          <td style={{padding:"4px 8px",textAlign:"right"}}>
-                            <span title={fmtD(sumM(pD,key))} style={{color:KC[key]||C.accent,fontWeight:700,fontSize:11,cursor:"default"}}>
-                              {fmt(sumM(pD,key))}
-                            </span>
-                          </td>
-                        </tr>
-                        {/* 전년 실적 */}
-                        <tr>
-                          <td style={{padding:"4px 10px",color:C.muted2,fontWeight:400,fontSize:10,
-                            position:"sticky",left:0,background:C.card2,zIndex:1,whiteSpace:"nowrap"}}>
-                            {key} <span style={{fontSize:9}}>{prevYr}년</span>
-                          </td>
-                          {pRows.map((r,i)=>(
-                            <td key={i} style={{padding:"4px 6px",textAlign:"right"}}>
-                              <span title={fmtD(r[key])} style={{color:C.muted2,fontSize:10,cursor:"default"}}>
-                                {fmt(r[key])}
-                              </span>
-                            </td>
-                          ))}
-                          <td style={{padding:"4px 8px",textAlign:"right"}}>
-                            <span style={{color:C.muted2,fontSize:10,cursor:"default"}}>
-                              {fmt(sumM(prevP,key))}
-                            </span>
-                          </td>
-                        </tr>
-                        {/* 성장률 */}
-                        <tr style={{borderBottom:`1px solid ${C.b1}40`}}>
-                          <td style={{padding:"3px 10px",color:C.muted,fontSize:10,
-                            position:"sticky",left:0,background:C.card2,zIndex:1}}>성장률</td>
-                          {mRows.map((r,i)=>{
-                            const c=gNum(r[key]),p=gNum(pRows[i][key]);
-                            const gr=grw(c,p);
-                            return (
-                              <td key={i} style={{padding:"3px 6px",textAlign:"right"}}>
-                                {gr?<span style={{color:grwC(gr),fontSize:10,fontWeight:600}}>{grwT(gr)}</span>
-                                  :<span style={{color:C.muted,fontSize:9}}>-</span>}
-                              </td>
-                            );
-                          })}
-                          <td style={{padding:"3px 8px",textAlign:"right"}}>
-                            {ytdG?<span style={{color:grwC(ytdG),fontWeight:700,fontSize:11}}>{grwT(ytdG)}</span>
-                              :<span style={{color:C.muted}}>-</span>}
-                          </td>
-                        </tr>
-                      </React.Fragment>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ):<div style={{padding:30,textAlign:"center",color:C.muted}}>전년 비교 기준 없음</div>}
-          </>
-        )}
-
-        {/* CE 비중 */}
-        {view==="share"&&(
-          <>
-            <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:12}}>
-              CE 비중 — {yr}년 · {mode}
-            </div>
-            <table style={{borderCollapse:"collapse",minWidth:900,width:"100%"}}>
-              <thead>
-                <tr style={{borderBottom:`1px solid ${C.b1}`}}>
-                  <TH sticky>항목</TH>
-                  {MONTHS.map(m=><TH key={m} right>{m}</TH>)}
-                  <TH right c={C.accent}>연비중</TH>
-                </tr>
-              </thead>
-              <tbody>
-                {/* 휴대폰은 CE 비중 분석에서 제외 (대외영업/B2B 실적에는 포함) */}
-                {["대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협"].map(key=>(
-                  <tr key={key} style={{borderBottom:`1px solid ${C.b1}18`}}>
-                    <td style={{padding:"5px 10px",color:KC[key]||C.muted2,fontWeight:600,fontSize:11,
-                      position:"sticky",left:0,background:C.card2,zIndex:1}}>{key}</td>
-                    {mRows.map((r,i)=>{
-                      const ce=r.CE, hp=r.휴대폰;
-                      // 대외영업, B2B: 실적에는 휴대폰 포함이지만 비중 계산에서는 제외
-                      const v = key==="대외영업" ? r.대외영업-hp
-                               : key==="B2B"    ? r.B2B-hp
-                               : r[key];
-                      const s=ce?(v/ce*100).toFixed(1):null;
-                      return <td key={i} style={{padding:"5px 6px",textAlign:"right"}}>
-                        {s?<span style={{color:KC[key]||C.text,fontSize:10,fontWeight:600}}>{s}%</span>
-                          :<span style={{color:C.muted}}>-</span>}
-                      </td>;
-                    })}
-                    <td style={{padding:"5px 10px",textAlign:"right"}}>
-                      {(()=>{
-                        const ce=sumM(pD,"CE"), hp=sumM(pD,"휴대폰");
-                        const v = key==="대외영업" ? sumM(pD,"대외영업")-hp
-                                 : key==="B2B"    ? sumM(pD,"B2B")-hp
-                                 : sumM(pD,key);
-                        const s=ce?(v/ce*100).toFixed(1):null;
-                        return s?<span style={{color:KC[key]||C.accent,fontWeight:700,fontSize:11}}>{s}%</span>
-                          :<span style={{color:C.muted}}>-</span>;
-                      })()}
-                    </td>
-                  </tr>
+      {/* ── 월별 데이터 테이블 ── */}
+      <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:10,
+        padding:"12px 14px",overflowX:"auto"}}>
+        <div style={{color:C.text,fontWeight:800,fontSize:12,marginBottom:10}}>
+          <span style={{color}}>{selKey}</span>
+          <span style={{color:C.muted,fontWeight:400,fontSize:11,marginLeft:8}}>
+            월별 상세 — {yr}년 · {mode} · 억원
+          </span>
+        </div>
+        <table style={{borderCollapse:"collapse",minWidth:800,width:"100%"}}>
+          <thead>
+            <tr style={{borderBottom:`2px solid ${C.b1}`}}>
+              <td style={{padding:"5px 10px",color:C.muted,fontWeight:700,fontSize:10,
+                position:"sticky",left:0,background:C.card2,minWidth:72}}>항목</td>
+              {MONTHS.map((m,i)=>(
+                <td key={m} style={{padding:"5px 5px",textAlign:"right",
+                  color:i<=emi?C.muted2:C.muted,fontWeight:600,fontSize:10,
+                  borderBottom:i===emi?`2px solid ${color}60`:"none",minWidth:40}}>
+                  {m}{i===emi&&<span style={{color,fontSize:7,display:"block"}}>▲</span>}
+                </td>
+              ))}
+              <td style={{padding:"5px 8px",textAlign:"right",color:C.accent,
+                fontWeight:700,fontSize:10,minWidth:50}}>누계</td>
+            </tr>
+          </thead>
+          <tbody>
+            {/* 실적 행 */}
+            <tr style={{background:C.card+"66"}}>
+              <td style={{padding:"4px 10px",color,fontWeight:700,fontSize:11,
+                position:"sticky",left:0,background:C.card}}>실적</td>
+              {mPerf.map((v,i)=>(
+                <td key={i} style={{padding:"4px 5px",textAlign:"right"}}>
+                  <span style={{color:i<=emi?C.text:C.muted,fontSize:11,fontWeight:i<=emi?700:400}}>
+                    {i<=emi&&v>0?Math.round(v).toLocaleString():i<=emi?"─":"·"}
+                  </span>
+                </td>
+              ))}
+              <td style={{padding:"4px 8px",textAlign:"right"}}>
+                <span style={{color,fontWeight:800,fontSize:12}}>{ytdP>0?Math.round(ytdP).toLocaleString()+"억":"─"}</span>
+              </td>
+            </tr>
+            {/* 목표 행 */}
+            {annT>0&&(
+              <tr>
+                <td style={{padding:"4px 10px",color:C.orange,fontWeight:600,fontSize:10,
+                  position:"sticky",left:0,background:C.card2}}>목표</td>
+                {mTgt.map((v,i)=>(
+                  <td key={i} style={{padding:"4px 5px",textAlign:"right"}}>
+                    <span style={{color:C.orange,fontSize:10,opacity:.8}}>
+                      {v>0?Math.round(v).toLocaleString():"─"}
+                    </span>
+                  </td>
                 ))}
-              </tbody>
-            </table>
-          </>
+                <td style={{padding:"4px 8px",textAlign:"right"}}>
+                  <span style={{color:C.orange,fontWeight:700,fontSize:11}}>{annT>0?Math.round(annT).toLocaleString()+"억":"─"}</span>
+                </td>
+              </tr>
+            )}
+            {/* 달성률 행 */}
+            {annT>0&&(
+              <tr style={{borderBottom:`1px solid ${C.b1}30`}}>
+                <td style={{padding:"3px 10px",color:C.muted,fontSize:10,
+                  position:"sticky",left:0,background:C.card2}}>달성률</td>
+                {mAr.map((v,i)=>(
+                  <td key={i} style={{padding:"3px 5px",textAlign:"right"}}>
+                    {v!==null
+                      ? <span style={{color:pctC(v),fontSize:10,fontWeight:700}}>{Math.round(v)}%</span>
+                      : <span style={{color:C.muted,fontSize:9}}>─</span>}
+                  </td>
+                ))}
+                <td style={{padding:"3px 8px",textAlign:"right"}}>
+                  {ytdAr?<span style={{color:pctC(ytdAr),fontWeight:800,fontSize:11}}>{Math.round(gNum(ytdAr))}%</span>
+                    :<span style={{color:C.muted}}>─</span>}
+                </td>
+              </tr>
+            )}
+            {/* 전년실적 행 */}
+            {mPrev&&(
+              <tr style={{background:C.card+"22"}}>
+                <td style={{padding:"4px 10px",color:C.muted2,fontWeight:500,fontSize:10,
+                  position:"sticky",left:0,background:C.card2}}>{prevYr}년실적</td>
+                {mPrev.map((v,i)=>(
+                  <td key={i} style={{padding:"4px 5px",textAlign:"right"}}>
+                    <span style={{color:C.muted2,fontSize:10}}>
+                      {i<=emi&&v>0?Math.round(v).toLocaleString():"─"}
+                    </span>
+                  </td>
+                ))}
+                <td style={{padding:"4px 8px",textAlign:"right"}}>
+                  <span style={{color:C.muted2,fontSize:11}}>{ytdPrev>0?Math.round(ytdPrev).toLocaleString()+"억":"─"}</span>
+                </td>
+              </tr>
+            )}
+            {/* 성장률 행 */}
+            {mGr&&(
+              <tr style={{borderBottom:`1px solid ${C.b1}40`}}>
+                <td style={{padding:"3px 10px",color:C.muted,fontSize:10,
+                  position:"sticky",left:0,background:C.card2}}>전년비</td>
+                {mGr.map((v,i)=>(
+                  <td key={i} style={{padding:"3px 5px",textAlign:"right"}}>
+                    {v!==null
+                      ? <span style={{color:grwC(String(v)),fontSize:10,fontWeight:600}}>{grwT(String(v))}</span>
+                      : <span style={{color:C.muted,fontSize:9}}>─</span>}
+                  </td>
+                ))}
+                <td style={{padding:"3px 8px",textAlign:"right"}}>
+                  {ytdGr?<span style={{color:grwC(ytdGr),fontWeight:700,fontSize:11}}>{grwT(ytdGr)}</span>
+                    :<span style={{color:C.muted}}>─</span>}
+                </td>
+              </tr>
+            )}
+            {/* CE 비중 행 */}
+            {ceShare&&selKey!=="CE"&&(
+              <tr>
+                <td style={{padding:"3px 10px",color:KC.CE,fontSize:10,fontWeight:600,
+                  position:"sticky",left:0,background:C.card2}}>CE비중</td>
+                {ceShare.map((v,i)=>(
+                  <td key={i} style={{padding:"3px 5px",textAlign:"right"}}>
+                    {v!==null
+                      ? <span style={{color:KC.CE,fontSize:9,fontWeight:600}}>{v.toFixed(1)}%</span>
+                      : <span style={{color:C.muted,fontSize:9}}>─</span>}
+                  </td>
+                ))}
+                <td style={{padding:"3px 8px",textAlign:"right"}}>
+                  {(()=>{
+                    const ceYtd=sumR(pD,"CE",0,emi);
+                    const hp=sumR(pD,"휴대폰",0,emi);
+                    const vYtd = selKey==="대외영업" ? sumR(pD,selKey,0,emi)-hp
+                               : selKey==="B2B"    ? sumR(pD,selKey,0,emi)-hp
+                               : sumR(pD,selKey,0,emi);
+                    const s = ceYtd>0?(vYtd/ceYtd*100).toFixed(1):null;
+                    return s?<span style={{color:KC.CE,fontWeight:700,fontSize:11}}>{s}%</span>
+                      :<span style={{color:C.muted}}>─</span>;
+                  })()}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ── 차트 그리드 ── */}
+      <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12}}>
+
+        {/* 월별 실적 추이 */}
+        <div style={{background:C.card2,border:`1px solid ${color}33`,borderRadius:10,padding:14}}>
+          <div style={{color:C.text,fontWeight:700,fontSize:12,marginBottom:8}}>
+            월별 실적 추이
+            <span style={{color:C.muted,fontSize:9,fontWeight:400,marginLeft:6}}>당월 실적 vs 목표 vs {prevYr||"전년"}년</span>
+          </div>
+          {mPerf.some((v,i)=>i<=emi&&v>0) ? (
+            <RichLineChart h={120} series={[
+              ...(mPrev?[{data:mPrev.map((v,i)=>i<=emi?v:null),color:"#a78bfa",op:.7,tooltipLabel:`${prevYr}년`}]:[]),
+              {data:mTgt.map((v,i)=>i<=emi?v:null),color:C.orange,dash:true,op:.7,tooltipLabel:"목표"},
+              {data:mPerf.map((v,i)=>i<=emi?v:null),color,bold:true,fill:true,showLabels:true,tooltipLabel:`${yr}년`},
+            ]} labels={MONTHS}/>
+          ) : <div style={{height:120,display:"flex",alignItems:"center",justifyContent:"center"}}>
+            <span style={{color:C.muted,fontSize:11}}>데이터 없음</span></div>}
+        </div>
+
+        {/* 누계 추이 */}
+        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:10,padding:14}}>
+          <div style={{color:C.text,fontWeight:700,fontSize:12,marginBottom:8}}>
+            누계 실적 추이
+            <span style={{color:C.muted,fontSize:9,fontWeight:400,marginLeft:6}}>3개년 비교</span>
+          </div>
+          {(()=>{
+            const c26 = makeArr26(pD,selKey);
+            const c25 = makeArr26(d25P,selKey);
+            const c24 = makeArr26(d24P,selKey);
+            return c26.some(v=>v!==null) ? (
+              <RichLineChart h={120} series={[
+                {data:c24,color:"#fbbf24",op:.7,medium:true,tooltipLabel:"24년"},
+                {data:c25,color:"#a78bfa",op:.85,medium:true,tooltipLabel:"25년"},
+                {data:c26,color,bold:true,fill:true,showLabels:true,tooltipLabel:"26년"},
+              ]} labels={MONTHS}/>
+            ) : <div style={{height:120,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span style={{color:C.muted,fontSize:11}}>데이터 없음</span></div>;
+          })()}
+        </div>
+
+        {/* 달성률 추이 */}
+        {annT>0&&(
+          <div style={{background:C.card2,border:`1px solid ${C.teal}33`,borderRadius:10,padding:14}}>
+            <div style={{color:C.text,fontWeight:700,fontSize:12,marginBottom:8}}>
+              달성률 추이
+              <span style={{color:C.muted,fontSize:9,fontWeight:400,marginLeft:6}}>당월 및 누계 달성률</span>
+            </div>
+            {mAr.some(v=>v!==null) ? (
+              <RichLineChart h={110} pctMode={true} series={[
+                {data:MONTHS.map((_,i)=>i<=emi?100:null),color:C.green,dash:true,op:.4,tooltipLabel:"100%기준",tooltipUnit:"%"},
+                {data:cumAr,color:C.orange,medium:true,op:.85,showLabels:true,tooltipLabel:"누계달성률",tooltipUnit:"%"},
+                {data:mAr,color:C.teal,bold:true,fill:true,tooltipLabel:"당월달성률",tooltipUnit:"%"},
+              ]} labels={MONTHS}/>
+            ) : <div style={{height:110,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span style={{color:C.muted,fontSize:11}}>목표 데이터 없음</span></div>}
+          </div>
         )}
 
-        {/* 히트맵 */}
-        {view==="heatmap"&&(
-          <>
-            <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:12}}>
-              전년동월비 성장률 히트맵 — {yr}년 · {mode}
+        {/* 성장률 추이 */}
+        {mPrev&&(
+          <div style={{background:C.card2,border:`1px solid ${C.orange}33`,borderRadius:10,padding:14}}>
+            <div style={{color:C.text,fontWeight:700,fontSize:12,marginBottom:8}}>
+              전년비 성장률
+              <span style={{color:C.muted,fontSize:9,fontWeight:400,marginLeft:6}}>당월 및 누계 성장률</span>
             </div>
-            {pRows?(
-              <table style={{borderCollapse:"collapse",width:"100%"}}>
-                <thead>
-                  <tr>
-                    <th style={{padding:"5px 10px",textAlign:"left",color:C.muted,fontWeight:600,fontSize:10,width:80}}>항목</th>
-                    {MONTHS.map(m=><th key={m} style={{padding:"5px 5px",textAlign:"center",
-                      color:C.muted,fontWeight:600,fontSize:10,minWidth:44}}>{m}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {ALL_KEYS.map(key=>(
-                    <tr key={key} style={{borderBottom:`1px solid ${C.b1}18`}}>
-                      <td style={{padding:"5px 10px",color:KC[key]||C.muted2,fontWeight:600,fontSize:11}}>{key}</td>
-                      {MONTHS.map((_,i)=>{
-                        const cv=mRows[i][key],pv=pRows[i][key];
-                        if(!cv&&!pv) return <td key={i} style={{padding:"5px 5px",textAlign:"center"}}>
-                          <span style={{color:C.muted,fontSize:10}}>-</span></td>;
-                        const gr=pv?((cv-pv)/pv*100):null;
-                        const inten=gr!==null?Math.min(Math.abs(gr)/25,1):0;
-                        const bg=gr===null?"transparent":gr>0?`rgba(45,212,136,${inten*.35})`:`rgba(240,112,112,${inten*.35})`;
-                        return (
-                          <td key={i} style={{padding:"5px 5px",textAlign:"center",background:bg,borderRadius:3}}>
-                            <span style={{color:gr===null?C.muted:gr>0?C.green:C.red,fontSize:10,fontWeight:600}}>
-                              {gr!==null?(gr>0?"+":"")+gr.toFixed(1)+"%":"-"}
-                            </span>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ):<div style={{padding:30,textAlign:"center",color:C.muted}}>전년 비교 기준 없음</div>}
-          </>
+            {mGr&&mGr.some(v=>v!==null) ? (
+              <RichLineChart h={110} grMode={true} zeroOffset={negMaxGr} series={[
+                {data:MONTHS.map((_,i)=>i<=emi?offsetGr(0):null),color:"rgba(255,255,255,.2)",dash:true,op:.5,tooltipLabel:"0%",tooltipUnit:"%"},
+                ...(cumGr?[{data:cumGr.map(offsetGr),color:"#a78bfa",medium:true,op:.85,tooltipLabel:"누계성장률",tooltipUnit:"%",grOffset:negMaxGr}]:[]),
+                {data:mGr.map(offsetGr),color:C.orange,bold:true,fill:true,showLabels:true,tooltipLabel:"당월성장률",tooltipUnit:"%",grOffset:negMaxGr},
+              ]} labels={MONTHS}/>
+            ) : <div style={{height:110,display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <span style={{color:C.muted,fontSize:11}}>전년 데이터 없음</span></div>}
+          </div>
         )}
+
       </div>
     </div>
   );
