@@ -668,105 +668,131 @@ function Dashboard({data,mode}){
             })}
           </div>
 
-          {/* ── 목표 잔여 현황 ── */}
+          {/* ── 전체 파트 연간 목표 진척 현황 (CE 제외) ── */}
           {(()=>{
             try {
-            const selPv  = ytd(p26,selKey);               // 누계 실적 (emi까지)
-            // 연간 목표: 12개월 전체 합산
-            const annualTv = (() => {
-              let s=0;
-              for(let i=0;i<12;i++) s+=gNum(fullRow(t26?.[sk(i)])?.[selKey]);
-              return s;
-            })();
-            if(annualTv<=0) return null;
-            // 연간 잔여 = 연간목표 - 누계실적
-            const annualRem = Math.max(annualTv - selPv, 0);
-            // 누계 달성률 = 누계실적 / 연간목표
-            const selAr = annualTv>0 ? (selPv/annualTv*100).toFixed(1) : null;
-            const color  = KC[selKey]||C.accent;
-            const remainMonths = 11 - emi; // 남은 월 수
-            const needPerMonth = remainMonths>0&&annualRem>0
-              ? Math.ceil(annualRem / remainMonths) : 0;
-            const pctNum = selAr ? parseFloat(selAr) : 0;
-            const r=28, stroke=6, circ=2*Math.PI*r;
-            const filled = isNaN(pctNum) ? 0 : Math.min(pctNum/100,1)*circ;
+            // CE 제외 파트 목록 (표시 순서)
+            const BAR_KEYS = ["혼수","입주","이사","SAC","거주중","SMB","농협","휴대폰"];
+            const remainMonths = 11 - emi;
+
+            // 각 파트 데이터 계산
+            const parts = BAR_KEYS.map(k => {
+              const perf  = ytd(p26, k);                         // 누계 실적
+              const annualTgt = (() => {
+                let s=0;
+                for(let i=0;i<12;i++) s+=gNum(fullRow(t26?.[sk(i)])?.[k]);
+                return s;
+              })();
+              const rem   = Math.max(annualTgt - perf, 0);
+              const arPct = annualTgt>0 ? perf/annualTgt*100 : 0;
+              const needPM= remainMonths>0&&rem>0 ? Math.ceil(rem/remainMonths) : 0;
+              return {k, perf, annualTgt, rem, arPct, needPM};
+            }).filter(d => d.annualTgt > 0);
+
+            if(parts.length === 0) return null;
+
             return (
-              <div style={{marginTop:14,padding:"14px 10px",
-                background:"rgba(0,0,0,.2)",borderRadius:10,
-                border:`1px solid ${color}30`}}>
-                <div style={{color:C.muted,fontSize:10,fontWeight:700,marginBottom:10,
-                  display:"flex",alignItems:"center",gap:6}}>
-                  <div style={{width:6,height:6,borderRadius:2,background:color}}/>
-                  {selKey} · 연간 목표 잔여 현황
+              <div style={{marginTop:14,padding:"12px 10px",
+                background:"rgba(0,0,0,.18)",borderRadius:10,
+                border:"1px solid rgba(255,255,255,.06)"}}>
+                {/* 헤더 */}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+                  marginBottom:10}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{width:6,height:6,borderRadius:2,
+                      background:"linear-gradient(135deg,#818cf8,#38bdf8)"}}/>
+                    <span style={{color:C.muted2,fontSize:10,fontWeight:700}}>
+                      파트별 연간 목표 진척 현황
+                    </span>
+                  </div>
+                  <span style={{color:C.muted,fontSize:9}}>
+                    잔여 {remainMonths}개월
+                  </span>
                 </div>
-                <div style={{display:"flex",gap:12,alignItems:"center"}}>
-                  {/* 원형 도넛 — 연간목표 대비 누계달성 */}
-                  <div style={{position:"relative",flexShrink:0}}>
-                    <svg width={70} height={70}>
-                      <circle cx={35} cy={35} r={r}
-                        fill="none" stroke="rgba(255,255,255,.06)" strokeWidth={stroke}/>
-                      <circle cx={35} cy={35} r={r}
-                        fill="none" stroke={color} strokeWidth={stroke}
-                        strokeDasharray={`${filled} ${circ}`}
-                        strokeLinecap="round"
-                        transform="rotate(-90 35 35)"
-                        style={{transition:"stroke-dasharray .6s ease"}}/>
-                      <text x={35} y={31} textAnchor="middle"
-                        fill={color} fontSize={11} fontWeight={900}>
-                        {selAr?selAr+"%":"─"}
-                      </text>
-                      <text x={35} y={41} textAnchor="middle"
-                        fill={C.muted} fontSize={7}>
-                        연간대비
-                      </text>
-                      <text x={35} y={50} textAnchor="middle"
-                        fill={C.muted} fontSize={7}>
-                        누계달성
-                      </text>
-                    </svg>
-                  </div>
-                  {/* 수치 상세 */}
-                  <div style={{flex:1,display:"flex",flexDirection:"column",gap:5}}>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <span style={{color:C.muted,fontSize:9}}>누계실적</span>
-                      <span style={{color:color,fontSize:12,fontWeight:800}}>
-                        {selPv>0?Math.round(selPv).toLocaleString()+"억":"─"}
-                      </span>
-                    </div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <span style={{color:C.muted,fontSize:9}}>연간목표</span>
-                      <span style={{color:C.muted2,fontSize:11,fontWeight:700}}>
-                        {Math.round(annualTv).toLocaleString()}억
-                      </span>
-                    </div>
-                    <div style={{height:1,background:C.b1}}/>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                      <span style={{color:C.muted,fontSize:9}}>연간 잔여목표</span>
-                      <span style={{color:annualRem>0?C.orange:C.green,fontSize:12,fontWeight:900}}>
-                        {annualRem>0?"-"+Math.round(annualRem).toLocaleString()+"억":"✓ 달성"}
-                      </span>
-                    </div>
-                    {needPerMonth>0&&remainMonths>0&&(
-                      <div style={{background:`${C.orange}15`,borderRadius:6,
-                        padding:"5px 8px",border:`1px solid ${C.orange}30`}}>
-                        <div style={{color:C.muted,fontSize:8,marginBottom:2}}>
-                          잔여 {remainMonths}개월 · 월평균 필요금액
+
+                {/* 파트별 가로 바 */}
+                <div style={{display:"flex",flexDirection:"column",gap:7}}>
+                  {parts.map(({k, perf, annualTgt, rem, arPct, needPM})=>{
+                    const color = KC[k]||C.accent;
+                    const fillW = Math.min(arPct, 100);
+                    const isAchieved = arPct >= 100;
+                    return (
+                      <div key={k}>
+                        {/* 파트명 + 금액 + 달성률 */}
+                        <div style={{display:"flex",justifyContent:"space-between",
+                          alignItems:"center",marginBottom:3}}>
+                          <div style={{display:"flex",alignItems:"center",gap:5,minWidth:44}}>
+                            <div style={{width:5,height:5,borderRadius:1,background:color,flexShrink:0}}/>
+                            <span style={{color:color,fontSize:10,fontWeight:800}}>{k}</span>
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            {/* 누계실적 / 연간목표 */}
+                            <span style={{color:C.text,fontSize:10,fontWeight:700}}>
+                              {Math.round(perf).toLocaleString()}
+                              <span style={{color:C.muted,fontSize:9,fontWeight:400}}>
+                                /{Math.round(annualTgt).toLocaleString()}억
+                              </span>
+                            </span>
+                            {/* 달성률 */}
+                            <span style={{
+                              color:isAchieved?C.green:arPct>=80?C.orange:C.red,
+                              fontSize:10,fontWeight:900,minWidth:38,textAlign:"right"
+                            }}>
+                              {arPct.toFixed(1)}%
+                            </span>
+                          </div>
                         </div>
-                        <div style={{display:"flex",alignItems:"baseline",gap:3}}>
-                          <span style={{color:C.orange,fontSize:14,fontWeight:900}}>
-                            {Math.round(needPerMonth).toLocaleString()}억
-                          </span>
-                          <span style={{color:C.muted,fontSize:9}}>/월</span>
+
+                        {/* 가로 바 */}
+                        <div style={{height:8,background:"rgba(255,255,255,.06)",
+                          borderRadius:4,overflow:"visible",position:"relative"}}>
+                          {/* 실적 채움 */}
+                          <div style={{
+                            height:"100%",
+                            width:`${fillW}%`,
+                            background:`linear-gradient(90deg,${color}cc,${color})`,
+                            borderRadius:4,
+                            boxShadow:`0 0 6px ${color}50`,
+                            transition:"width .6s ease",
+                            position:"relative",
+                          }}>
+                            {/* 초과달성 표시 */}
+                            {arPct>100&&(
+                              <div style={{
+                                position:"absolute",right:-2,top:-1,
+                                height:10,width:Math.min((arPct-100)/100*fillW,20),
+                                background:C.green,borderRadius:2,opacity:.7
+                              }}/>
+                            )}
+                          </div>
                         </div>
+
+                        {/* 잔여 + 월평균 필요 */}
+                        {!isAchieved && rem > 0 && (
+                          <div style={{display:"flex",justifyContent:"flex-end",
+                            alignItems:"center",gap:6,marginTop:2}}>
+                            <span style={{color:C.muted,fontSize:8}}>
+                              잔여 <span style={{color:C.orange,fontWeight:700}}>
+                                {Math.round(rem).toLocaleString()}억
+                              </span>
+                            </span>
+                            {needPM>0&&remainMonths>0&&(
+                              <span style={{color:C.muted,fontSize:8}}>
+                                월평균 <span style={{color:C.blue,fontWeight:700}}>
+                                  {Math.round(needPM).toLocaleString()}억
+                                </span> 필요
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        {isAchieved&&(
+                          <div style={{textAlign:"right",marginTop:2}}>
+                            <span style={{color:C.green,fontSize:8,fontWeight:700}}>🎯 달성</span>
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {annualRem===0&&selPv>0&&(
-                      <div style={{background:`${C.green}15`,borderRadius:6,
-                        padding:"5px 8px",border:`1px solid ${C.green}30`,textAlign:"center"}}>
-                        <span style={{color:C.green,fontSize:11,fontWeight:800}}>🎯 연간목표 달성!</span>
-                      </div>
-                    )}
-                  </div>
+                    );
+                  })}
                 </div>
               </div>
             );
@@ -1476,13 +1502,20 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport}){
     const other = type==="perf" ? tD : null;
     const clr   = colorOverride || (type==="perf"?mColor:C.blue);
 
-    // 누계 합산: emi(실적 마지막 입력월)까지만
-    const yearSum  = sumR(d,     row.key, 0, emi);
-    const yearPrev = prevP ? sumR(prevP, row.key, 0, emi) : 0;
-    const yearTgt  = sumR(tD,    row.key, 0, emi);
+    // 합계 계산:
+    // - perf: emi(실적 마지막 입력월)까지 누계
+    // - target: 입력된 전 월 합산(12개월), 입력된 월만큼 반영
+    const isTarget = type === "target";
+    const yearSum  = isTarget ? sumM(d, row.key) : sumR(d, row.key, 0, emi);
+    // 전년 실적 비교: target은 12개월 전체, perf는 emi까지
+    const yearPrev = prevP
+      ? (isTarget ? sumM(prevP, row.key) : sumR(prevP, row.key, 0, emi))
+      : 0;
+    // 실적 달성률용 목표 누계 (emi까지)
+    const yearTgt  = sumR(tD, row.key, 0, emi);
     const yearAr   = type==="perf"&&hasTgt&&yearTgt>0 ? pct(yearSum,yearTgt) : null;
-    const yearGr   = prevP&&yearPrev>0 ? grw(yearSum,yearPrev) : null;
-    const tgtGr    = type==="target"&&prevP&&yearPrev>0 ? grw(yearSum,yearPrev) : null;
+    const yearGr   = type==="perf"&&prevP&&yearPrev>0 ? grw(yearSum,yearPrev) : null;
+    const tgtGr    = isTarget&&prevP&&yearPrev>0 ? grw(yearSum,yearPrev) : null;
 
     const rowBg = type==="perf"
       ? (GROUP_BG[row.key]||"transparent")
@@ -1567,7 +1600,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport}){
             )}
             {(yearGr||tgtGr)&&(
               <span style={{display:"flex",alignItems:"center",gap:2}}>
-                <span style={{color:C.muted,fontSize:8}}>누계성장</span>
+                <span style={{color:C.muted,fontSize:8}}>{isTarget?"전년비":"누계성장"}</span>
                 <span style={{color:grwC(yearGr||tgtGr),fontSize:10,fontWeight:700}}>{grwT(yearGr||tgtGr)}</span>
               </span>
             )}
@@ -1790,7 +1823,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport}){
                           {prevYr&&<div style={{fontSize:8,fontWeight:400,marginTop:1}}><span style={{color:C.green}}>전년비</span></div>}
                         </BulkTH>
                       ))}
-                      <BulkTH right c={C.blue} w={110}><div>{MONTHS[emi]} 누계</div><div style={{fontSize:8,marginTop:1}}><span style={{color:C.green}}>전년동기비</span></div></BulkTH>
+                      <BulkTH right c={C.blue} w={110}><div>연간 합계</div><div style={{fontSize:8,marginTop:1}}><span style={{color:C.green}}>전년비</span></div></BulkTH>
                     </tr>
                   </thead>
                   <tbody>
