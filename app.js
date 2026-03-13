@@ -3155,6 +3155,17 @@ function App(){
           onMouseLeave={e=>{e.currentTarget.style.background="#f5b94210";e.currentTarget.style.borderColor="#f5b94240";}}>
             🖨️{!isMobile&&" 레포트"}
           </button>
+          {/* 달성계획 링크 버튼 */}
+          <a href="plan.html" target="_blank" rel="noopener noreferrer" style={{
+            padding:"5px 12px",borderRadius:7,border:`1px solid #7c83f540`,
+            background:"#7c83f510",color:"#7c83f5",fontWeight:700,fontSize:11,
+            textDecoration:"none",display:"flex",alignItems:"center",gap:5,
+            transition:"all .15s",marginLeft:4,whiteSpace:"nowrap",
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.background="#7c83f522";e.currentTarget.style.borderColor="#7c83f5";}}
+          onMouseLeave={e=>{e.currentTarget.style.background="#7c83f510";e.currentTarget.style.borderColor="#7c83f540";}}>
+            📋{!isMobile&&" 달성계획"}
+          </a>
           {!isMobile&&(
             <div style={{marginLeft:"auto",display:"flex",gap:5}}>
               <Chip c={C.muted2}>24년</Chip>
