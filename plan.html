@@ -275,23 +275,101 @@ function Chip({c,children}){
 }
 
 // ── 자동 높이 textarea
-function AutoTextarea({value,onChange,placeholder,minHeight=220,readOnly=false,style={}}){
+function AutoTextarea({value,onChange,placeholder,minHeight=220,readOnly=false,fontSize=14,style={}}){
   const ref=useRef(null);
   useEffect(()=>{
     const el=ref.current;
     if(!el)return;
     el.style.height="auto";
     el.style.height=Math.max(minHeight,el.scrollHeight)+"px";
-  },[value,minHeight]);
+  },[value,minHeight,fontSize]);
   return(
     <textarea ref={ref} value={value} onChange={readOnly?undefined:onChange}
       readOnly={readOnly} placeholder={readOnly?"":placeholder}
-      style={{width:"100%",minHeight:minHeight,background:readOnly?"rgba(255,255,255,.03)":C.bg,
-        border:`1px solid ${readOnly?C.b1:C.accent+"50"}`,borderRadius:8,
-        padding:"14px 16px",color:readOnly?C.muted2:C.text,fontSize:13,lineHeight:1.7,
+      style={{width:"100%",minHeight:minHeight,background:C.bg,
+        border:`1px solid ${readOnly?"rgba(255,255,255,.12)":C.accent+"60"}`,borderRadius:8,
+        padding:"14px 16px",color:C.text,fontSize:fontSize,lineHeight:1.75,
         outline:"none",resize:readOnly?"none":"vertical",overflow:"hidden",
-        cursor:readOnly?"default":"text",
-        transition:"height .1s ease, background .2s, border-color .2s",...style}}/>
+        cursor:readOnly?"default":"text",opacity:readOnly?.85:1,
+        transition:"height .1s ease, border-color .2s",...style}}/>
+  );
+}
+
+// ── 리치 에디터 (툴바 포함)
+function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fontSize=14,style={}}){
+  const ref=useRef(null);
+  useEffect(()=>{
+    const el=ref.current;
+    if(!el)return;
+    el.style.height="auto";
+    el.style.height=Math.max(minHeight,el.scrollHeight)+"px";
+  },[value,minHeight,fontSize]);
+
+  const insert=(prefix,suffix="")=>{
+    const el=ref.current;
+    if(!el||readOnly)return;
+    const s=el.selectionStart,e=el.selectionEnd;
+    const sel=value.slice(s,e);
+    const next=value.slice(0,s)+prefix+sel+suffix+value.slice(e);
+    onChange({target:{value:next}});
+    setTimeout(()=>{el.focus();el.setSelectionRange(s+prefix.length,e+prefix.length);},0);
+  };
+  const insertLine=(prefix)=>{
+    const el=ref.current;
+    if(!el||readOnly)return;
+    const s=el.selectionStart;
+    const before=value.slice(0,s);
+    const lineStart=before.lastIndexOf("\n")+1;
+    const next=value.slice(0,lineStart)+prefix+value.slice(lineStart);
+    onChange({target:{value:next}});
+    setTimeout(()=>{el.focus();el.setSelectionRange(s+prefix.length,s+prefix.length);},0);
+  };
+
+  const tools=[
+    {label:"•",title:"글머리 (•)",act:()=>insertLine("• ")},
+    {label:"–",title:"대시 (–)",act:()=>insertLine("– ")},
+    {label:"✓",title:"체크 (✓)",act:()=>insertLine("✓ ")},
+    {label:"▶",title:"화살표 (▶)",act:()=>insertLine("▶ ")},
+    {label:"★",title:"별 (★)",act:()=>insert("★ ")},
+    {label:"[ ]",title:"구분선",act:()=>{
+      const el=ref.current;if(!el||readOnly)return;
+      const s=el.selectionStart;
+      const nl=value.slice(0,s).endsWith("\n")||s===0?"":"\n";
+      const next=value.slice(0,s)+nl+"─────────────────\n"+value.slice(s);
+      onChange({target:{value:next}});
+    }},
+  ];
+
+  return(
+    <div style={{borderRadius:8,overflow:"hidden",border:`1px solid ${readOnly?"rgba(255,255,255,.12)":C.accent+"60"}`,transition:"border-color .2s"}}>
+      {/* 툴바 */}
+      <div style={{
+        display:"flex",gap:3,padding:"6px 10px",
+        background:readOnly?"rgba(255,255,255,.02)":"rgba(124,131,245,.08)",
+        borderBottom:`1px solid ${readOnly?"rgba(255,255,255,.06)":C.accent+"30"}`,
+        flexWrap:"wrap",alignItems:"center"}}>
+        {!readOnly&&tools.map((t,i)=>(
+          <button key={i} title={t.title} onClick={t.act} style={{
+            padding:"3px 8px",borderRadius:4,border:`1px solid ${C.b1}`,
+            background:"rgba(255,255,255,.05)",color:C.muted2,cursor:"pointer",
+            fontSize:11,fontWeight:700,fontFamily:"monospace",
+            transition:"background .15s, color .15s"}}
+            onMouseEnter={e=>{e.target.style.background=C.accent+"30";e.target.style.color=C.accent;}}
+            onMouseLeave={e=>{e.target.style.background="rgba(255,255,255,.05)";e.target.style.color=C.muted2;}}>
+            {t.label}
+          </button>
+        ))}
+        {readOnly&&<span style={{color:C.muted,fontSize:10}}>🔒 읽기 전용 — 수정하려면 위의 수정 버튼을 클릭하세요</span>}
+        {!readOnly&&<span style={{color:C.muted,fontSize:9,marginLeft:"auto"}}>Tab·Enter 자유 입력</span>}
+      </div>
+      <textarea ref={ref} value={value} onChange={readOnly?undefined:onChange}
+        readOnly={readOnly} placeholder={readOnly?"":placeholder}
+        style={{width:"100%",minHeight:minHeight,background:C.bg,border:"none",
+          padding:"14px 16px",color:C.text,fontSize:fontSize,lineHeight:1.8,
+          outline:"none",resize:readOnly?"none":"vertical",overflow:"hidden",
+          display:"block",cursor:readOnly?"default":"text",opacity:readOnly?.85:1,
+          transition:"height .1s ease",...style}}/>
+    </div>
   );
 }
 
@@ -321,6 +399,9 @@ function PlanApp(){
   const [planInput,setPlanInput]=useState("26");
   const [selMonth,setSelMonth]=useState("annual"); // 'annual' | 0~11
   const [isEditing,setIsEditing]=useState(false);   // 수정 모드 잠금
+  const [fontSize,setFontSize]=useState(14);         // 글자 크기
+  const [prevNoteYr,setPrevNoteYr]=useState("25");  // 전년도 주요사항 연도
+  const [prevNoteMonth,setPrevNoteMonth]=useState("annual");
   const autoSaveTimer=useRef(null);
 
   // Firebase 로드
@@ -575,6 +656,16 @@ function PlanApp(){
                 {y}년
               </button>
             ))}
+          </div>
+          {/* 글자 크기 */}
+          <div style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,.05)",borderRadius:6,padding:"3px 6px"}}>
+            <button onClick={()=>setFontSize(f=>Math.max(11,f-1))} style={{
+              padding:"2px 6px",border:"none",background:"transparent",color:C.muted,
+              cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:700}}>A−</button>
+            <span style={{color:C.muted2,fontSize:10,minWidth:22,textAlign:"center"}}>{fontSize}</span>
+            <button onClick={()=>setFontSize(f=>Math.min(20,f+1))} style={{
+              padding:"2px 6px",border:"none",background:"transparent",color:C.muted,
+              cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:700}}>A+</button>
           </div>
           <button onClick={handleSave} disabled={!isEditing||!hasDraft||saveState==="saving"} style={{
             padding:"6px 14px",borderRadius:6,
@@ -878,39 +969,26 @@ function PlanApp(){
           ]}/>}
         </div>
 
-        {/* ── [4] 달성 계획 입력 (텍스트 에디터) */}
+        {/* ── [4] 달성 계획 입력 */}
         <div style={{background:C.card2,border:`2px solid ${C.accent}44`,borderRadius:12,padding:16}}>
+
+          {/* 헤더: 연도선택 + 잠금상태 */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
-            <div>
-              <div style={{fontWeight:800,fontSize:13,color:C.text}}>
-                {isEditing?"✏️":"🔒"} 달성 계획
-                <span style={{color:C.muted,fontWeight:400,fontSize:11,marginLeft:8}}>{mode} · {part}</span>
-                <span style={{
-                  marginLeft:8,fontSize:10,fontWeight:700,padding:"2px 7px",borderRadius:4,
-                  background:isEditing?C.orange+"22":C.muted+"18",
-                  color:isEditing?C.orange:C.muted,border:`1px solid ${isEditing?C.orange+"50":C.b1}`}}>
-                  {isEditing?"편집 중":"저장됨"}
-                </span>
-              </div>
-              {hasDraft&&isEditing&&<div style={{marginTop:4}}><Chip c={C.orange}>● 미저장 변경사항 있음</Chip></div>}
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <span style={{fontWeight:800,fontSize:14,color:C.text}}>{isEditing?"✏️":"🔒"} 달성 계획</span>
+              <span style={{color:C.muted,fontSize:11}}>{mode} · {part}</span>
+              <span style={{
+                fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:4,
+                background:isEditing?C.orange+"28":C.muted+"18",
+                color:isEditing?C.orange:C.muted,border:`1px solid ${isEditing?C.orange+"50":C.b1}`}}>
+                {isEditing?"편집 중":"저장됨"}
+              </span>
+              {hasDraft&&isEditing&&<Chip c={C.orange}>● 미저장</Chip>}
             </div>
-            <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
               <span style={{color:C.muted,fontSize:10}}>입력 연도:</span>
-              {YRS.map(y=><TabBtn key={y} label={y+"년"} active={planInput===y} color={C.accent} onClick={()=>setPlanInput(y)}/>)}
-              <div style={{width:1,height:20,background:C.b1,margin:"0 2px"}}/>
-              {isEditing?(
-                <button onClick={()=>{setTextDraft({});setIsEditing(false);}} style={{
-                  padding:"5px 12px",borderRadius:6,cursor:"pointer",fontWeight:700,fontSize:11,
-                  fontFamily:"inherit",border:`1px solid ${C.muted}`,background:"transparent",color:C.muted}}>
-                  취소
-                </button>
-              ):(
-                <button onClick={()=>setIsEditing(true)} style={{
-                  padding:"5px 14px",borderRadius:6,cursor:"pointer",fontWeight:700,fontSize:11,
-                  fontFamily:"inherit",border:`1px solid ${C.accent}`,background:C.accent+"22",color:C.accent}}>
-                  ✏️ 수정
-                </button>
-              )}
+              {YRS.map(y=><TabBtn key={y} label={y+"년"} active={planInput===y} color={C.accent}
+                onClick={()=>{setPlanInput(y);setPrevNoteYr(y==="26"?"25":y==="25"?"24":"23");}}/>)}
             </div>
           </div>
 
@@ -930,8 +1008,7 @@ function PlanApp(){
                   padding:"5px 10px",borderRadius:6,cursor:"pointer",fontWeight:700,fontSize:11,
                   fontFamily:"inherit",border:`1px solid ${selMonth===i?color:hasTxt?color+"60":C.b1}`,
                   background:selMonth===i?color+"22":hasTxt?color+"10":"transparent",
-                  color:selMonth===i?color:hasTxt?color+"cc":C.muted,
-                  position:"relative"}}>
+                  color:selMonth===i?color:hasTxt?color+"cc":C.muted,position:"relative"}}>
                   {m}
                   {hasTxt&&selMonth!==i&&<span style={{position:"absolute",top:2,right:2,width:4,height:4,borderRadius:"50%",background:color,display:"block"}}/>}
                 </button>
@@ -939,79 +1016,147 @@ function PlanApp(){
             })}
           </div>
 
-          {/* 선택 월 참고 정보 */}
-          <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
-            <div style={{background:C.card,borderRadius:8,padding:"10px 16px",border:`1px solid ${C.b1}`,flex:1,minWidth:120}}>
-              <div style={{color:C.muted,fontSize:9,fontWeight:700,marginBottom:2}}>
-                {selMonth==="annual"?"연간 목표":`${MONTHS[selMonth]} 목표`}
+          {/* 참고 카드 */}
+          <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+            {[
+              {label:selMonth==="annual"?"연간 목표":`${MONTHS[selMonth]} 목표`,val:fmtN(selTgt),c:C.orange},
+              {label:selMonth==="annual"?"전년 연간 실적":`${MONTHS[selMonth]} 전년 실적`,val:fmtN(selPrev),c:C.muted2},
+              {label:"성장 목표",val:selGrowthTarget?(gNum(selGrowthTarget)>=0?"▲":"▼")+Math.abs(gNum(selGrowthTarget)).toFixed(1)+"%":"─",
+               c:selGrowthTarget?grwC(selGrowthTarget):C.muted},
+              ...(selMi!==null&&selPerf>0?[{label:`${MONTHS[selMi]} 실적`,
+                val:fmtN(selPerf)+(selAr?` (${Math.round(gNum(selAr))}%)` :""),c:color}]:[]),
+            ].map(({label,val,c})=>(
+              <div key={label} style={{background:C.card,borderRadius:8,padding:"10px 16px",border:`1px solid ${C.b1}`,flex:1,minWidth:120}}>
+                <div style={{color:C.muted,fontSize:9,fontWeight:700,marginBottom:3}}>{label}</div>
+                <div style={{color:c,fontSize:16,fontWeight:900}}>{val}</div>
               </div>
-              <div style={{color:C.orange,fontSize:15,fontWeight:900}}>{fmtN(selTgt)}</div>
-            </div>
-            <div style={{background:C.card,borderRadius:8,padding:"10px 16px",border:`1px solid ${C.b1}`,flex:1,minWidth:120}}>
-              <div style={{color:C.muted,fontSize:9,fontWeight:700,marginBottom:2}}>
-                {selMonth==="annual"?"전년 실적(누계)":`${MONTHS[selMonth]} 전년 실적`}
-              </div>
-              <div style={{color:C.muted2,fontSize:15,fontWeight:900}}>{fmtN(selPrev)}</div>
-            </div>
-            <div style={{background:C.card,borderRadius:8,padding:"10px 16px",border:`1px solid ${C.b1}`,flex:1,minWidth:120}}>
-              <div style={{color:C.muted,fontSize:9,fontWeight:700,marginBottom:2}}>성장 목표 (목표/전년)</div>
-              <div style={{color:selGrowthTarget?grwC(selGrowthTarget):C.muted,fontSize:15,fontWeight:900}}>
-                {selGrowthTarget?(gNum(selGrowthTarget)>=0?"▲":"▼")+Math.abs(gNum(selGrowthTarget)).toFixed(1)+"%":"─"}
-              </div>
-            </div>
-            {selMi!==null&&selPerf>0&&(
-              <div style={{background:C.card,borderRadius:8,padding:"10px 16px",border:`1px solid ${C.b1}`,flex:1,minWidth:120}}>
-                <div style={{color:C.muted,fontSize:9,fontWeight:700,marginBottom:2}}>{MONTHS[selMi]} 실적</div>
-                <div style={{color,fontSize:15,fontWeight:900}}>{fmtN(selPerf)}</div>
-                {selAr&&<div style={{color:pctC(selAr),fontSize:10,marginTop:2}}>{Math.round(gNum(selAr))}% 달성</div>}
-              </div>
-            )}
+            ))}
           </div>
 
-          {/* 텍스트 에디터 */}
-          <div style={{marginBottom:10}}>
-            <div style={{color:C.muted2,fontSize:10,fontWeight:700,marginBottom:6}}>
-              {selMonth==="annual"?`📝 연간 달성 계획`:` 📝 ${MONTHS[selMonth]} 달성 계획`}
-              <span style={{color:C.muted,fontWeight:400,marginLeft:8}}>목표 달성을 위한 전략과 실행 계획을 입력하세요</span>
+          {/* 달성 계획 에디터 */}
+          <div style={{marginBottom:6}}>
+            <div style={{color:C.accent,fontSize:11,fontWeight:700,marginBottom:8}}>
+              📝 {selMonth==="annual"?"연간":"${MONTHS[selMonth]}"} 달성 계획
+              <span style={{color:C.muted,fontWeight:400,marginLeft:6,fontSize:10}}>({planInput}년 · {mode} · {part})</span>
             </div>
-            <AutoTextarea
+            <RichEditor
               value={currentText}
               onChange={e=>setText(planInput,mode,part,selMonth==="annual"?"annual":String(selMonth),e.target.value)}
               placeholder={"예)\n• 핵심 거래처 집중 공략: ○○가구 등 상위 10개사 목표 관리\n• 신규 개척: 신혼부부 대상 패키지 제안 확대\n• 캠페인 연계: 봄 이사철 프로모션 적극 활용\n• 리스크 관리: 전년 대비 취약 월 보완 방안 수립"}
-              minHeight={220}
+              minHeight={240}
               readOnly={!isEditing}
-              style={{boxShadow:isEditing&&hasDraft?`0 0 0 2px ${C.accent}30`:"none",transition:"box-shadow .2s, height .1s ease"}}
+              fontSize={fontSize}
             />
           </div>
 
-          {/* 전년도 주요 사항 */}
-          <div style={{marginTop:10,marginBottom:10}}>
-            <div style={{color:C.muted2,fontSize:10,fontWeight:700,marginBottom:6}}>
-              📌 전년도 주요 사항
-              <span style={{color:C.muted,fontWeight:400,marginLeft:8}}>전년 실적 특이사항, 참고할 내용을 간략히 입력하세요</span>
+          {/* 하단 버튼 바 (수정/취소/저장 한 줄) */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:14,flexWrap:"wrap",gap:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              {saveState==="saved"&&<span style={{color:C.green,fontSize:11,fontWeight:700}}>✅ 저장 완료</span>}
+              {saveState==="error"&&<span style={{color:C.red,fontSize:11,fontWeight:700}}>❌ 저장 오류</span>}
+              {hasDraft&&isEditing&&saveState==="idle"&&<span style={{color:C.muted,fontSize:10}}>● 3초 후 로컬 자동저장</span>}
             </div>
-            <AutoTextarea
-              value={getText(planInput==="26"?"25":planInput==="25"?"24":"24",mode,part,selMonth==="annual"?"annual":String(selMonth))}
-              onChange={e=>setText(planInput==="26"?"25":planInput==="25"?"24":"24",mode,part,selMonth==="annual"?"annual":String(selMonth),e.target.value)}
-              placeholder={"예)\n• 1분기: 혼수 이사 수요 호조로 목표 초과달성\n• 하반기: 경기침체로 고가 제품 판매 부진\n• 연간 달성률 103%, 전년비 +5%"}
-              minHeight={100}
+            <div style={{display:"flex",gap:6,alignItems:"center"}}>
+              {isEditing?(
+                <>
+                  <button onClick={()=>{setTextDraft({});setIsEditing(false);}} style={{
+                    padding:"7px 16px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:12,
+                    fontFamily:"inherit",border:`1px solid ${C.muted}`,background:"transparent",color:C.muted}}>
+                    취소
+                  </button>
+                  <button onClick={handleSave} disabled={!hasDraft||saveState==="saving"} style={{
+                    padding:"7px 20px",borderRadius:7,fontWeight:700,fontSize:12,fontFamily:"inherit",
+                    border:"none",cursor:hasDraft?"pointer":"default",
+                    background:hasDraft?C.accent:"rgba(255,255,255,.08)",
+                    color:hasDraft?"#fff":C.muted,opacity:saveState==="saving"?.6:1}}>
+                    {saveState==="saving"?"저장 중...":"💾 저장"}
+                  </button>
+                </>
+              ):(
+                <button onClick={()=>setIsEditing(true)} style={{
+                  padding:"7px 20px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:12,
+                  fontFamily:"inherit",border:`1px solid ${C.accent}`,background:C.accent+"22",color:C.accent}}>
+                  ✏️ 수정
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── [5] 전년도 주요 사항 (완전 독립 섹션) */}
+        <div style={{background:C.card2,border:`1px solid ${C.muted}30`,borderRadius:12,padding:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <span style={{fontWeight:800,fontSize:14,color:C.text}}>📌 전년도 주요 사항</span>
+              <span style={{color:C.muted,fontSize:11}}>{mode} · {part}</span>
+            </div>
+            <div style={{display:"flex",gap:4,alignItems:"center",flexWrap:"wrap"}}>
+              <span style={{color:C.muted,fontSize:10}}>연도:</span>
+              {["25","24","23"].map(y=><TabBtn key={y} label={y+"년"} active={prevNoteYr===y} color={C.muted2} onClick={()=>setPrevNoteYr(y)}/>)}
+            </div>
+          </div>
+
+          {/* 전년도 월 선택 */}
+          <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:12}}>
+            <button onClick={()=>setPrevNoteMonth("annual")} style={{
+              padding:"4px 10px",borderRadius:5,cursor:"pointer",fontWeight:700,fontSize:10,
+              fontFamily:"inherit",border:`1px solid ${prevNoteMonth==="annual"?C.muted2:C.b1}`,
+              background:prevNoteMonth==="annual"?C.muted2+"22":"transparent",
+              color:prevNoteMonth==="annual"?C.muted2:C.muted}}>
+              연간
+            </button>
+            {MONTHS.map((m,i)=>{
+              const hasTxt=getText("prev_"+prevNoteYr,mode,part,String(i)).length>0;
+              return(
+                <button key={i} onClick={()=>setPrevNoteMonth(i)} style={{
+                  padding:"4px 8px",borderRadius:5,cursor:"pointer",fontWeight:700,fontSize:10,
+                  fontFamily:"inherit",border:`1px solid ${prevNoteMonth===i?C.muted2:hasTxt?C.muted2+"50":C.b1}`,
+                  background:prevNoteMonth===i?C.muted2+"22":hasTxt?C.muted2+"0a":"transparent",
+                  color:prevNoteMonth===i?C.muted2:hasTxt?C.muted2:C.muted,position:"relative"}}>
+                  {m}
+                  {hasTxt&&prevNoteMonth!==i&&<span style={{position:"absolute",top:1,right:1,width:3,height:3,borderRadius:"50%",background:C.muted2,display:"block"}}/>}
+                </button>
+              );
+            })}
+          </div>
+
+          <div style={{marginBottom:6}}>
+            <div style={{color:C.muted2,fontSize:11,fontWeight:700,marginBottom:8}}>
+              {prevNoteMonth==="annual"?"연간":"${MONTHS[prevNoteMonth]}"} 주요 사항
+              <span style={{color:C.muted,fontWeight:400,marginLeft:6,fontSize:10}}>({prevNoteYr}년 실적 특이사항, 참고 내용)</span>
+            </div>
+            <RichEditor
+              value={getText("prev_"+prevNoteYr,mode,part,prevNoteMonth==="annual"?"annual":String(prevNoteMonth))}
+              onChange={e=>setText("prev_"+prevNoteYr,mode,part,prevNoteMonth==="annual"?"annual":String(prevNoteMonth),e.target.value)}
+              placeholder={"예)\n• 1분기: 혼수·이사 수요 호조로 목표 초과달성\n• 하반기: 경기침체로 고가 제품 판매 부진\n• 연간 달성률 103%, 전년비 +5%"}
+              minHeight={140}
               readOnly={!isEditing}
-              style={{fontSize:12,border:`1px solid ${isEditing?C.muted+"60":C.b1}`}}
+              fontSize={fontSize-1}
             />
           </div>
 
-          {/* 저장 버튼 */}
-          <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:10}}>
-            {saveState==="saved"&&<span style={{color:C.green,fontSize:11}}>✅ Firebase 저장 완료</span>}
-            {saveState==="error"&&<span style={{color:C.red,fontSize:11}}>❌ 저장 오류 발생</span>}
-            {hasDraft&&saveState==="idle"&&<span style={{color:C.muted,fontSize:10}}>3초 후 로컬 자동저장</span>}
-            {isEditing&&(
-              <button onClick={handleSave} disabled={!hasDraft||saveState==="saving"} style={{
-                padding:"8px 20px",borderRadius:7,cursor:hasDraft?"pointer":"default",fontWeight:700,
-                fontSize:12,fontFamily:"inherit",border:"none",
-                background:saveState==="saving"?C.muted:hasDraft?C.accent:"rgba(255,255,255,.06)",
-                color:hasDraft?"#fff":C.muted,opacity:saveState==="saving"?.7:1}}>
-                {saveState==="saving"?"저장 중...":"💾 저장"}
+          {/* 하단 버튼 */}
+          <div style={{display:"flex",justifyContent:"flex-end",gap:6,marginTop:12}}>
+            {isEditing?(
+              <>
+                <button onClick={()=>{setTextDraft({});setIsEditing(false);}} style={{
+                  padding:"6px 14px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:11,
+                  fontFamily:"inherit",border:`1px solid ${C.muted}`,background:"transparent",color:C.muted}}>
+                  취소
+                </button>
+                <button onClick={handleSave} disabled={!hasDraft||saveState==="saving"} style={{
+                  padding:"6px 18px",borderRadius:7,fontWeight:700,fontSize:11,fontFamily:"inherit",
+                  border:"none",cursor:hasDraft?"pointer":"default",
+                  background:hasDraft?C.accent:"rgba(255,255,255,.08)",
+                  color:hasDraft?"#fff":C.muted,opacity:saveState==="saving"?.6:1}}>
+                  {saveState==="saving"?"저장 중...":"💾 저장"}
+                </button>
+              </>
+            ):(
+              <button onClick={()=>setIsEditing(true)} style={{
+                padding:"6px 18px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:11,
+                fontFamily:"inherit",border:`1px solid ${C.muted2}`,background:C.muted2+"18",color:C.muted2}}>
+                ✏️ 수정
               </button>
             )}
           </div>
