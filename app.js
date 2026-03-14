@@ -22,19 +22,11 @@ const FONT_SIZE_KEY = "cst_font_size_v1";
   if(!document.getElementById("cst-spin-style")){
     const s=document.createElement("style");
     s.id="cst-spin-style";
-    s.textContent=":root{--app-fs:15px;--app-fs-sm:13px;--app-fs-xs:11px}"+
-      "#root{font-size:var(--app-fs)}"+
-      "#root .tbl-cell{font-size:var(--app-fs-sm)}"+
+    s.textContent=
+      "#app-content{transform-origin:top left;transition:transform .15s ease;}"+
       "@keyframes spin{to{transform:rotate(360deg)}}"+
       "@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}";
     document.head.appendChild(s);
-  }
-  // 저장된 폰트 크기 즉시 적용
-  const saved=parseInt(localStorage.getItem("cst_font_size_v1"));
-  if(saved&&saved>=12&&saved<=19){
-    document.documentElement.style.setProperty("--app-fs",saved+"px");
-    document.documentElement.style.setProperty("--app-fs-sm",(saved-2)+"px");
-    document.documentElement.style.setProperty("--app-fs-xs",(saved-4)+"px");
   }
 })();
 
@@ -3158,11 +3150,13 @@ function App(){
   const [globalFontSize,setGlobalFontSize] = useState(
     ()=>parseInt(localStorage.getItem(FONT_SIZE_KEY))||15
   );
-  // CSS 변수로 전역 반영
+  // zoom으로 전체 스케일링
   useEffect(()=>{
-    document.documentElement.style.setProperty('--app-fs', globalFontSize+'px');
-    document.documentElement.style.setProperty('--app-fs-sm', (globalFontSize-2)+'px');
-    document.documentElement.style.setProperty('--app-fs-xs', (globalFontSize-4)+'px');
+    const el=document.getElementById('app-content');
+    if(!el)return;
+    const ratio=globalFontSize/14; // 14px 기준
+    el.style.transform=`scale(${ratio})`;
+    el.style.width=`${100/ratio}%`;
     localStorage.setItem(FONT_SIZE_KEY, globalFontSize);
   },[globalFontSize]);
   const isMobile = useIsMobile();
@@ -3361,6 +3355,7 @@ function App(){
             <span style={{color:mColor,fontSize:13,fontWeight:700,marginLeft:8}}>· {mode}</span>
           </h1>
         </div>
+        <div id="app-content" style={{transformOrigin:"top left",transition:"transform .15s ease"}}>
         <ErrorBoundary key={tab+mode}>
           {!dbReady ? (
             /* Firebase 응답 전 — 빈 데이터로 렌더 방지 */
@@ -3389,6 +3384,7 @@ function App(){
             </>
           )}
         </ErrorBoundary>
+        </div>{/* app-content 끝 */}
       </div>
 
       {/* 목표 잠금해제 비번 모달 */}

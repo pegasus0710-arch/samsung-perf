@@ -25,13 +25,8 @@
   </script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    :root{--plan-fs:16px;--plan-fs-sm:14px;--plan-fs-xs:12px}
     body{background:#07101f;color:#e8f4fd;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;min-height:100vh}
-    #root *{font-size:inherit}
-    #root{font-size:var(--plan-fs)}
-    #root table td, #root table th{font-size:var(--plan-fs-sm)}
-    #root .kpi-val{font-size:calc(var(--plan-fs) + 2px) !important}
-    #root .hdr-btn{font-size:var(--plan-fs-xs) !important}
+    #plan-content{transform-origin:top left;transition:transform .15s ease;}
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
     @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
@@ -553,11 +548,14 @@ function PlanApp(){
   const [selMonth,setSelMonth]=useState("annual"); // 'annual' | 0~11
   const [isEditing,setIsEditing]=useState(false);   // 수정 모드 잠금
   const [fontSize,setFontSize]=useState(()=>parseInt(localStorage.getItem('cst_font_size_v1'))||16); // 글자 크기
-  // CSS 변수로 전체 페이지에 즉시 반영
+  // zoom으로 전체 스케일링 (인라인 fontSize 모두 동일하게 반영)
   useEffect(()=>{
-    document.documentElement.style.setProperty('--plan-fs', fontSize+'px');
-    document.documentElement.style.setProperty('--plan-fs-sm', (fontSize-2)+'px');
-    document.documentElement.style.setProperty('--plan-fs-xs', (fontSize-4)+'px');
+    const el=document.getElementById('plan-content');
+    if(!el)return;
+    const ratio=fontSize/15; // 15px 기준
+    el.style.transform=`scale(${ratio})`;
+    el.style.width=`${100/ratio}%`;
+    el.parentElement.style.minHeight=`${el.scrollHeight*ratio}px`;
     localStorage.setItem('cst_font_size_v1', fontSize);
   },[fontSize]);
   const [prevNoteYr,setPrevNoteYr]=useState("25");  // 전년도 주요사항 연도 (독립)
@@ -861,7 +859,7 @@ function PlanApp(){
         </div>
       </div>
 
-      <div style={{maxWidth:1360,margin:"0 auto",padding:"16px",display:"flex",flexDirection:"column",gap:14}}>
+      <div id="plan-content" style={{maxWidth:1360,margin:"0 auto",padding:"16px",display:"flex",flexDirection:"column",gap:14}}>
 
         {/* ── [1] KPI 카드 */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8}}>
@@ -943,7 +941,10 @@ function PlanApp(){
               <span style={{color:C.muted,fontWeight:400,fontSize:11,marginLeft:8}}>월별 실적 — {yr}년 · {mode}</span>
             </div>
           </div>
-          <div style={{overflowX:"auto",marginBottom:14}}>
+          {/* 표 + 차트 나란히 */}
+          <div style={{display:"flex",gap:14,alignItems:"flex-start"}}>
+          {/* 표 */}
+          <div style={{flex:"1 1 0",minWidth:0,overflowX:"auto",marginBottom:4}}>
             <table style={{borderCollapse:"collapse",minWidth:780,width:"100%"}}>
               <thead>
                 <tr style={{borderBottom:`2px solid ${C.b1}`}}>
@@ -1027,22 +1028,25 @@ function PlanApp(){
               </tbody>
             </table>
           </div>
-          {/* 차트 버튼 + 차트 */}
-          <div style={{display:"flex",justifyContent:"flex-end",gap:4,marginBottom:10}}>
-            {["실적","달성","성장"].map(t=><TabBtn key={t} label={t} active={chartTab===t} color={color} onClick={()=>setChartTab(t)}/>)}
+          {/* 차트 패널 (오른쪽) */}
+          <div style={{width:380,flexShrink:0}}>
+            <div style={{display:"flex",justifyContent:"flex-end",gap:4,marginBottom:8}}>
+              {["실적","달성","성장"].map(t=><TabBtn key={t} label={t} active={chartTab===t} color={color} onClick={()=>setChartTab(t)}/>)}
+            </div>
+            {chartTab==="실적"&&<MiniChart labels={MONTHS} h={260} series={[
+              {data:mPrev.map((v,i)=>i<=emi?v:null),color:"#a78bfa",op:.7,label:"전년"},
+              {data:mTgt.map(v=>v||null),color:C.orange,dash:true,op:.8,label:"목표"},
+              {data:mPerf.map((v,i)=>i<=emi?v:null),color,bold:true,fill:true,showLabels:true,label:"실적"},
+            ]}/>}
+            {chartTab==="달성"&&<MiniChart labels={MONTHS} h={260} pctMode={true} series={[
+              {data:MONTHS.map((_,i)=>i<=emi?100:null),color:C.green,dash:true,op:.4,label:"100%"},
+              {data:mArArr,color:C.teal,bold:true,fill:true,showLabels:true,label:"달성률"},
+            ]}/>}
+            {chartTab==="성장"&&<MiniChart labels={MONTHS} h={260} grMode={true} series={[
+              {data:mGrArr,color:C.orange,bold:true,fill:true,showLabels:true,label:"성장률"},
+            ]}/>}
           </div>
-          {chartTab==="실적"&&<MiniChart labels={MONTHS} h={200} series={[
-            {data:mPrev.map((v,i)=>i<=emi?v:null),color:"#a78bfa",op:.7,label:"전년"},
-            {data:mTgt.map(v=>v||null),color:C.orange,dash:true,op:.8,label:"목표"},
-            {data:mPerf.map((v,i)=>i<=emi?v:null),color,bold:true,fill:true,showLabels:true,label:"실적"},
-          ]}/>}
-          {chartTab==="달성"&&<MiniChart labels={MONTHS} h={200} pctMode={true} series={[
-            {data:MONTHS.map((_,i)=>i<=emi?100:null),color:C.green,dash:true,op:.4,label:"100%"},
-            {data:mArArr,color:C.teal,bold:true,fill:true,showLabels:true,label:"달성률"},
-          ]}/>}
-          {chartTab==="성장"&&<MiniChart labels={MONTHS} h={200} grMode={true} series={[
-            {data:mGrArr,color:C.orange,bold:true,fill:true,showLabels:true,label:"성장률"},
-          ]}/>}
+          </div>{/* flex row 끝 */}
         </div>
 
         {/* ── [3] 누계 실적표 + 차트 */}
@@ -1053,7 +1057,10 @@ function PlanApp(){
               <span style={{color:C.muted,fontWeight:400,fontSize:11,marginLeft:8}}>누계 실적 — {yr}년 · {mode}</span>
             </div>
           </div>
-          <div style={{overflowX:"auto",marginBottom:14}}>
+          {/* 표 + 차트 나란히 */}
+          <div style={{display:"flex",gap:14,alignItems:"flex-start"}}>
+          {/* 표 */}
+          <div style={{flex:"1 1 0",minWidth:0,overflowX:"auto",marginBottom:4}}>
             <table style={{borderCollapse:"collapse",minWidth:780,width:"100%"}}>
               <thead>
                 <tr style={{borderBottom:`2px solid ${C.b1}`}}>
@@ -1116,21 +1123,25 @@ function PlanApp(){
               </tbody>
             </table>
           </div>
-          <div style={{display:"flex",justifyContent:"flex-end",gap:4,marginBottom:10}}>
-            {["실적","달성","성장"].map(t=><TabBtn key={t} label={t} active={cumChartTab===t} color={color} onClick={()=>setCumChartTab(t)}/>)}
+          {/* 차트 패널 (오른쪽) */}
+          <div style={{width:380,flexShrink:0}}>
+            <div style={{display:"flex",justifyContent:"flex-end",gap:4,marginBottom:8}}>
+              {["실적","달성","성장"].map(t=><TabBtn key={t} label={t} active={cumChartTab===t} color={color} onClick={()=>setCumChartTab(t)}/>)}
+            </div>
+            {cumChartTab==="실적"&&<MiniChart labels={MONTHS} h={260} series={[
+              {data:cumPrevArr,color:"#a78bfa",op:.7,label:"전년누계"},
+              {data:cumTgt,color:C.orange,dash:true,op:.8,label:"누계목표"},
+              {data:cumPerf,color,bold:true,fill:true,showLabels:true,label:"누계실적"},
+            ]}/>}
+            {cumChartTab==="달성"&&<MiniChart labels={MONTHS} h={260} pctMode={true} series={[
+              {data:MONTHS.map((_,i)=>i<=emi?100:null),color:C.green,dash:true,op:.4,label:"100%"},
+              {data:cumAr,color:C.teal,bold:true,fill:true,showLabels:true,label:"누계달성률"},
+            ]}/>}
+            {cumChartTab==="성장"&&<MiniChart labels={MONTHS} h={260} grMode={true} series={[
+              {data:cumGr,color:C.orange,bold:true,fill:true,showLabels:true,label:"누계성장률"},
+            ]}/>}
           </div>
-          {cumChartTab==="실적"&&<MiniChart labels={MONTHS} h={200} series={[
-            {data:cumPrevArr,color:"#a78bfa",op:.7,label:"전년누계"},
-            {data:cumTgt,color:C.orange,dash:true,op:.8,label:"누계목표"},
-            {data:cumPerf,color,bold:true,fill:true,showLabels:true,label:"누계실적"},
-          ]}/>}
-          {cumChartTab==="달성"&&<MiniChart labels={MONTHS} h={200} pctMode={true} series={[
-            {data:MONTHS.map((_,i)=>i<=emi?100:null),color:C.green,dash:true,op:.4,label:"100%"},
-            {data:cumAr,color:C.teal,bold:true,fill:true,showLabels:true,label:"누계달성률"},
-          ]}/>}
-          {cumChartTab==="성장"&&<MiniChart labels={MONTHS} h={200} grMode={true} series={[
-            {data:cumGr,color:C.orange,bold:true,fill:true,showLabels:true,label:"누계성장률"},
-          ]}/>}
+          </div>{/* flex row 끝 */}
         </div>
 
         {/* ── [4+5] 달성 계획 + 전년도 주요사항 통합 */}
