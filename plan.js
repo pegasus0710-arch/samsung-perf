@@ -1061,8 +1061,8 @@ function PlanApp(){
           .kpi-row{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto}
           .kpi-cell{flex:1 1 0;min-width:110px;background:#0a1628;border-radius:10px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.08)}
           .kpi-cell-lg{flex:1.8 1 0;min-width:160px}
-          .kpi-title{padding:6px 12px;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06)}
-          .kpi-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:center}
+          .kpi-title{padding:6px 12px;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
+          .kpi-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
           .kpi-cell-center .kpi-body{align-items:center;text-align:center}
           @media(max-width:640px){.kpi-row{flex-wrap:wrap}.kpi-cell{min-width:calc(50% - 3px)}.kpi-cell-lg{min-width:100%}}
         `}</style>
