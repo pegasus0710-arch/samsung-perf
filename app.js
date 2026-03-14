@@ -673,11 +673,12 @@ function Dashboard({data,mode}){
 
       {/* ── 파트 선택 + 도넛 달성률 ── */}
       <div style={{display:"grid",
-        gridTemplateColumns:isMobile?"1fr":`320px 1fr`,gap:14}}>
+        gridTemplateColumns:isMobile?"1fr":`320px 1fr`,gap:14,alignItems:"stretch"}}>
 
         {/* 도넛 달성률 패널 */}
         <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18,
-          boxShadow:"0 4px 20px rgba(0,0,0,.2)"}}>
+          boxShadow:"0 4px 20px rgba(0,0,0,.2)",
+          display:"flex",flexDirection:"column"}}>
           <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:2}}>목표 달성률</div>
           <div style={{color:C.muted,fontSize:10,marginBottom:12}}>
             {MONTHS[emi]} 누계 기준 · 항목 클릭 시 차트 전환
@@ -710,6 +711,7 @@ function Dashboard({data,mode}){
           </div>
 
           {/* ── 전체 파트 연간 목표 진척 현황 (CE 제외) ── */}
+          <div style={{flex:1,display:"flex",flexDirection:"column",minHeight:0}}>
           {(()=>{
             try {
             // 파트 목록 (대외영업·뉴홈·B2B 포함, CE 제외)
@@ -843,10 +845,11 @@ function Dashboard({data,mode}){
             );
             } catch(e) { return null; }
           })()}
+          </div>{/* 진척현황 flex:1 끝 */}
         </div>
 
         {/* 우측 — 월별 추이 + 누계 추이 */}
-        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{display:"flex",flexDirection:"column",gap:14,alignSelf:"stretch"}}>
 
           {/* 선택 파트 월별 추이 */}
           <div style={{background:C.card2,border:`1px solid ${KC[selKey]||C.accent}44`,
