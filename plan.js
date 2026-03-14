@@ -208,90 +208,129 @@ function AutoTextarea({value,onChange,placeholder,minHeight=220,readOnly=false,f
 // ── 리치 에디터 (툴바 포함)
 function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fontSize=14,style={}}){
   const ref=useRef(null);
-  const savedRange=useRef(null);
 
-  // 초기값 및 외부 변경 반영
-  const lastValue=useRef(value);
+  // 초기값/외부변경 반영
+  const lastVal=useRef(value);
   useEffect(()=>{
     const el=ref.current;
     if(!el)return;
-    if(el.innerHTML!==value&&lastValue.current!==value){
+    if(el.innerHTML!==value && lastVal.current!==value){
       el.innerHTML=value||"";
-      lastValue.current=value;
+      lastVal.current=value;
     }
     el.style.height="auto";
     el.style.height=Math.max(minHeight,el.scrollHeight)+"px";
   },[value,minHeight]);
 
-  // 선택 범위 저장
-  const saveRange=()=>{
-    const sel=window.getSelection();
-    if(sel&&sel.rangeCount>0) savedRange.current=sel.getRangeAt(0).cloneRange();
+  const emit=()=>{
+    if(onChange) onChange({target:{value:ref.current?.innerHTML||""}});
+    lastVal.current=ref.current?.innerHTML||"";
   };
 
-  // 선택 범위 복원 후 execCommand
-  const restoreAndExec=(cmd,val=null)=>{
+  // ── 선택 영역에 span 스타일 적용 (execCommand 대체)
+  const applyStyle=(cssProp,cssVal)=>{
     const el=ref.current;
     if(!el) return;
     el.focus();
-    if(savedRange.current){
-      const sel=window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(savedRange.current);
+    const sel=window.getSelection();
+    if(!sel||sel.rangeCount===0) return;
+    const range=sel.getRangeAt(0);
+    if(range.collapsed){
+      // 선택 없을 때: 커서 위치에 span 삽입 (이후 타이핑에 적용)
+      const span=document.createElement('span');
+      span.style[cssProp]=cssVal;
+      span.innerHTML='&#8203;'; // zero-width
+      range.insertNode(span);
+      range.setStart(span,1); range.setEnd(span,1);
+      sel.removeAllRanges(); sel.addRange(range);
+    } else {
+      // 선택 영역 전체를 span으로 래핑
+      const frag=range.extractContents();
+      const span=document.createElement('span');
+      span.style[cssProp]=cssVal;
+      span.appendChild(frag);
+      range.insertNode(span);
+      range.selectNodeContents(span);
+      sel.removeAllRanges(); sel.addRange(range);
     }
-    document.execCommand(cmd,false,val);
-    if(onChange) onChange({target:{value:el.innerHTML}});
+    emit();
   };
 
-  // 단순 버튼 (포커스 유지)
-  const exec=(cmd,val=null)=>{
+  const applyBlock=(tag,styleStr="")=>{
+    const el=ref.current;
+    if(!el) return;
+    el.focus();
+    const sel=window.getSelection();
+    if(!sel||sel.rangeCount===0) return;
+    const range=sel.getRangeAt(0);
+    const block=document.createElement(tag);
+    if(styleStr) block.setAttribute('style',styleStr);
+    if(range.collapsed){
+      block.innerHTML='<br>';
+      range.insertNode(block);
+    } else {
+      const frag=range.extractContents();
+      block.appendChild(frag);
+      range.insertNode(block);
+    }
+    // 커서를 블록 뒤로
+    const after=document.createRange();
+    after.setStartAfter(block); after.collapse(true);
+    sel.removeAllRanges(); sel.addRange(after);
+    emit();
+  };
+
+  const execCmd=(cmd,val=null)=>{
     ref.current?.focus();
     document.execCommand(cmd,false,val);
+    emit();
   };
 
-  const FONT_SIZES=[
-    {l:"소",v:"2"},{l:"보통",v:"3"},{l:"중",v:"4"},{l:"대",v:"5"},{l:"특대",v:"6"}
+  // ── 스타일 상수
+  const SIZES=[
+    {l:"소 (11px)",v:"11px"},{l:"보통 (14px)",v:"14px"},
+    {l:"중 (18px)",v:"18px"},{l:"대 (22px)",v:"22px"},
+    {l:"특대 (28px)",v:"28px"},
+  ];
+  const HEADING_STYLES=[
+    {l:"일반",       tag:"p",   s:""},
+    {l:"제목 1",     tag:"h2",  s:"font-size:26px;font-weight:900;margin:8px 0 4px;color:#e8f4fd;border-bottom:2px solid rgba(56,182,245,.4);padding-bottom:4px"},
+    {l:"제목 2",     tag:"h3",  s:"font-size:20px;font-weight:800;margin:6px 0 4px;color:#e8f4fd"},
+    {l:"제목 3",     tag:"h4",  s:"font-size:16px;font-weight:700;margin:4px 0;color:#b0d0e8"},
+    {l:"강조 블록",  tag:"div", s:"border-left:3px solid #38b6f5;padding:6px 12px;margin:6px 0;background:rgba(56,182,245,.08);color:#e8f4fd"},
+    {l:"경고 블록",  tag:"div", s:"border-left:3px solid #f87171;padding:6px 12px;margin:6px 0;background:rgba(248,113,113,.08);color:#e8f4fd"},
   ];
   const COLORS=[
-    {l:"빨강",v:"#ef4444"},{l:"주황",v:"#f97316"},{l:"노랑",v:"#facc15"},
-    {l:"초록",v:"#22c55e"},{l:"파랑",v:"#3b82f6"},{l:"하늘",v:"#38bdf8"},
-    {l:"보라",v:"#a855f7"},{l:"흰색",v:"#ffffff"},{l:"회색",v:"#9ca3af"},
+    {l:"기본",  v:""},{l:"빨강",v:"#ef4444"},{l:"주황",v:"#f97316"},
+    {l:"노랑",  v:"#facc15"},{l:"초록",v:"#22c55e"},{l:"파랑",v:"#60a5fa"},
+    {l:"하늘",  v:"#38bdf8"},{l:"보라",v:"#a855f7"},{l:"분홍",v:"#f472b6"},
+    {l:"흰색",  v:"#ffffff"},{l:"회색",v:"#9ca3af"},
   ];
   const BG_COLORS=[
-    {l:"노랑",v:"#fef08a"},{l:"초록",v:"#bbf7d0"},{l:"파랑",v:"#bfdbfe"},
-    {l:"빨강",v:"#fecaca"},{l:"보라",v:"#e9d5ff"},{l:"주황",v:"#fed7aa"},
-    {l:"회색",v:"#e5e7eb"},
+    {l:"없음",  v:""},{l:"노랑",v:"#fef08a"},{l:"연두",v:"#bbf7d0"},
+    {l:"하늘",  v:"#bfdbfe"},{l:"분홍",v:"#fecaca"},{l:"보라",v:"#e9d5ff"},
+    {l:"주황",  v:"#fed7aa"},{l:"회색",v:"#e5e7eb"},
   ];
 
   const BtnS={
-    padding:"3px 8px",border:"1px solid rgba(255,255,255,.18)",borderRadius:4,
+    padding:"3px 9px",border:"1px solid rgba(255,255,255,.18)",borderRadius:4,
     background:"rgba(255,255,255,.07)",color:"#c8d8e8",cursor:"pointer",
     fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1.5,
-    transition:"background .1s",userSelect:"none",
+    transition:"background .1s",userSelect:"none",whiteSpace:"nowrap",
   };
   const SelS={
     background:"#0c1e32",border:"1px solid rgba(255,255,255,.2)",
-    color:"#c8d8e8",fontSize:10,borderRadius:4,padding:"3px 6px",
-    cursor:"pointer",maxWidth:72,
+    color:"#c8d8e8",fontSize:11,borderRadius:4,padding:"3px 6px",
+    cursor:"pointer",fontFamily:"inherit",
   };
-  const Sep=()=><div style={{width:1,height:18,background:"rgba(255,255,255,.18)",margin:"0 2px",flexShrink:0}}/>;
-
-  const insertHR=()=>{
-    restoreAndExec("insertHTML","<hr style='border:none;border-top:1px solid rgba(255,255,255,.2);margin:8px 0'>");
-  };
-  const insertBox=()=>{
-    restoreAndExec("insertHTML",
-      "<div style='border:1px solid rgba(56,182,245,.4);border-radius:6px;padding:8px 12px;margin:6px 0;background:rgba(56,182,245,.06)'>내용을 입력하세요</div><br>"
-    );
-  };
+  const Sep=()=><div style={{width:1,height:18,background:"rgba(255,255,255,.2)",margin:"0 3px",flexShrink:0}}/>;
 
   if(readOnly){
     return(
       <div style={{
         padding:"12px 16px",borderRadius:8,border:"1px solid rgba(255,255,255,.08)",
-        minHeight,color:"#c8d8e8",fontSize:14,lineHeight:1.75,
-        whiteSpace:"pre-wrap",wordBreak:"break-word",
-        background:"rgba(255,255,255,.02)",opacity:.88,...style}}
+        minHeight,color:"#c8d8e8",fontSize:14,lineHeight:1.8,
+        wordBreak:"break-word",background:"rgba(255,255,255,.02)",opacity:.9,...style}}
         dangerouslySetInnerHTML={{__html:value||""}}
       />
     );
@@ -299,89 +338,117 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
 
   return(
     <div style={{borderRadius:8,border:"1px solid rgba(56,182,245,.3)",overflow:"hidden",...style}}>
-      {/* 툴바 */}
-      <div onMouseDown={e=>e.preventDefault()}
-        style={{background:"#0c1e32",borderBottom:"1px solid rgba(255,255,255,.12)",
-          padding:"6px 10px",display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
+      {/* ── 툴바 */}
+      <div style={{background:"#0c1e32",borderBottom:"1px solid rgba(255,255,255,.12)",
+        padding:"6px 10px",display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
 
-        {/* 서식 버튼 */}
-        {[["B","bold"],["I","italic"],["U","underline"],["S","strikeThrough"]].map(([l,c])=>(
-          <button key={c} onMouseDown={e=>{e.preventDefault();exec(c);}}
-            style={{...BtnS,fontStyle:c==="italic"?"italic":"normal",
+        {/* 서식 (execCommand 동작 OK) */}
+        {[["B","bold","굵게"],["I","italic","기울임"],["U","underline","밑줄"],["S","strikeThrough","취소선"]].map(([l,c,t])=>(
+          <button key={c}
+            onMouseDown={e=>{e.preventDefault();execCmd(c);}}
+            title={t}
+            style={{...BtnS,
+              fontWeight:c==="bold"?900:700,
+              fontStyle:c==="italic"?"italic":"normal",
               textDecoration:c==="underline"?"underline":c==="strikeThrough"?"line-through":"none"}}>
             {l}
           </button>
         ))}
         <Sep/>
 
-        {/* 글자 크기 */}
-        <select style={SelS}
-          onMouseDown={saveRange}
+        {/* 단락 스타일 */}
+        <select style={{...SelS,maxWidth:90}}
+          defaultValue=""
           onChange={e=>{
-            const v=e.target.value;
-            if(v){restoreAndExec("fontSize",v);}
+            const h=HEADING_STYLES.find(x=>x.l===e.target.value);
+            if(h){
+              if(h.tag==="p") execCmd("formatBlock","p");
+              else applyBlock(h.tag, h.s);
+            }
             e.target.value="";
           }}>
-          <option value="">크기</option>
-          {FONT_SIZES.map(f=><option key={f.v} value={f.v}>{f.l}</option>)}
+          <option value="">단락▾</option>
+          {HEADING_STYLES.map(h=><option key={h.l} value={h.l}>{h.l}</option>)}
         </select>
 
-        {/* 글자색 */}
-        <select style={SelS}
-          onMouseDown={saveRange}
+        {/* 글자 크기 — span 방식 */}
+        <select style={{...SelS,maxWidth:90}}
+          defaultValue=""
           onChange={e=>{
             const v=e.target.value;
-            if(v){restoreAndExec("foreColor",v);}
+            if(v) applyStyle("fontSize",v);
             e.target.value="";
           }}>
-          <option value="">글자색</option>
-          {COLORS.map(c=><option key={c.v} value={c.v} style={{background:c.v,color:"#000"}}>{c.l}</option>)}
+          <option value="">크기▾</option>
+          {SIZES.map(s=><option key={s.v} value={s.v}>{s.l}</option>)}
         </select>
-
-        {/* 배경색 */}
-        <select style={SelS}
-          onMouseDown={saveRange}
-          onChange={e=>{
-            const v=e.target.value;
-            if(v){restoreAndExec("hiliteColor",v);}
-            e.target.value="";
-          }}>
-          <option value="">배경색</option>
-          {BG_COLORS.map(b=><option key={b.v} value={b.v} style={{background:b.v,color:"#000"}}>{b.l}</option>)}
-        </select>
-
         <Sep/>
+
+        {/* 글자색 — span 방식 */}
+        <select style={{...SelS,maxWidth:70}}
+          defaultValue=""
+          onChange={e=>{
+            const v=e.target.value;
+            if(v) applyStyle("color",v);
+            e.target.value="";
+          }}>
+          <option value="">글자색▾</option>
+          {COLORS.filter(c=>c.v).map(c=>(
+            <option key={c.v} value={c.v} style={{background:c.v,color:"#000"}}>{c.l}</option>
+          ))}
+        </select>
+
+        {/* 배경색 — span 방식 */}
+        <select style={{...SelS,maxWidth:75}}
+          defaultValue=""
+          onChange={e=>{
+            const v=e.target.value;
+            if(v) applyStyle("backgroundColor",v);
+            e.target.value="";
+          }}>
+          <option value="">배경색▾</option>
+          {BG_COLORS.filter(b=>b.v).map(b=>(
+            <option key={b.v} value={b.v} style={{background:b.v,color:"#000"}}>{b.l}</option>
+          ))}
+        </select>
+        <Sep/>
+
         {/* 정렬 */}
-        {[["◀","justifyLeft"],["■","justifyCenter"],["▶","justifyRight"]].map(([l,c])=>(
-          <button key={c} onMouseDown={e=>{e.preventDefault();exec(c);}} style={BtnS}>{l}</button>
+        {[["◀","justifyLeft","왼쪽"],["■","justifyCenter","가운데"],["▶","justifyRight","오른쪽"]].map(([l,c,t])=>(
+          <button key={c} onMouseDown={e=>{e.preventDefault();execCmd(c);}} title={t} style={BtnS}>{l}</button>
         ))}
         <Sep/>
 
         {/* 목록 */}
-        <button onMouseDown={e=>{e.preventDefault();exec("insertUnorderedList");}} style={BtnS}>• 목록</button>
-        <button onMouseDown={e=>{e.preventDefault();exec("insertOrderedList");}} style={BtnS}>1. 목록</button>
+        <button onMouseDown={e=>{e.preventDefault();execCmd("insertUnorderedList");}} style={BtnS} title="글머리 기호">• 목록</button>
+        <button onMouseDown={e=>{e.preventDefault();execCmd("insertOrderedList");}} style={BtnS} title="번호 목록">1. 목록</button>
         <Sep/>
 
-        {/* 구분선 + 박스 */}
-        <button onMouseDown={e=>{e.preventDefault();insertHR();}} style={BtnS} title="구분선">― 선</button>
-        <button onMouseDown={e=>{e.preventDefault();insertBox();}} style={BtnS} title="박스">▭ 박스</button>
+        {/* 구분선 */}
+        <button onMouseDown={e=>{
+          e.preventDefault();
+          execCmd("insertHTML","<hr style='border:none;border-top:1px solid rgba(255,255,255,.25);margin:10px 0'><br>");
+        }} style={BtnS} title="구분선">— 선</button>
+
+        {/* 박스 */}
+        <button onMouseDown={e=>{
+          e.preventDefault();
+          execCmd("insertHTML","<div style='border:1px solid rgba(56,182,245,.4);border-radius:6px;padding:8px 12px;margin:6px 0;background:rgba(56,182,245,.06)'>내용 입력</div><br>");
+        }} style={BtnS} title="강조 박스">□ 박스</button>
         <Sep/>
 
         {/* 초기화 */}
-        <button onMouseDown={e=>{e.preventDefault();exec("removeFormat");}} style={{...BtnS,color:"#f87171"}}>초기화</button>
+        <button onMouseDown={e=>{e.preventDefault();execCmd("removeFormat");}} style={{...BtnS,color:"#f87171"}} title="서식 제거">초기화</button>
       </div>
 
-      {/* 편집 영역 */}
+      {/* ── 편집 영역 */}
       <div
         ref={ref}
         contentEditable
         suppressContentEditableWarning
-        onFocus={saveRange}
-        onKeyUp={saveRange}
-        onMouseUp={saveRange}
         onInput={e=>{
           onChange&&onChange({target:{value:e.currentTarget.innerHTML}});
-          lastValue.current=e.currentTarget.innerHTML;
+          lastVal.current=e.currentTarget.innerHTML;
         }}
         data-placeholder={placeholder}
         style={{
@@ -395,12 +462,9 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
         [contenteditable]:empty:before{
           content:attr(data-placeholder);
           color:rgba(255,255,255,.2);
-          font-style:italic;
-          pointer-events:none;
-          display:block;
-          white-space:pre-line;
+          font-style:italic;pointer-events:none;
+          display:block;white-space:pre-line;
         }
-        [contenteditable] hr{border:none;border-top:1px solid rgba(255,255,255,.2);margin:8px 0}
       `}</style>
     </div>
   );
