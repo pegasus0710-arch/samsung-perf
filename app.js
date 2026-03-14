@@ -20,7 +20,7 @@ const FONT_SIZE_KEY = "cst_font_size_v1";
     const s=document.createElement("style");
     s.id="cst-spin-style";
     s.textContent=
-      "#app-content{transform-origin:top left;transition:transform .15s ease;}"+
+      "#app-content{transform-origin:top center;transition:transform .15s ease;}"+
       "@keyframes spin{to{transform:rotate(360deg)}}"+
       "@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}";
     document.head.appendChild(s);
@@ -3087,18 +3087,20 @@ function App(){
   );
   const [showTgtPwModal,setShowTgtPwModal] = useState(false);
 
-  const [globalFontSize,setGlobalFontSize] = useState(
-    ()=>parseInt(localStorage.getItem(FONT_SIZE_KEY))||15
+  const [globalZoom,setGlobalZoom] = useState(
+    ()=>parseInt(localStorage.getItem(FONT_SIZE_KEY))||100
   );
-  // zoom으로 전체 스케일링
+  // 양방향 zoom (center 기준)
   useEffect(()=>{
     const el=document.getElementById('app-content');
     if(!el)return;
-    const ratio=globalFontSize/14; // 14px 기준
+    const ratio=globalZoom/100;
+    el.style.transformOrigin='top center';
     el.style.transform=`scale(${ratio})`;
     el.style.width=`${100/ratio}%`;
-    localStorage.setItem(FONT_SIZE_KEY, globalFontSize);
-  },[globalFontSize]);
+    el.style.marginLeft=`${-(100/ratio-100)/2}%`;
+    localStorage.setItem(FONT_SIZE_KEY, String(globalZoom));
+  },[globalZoom]);
   const isMobile = useIsMobile();
 
   // 레포트용 전역 데이터 노출
@@ -3260,19 +3262,26 @@ function App(){
           onMouseLeave={e=>{e.currentTarget.style.background=C.teal+"10";e.currentTarget.style.borderColor=C.teal+"40";}}>
             📦{!isMobile&&" 백업"}
           </button>
-          {/* 폰트 크기 조절 */}
+          {/* 화면 확대/축소 */}
           <div style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,.05)",
             borderRadius:7,padding:"3px 6px",border:`1px solid ${C.b1}`}}>
-            <span style={{color:C.muted2,fontSize:13,fontWeight:900,marginRight:1}}>T</span>
-            <button onClick={()=>setGlobalFontSize(Math.max(12,globalFontSize-1))} style={{
-              padding:"2px 7px",borderRadius:4,border:`1px solid ${C.b1}`,
+            <span style={{fontSize:12,color:C.muted2,flexShrink:0}}>🔍</span>
+            <button onClick={()=>setGlobalZoom(z=>Math.max(50,z-10))} style={{
+              padding:"2px 6px",borderRadius:4,border:`1px solid ${C.b1}`,
               background:"rgba(255,255,255,.04)",color:C.muted2,
-              cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700}}>−</button>
-            <span style={{color:C.text,fontSize:10,fontWeight:700,minWidth:26,textAlign:"center"}}>{globalFontSize}px</span>
-            <button onClick={()=>setGlobalFontSize(Math.min(18,globalFontSize+1))} style={{
-              padding:"2px 7px",borderRadius:4,border:`1px solid ${C.b1}`,
+              cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>−</button>
+            <select value={globalZoom} onChange={e=>setGlobalZoom(parseInt(e.target.value))}
+              style={{background:"transparent",border:"none",color:C.text,fontSize:11,
+                fontWeight:700,cursor:"pointer",outline:"none",textAlign:"center",
+                fontFamily:"inherit",minWidth:46}}>
+              {[50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200].map(v=>(
+                <option key={v} value={v} style={{background:"#0d1b2e",color:"#e8f4fd"}}>{v}%</option>
+              ))}
+            </select>
+            <button onClick={()=>setGlobalZoom(z=>Math.min(200,z+10))} style={{
+              padding:"2px 6px",borderRadius:4,border:`1px solid ${C.b1}`,
               background:"rgba(255,255,255,.04)",color:C.muted2,
-              cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700}}>+</button>
+              cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>+</button>
           </div>
           {/* 달성계획 링크 버튼 */}
           <a href="plan.html" style={{
