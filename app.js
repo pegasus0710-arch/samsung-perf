@@ -673,12 +673,14 @@ function Dashboard({data,mode}){
 
       {/* ── 파트 선택 + 도넛 달성률 ── */}
       <div style={{display:"grid",
-        gridTemplateColumns:isMobile?"1fr":`320px 1fr`,gap:14,alignItems:"stretch"}}>
+        gridTemplateColumns:isMobile?"1fr":`320px 1fr`,gap:14,
+        alignItems:"stretch"}}>
 
         {/* 도넛 달성률 패널 */}
         <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18,
           boxShadow:"0 4px 20px rgba(0,0,0,.2)",
-          display:"flex",flexDirection:"column"}}>
+          display:"flex",flexDirection:"column",
+          alignSelf:"stretch",minHeight:0}}>
           <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:2}}>목표 달성률</div>
           <div style={{color:C.muted,fontSize:10,marginBottom:12}}>
             {MONTHS[emi]} 누계 기준 · 항목 클릭 시 차트 전환
@@ -737,7 +739,8 @@ function Dashboard({data,mode}){
             return (
               <div style={{marginTop:14,padding:"12px 10px",
                 background:"rgba(0,0,0,.18)",borderRadius:10,
-                border:"1px solid rgba(255,255,255,.06)"}}>
+                border:"1px solid rgba(255,255,255,.06)",
+                flex:1,overflowY:"auto"}}>
                 {/* 헤더 */}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
                   marginBottom:10}}>
