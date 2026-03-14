@@ -2608,10 +2608,10 @@ function Analysis({data,mode}){
                                : sumR(pD,selKey,0,emi);
                     const s = ceYtd>0?(vYtd/ceYtd*100).toFixed(1):null;
                     // 전년 CE비중
-                    const ceYtdPrev=mPrev?sumR(pD25,"CE",0,emi):0;
-                    const vPrev = mPrev&&(selKey==="대외영업"?sumR(pD25,selKey,0,emi)-sumR(pD25,"휴대폰",0,emi)
-                               : selKey==="B2B"?sumR(pD25,selKey,0,emi)-sumR(pD25,"휴대폰",0,emi)
-                               : sumR(pD25,selKey,0,emi));
+                    const ceYtdPrev=prevP?sumR(prevP,"CE",0,emi):0;
+                    const vPrev = prevP&&(selKey==="대외영업"?sumR(prevP,selKey,0,emi)-sumR(prevP,"휴대폰",0,emi)
+                               : selKey==="B2B"?sumR(prevP,selKey,0,emi)-sumR(prevP,"휴대폰",0,emi)
+                               : sumR(prevP,selKey,0,emi));
                     const sPrev = ceYtdPrev>0?(vPrev/ceYtdPrev*100).toFixed(1):null;
                     return s?<div>
                       <span style={{color:KC.CE,fontWeight:700,fontSize:11}}>{s}%</span>
