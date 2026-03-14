@@ -213,14 +213,13 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   const toHTML=(v)=>{
     if(!v) return "";
     // 이미 HTML 태그가 있으면 그대로
-    if(/<[a-z][\s\S]*>/i.test(v)) return v;
+    if(v.indexOf("<")!==-1&&v.indexOf(">")!==-1) return v;
     // 일반 텍스트: 줄바꿈을 <br>로, &<> 이스케이프
     return v
       .replace(/&/g,"&amp;")
       .replace(/</g,"&lt;")
       .replace(/>/g,"&gt;")
-      .replace(/
-/g,"<br>");
+      .split("\n").join("<br>");
   };
 
   const lastVal=useRef(null);  // 마지막으로 설정한 외부 value
@@ -343,9 +342,8 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   // 일반텍스트 → HTML 변환 (구버전 데이터 호환) - readOnly용
   const toHTMLStatic=(v)=>{
     if(!v) return "";
-    if(/<[a-z][\s\S]*>/i.test(v)) return v;
-    return v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/
-/g,"<br>");
+    if(v.indexOf("<")!==-1&&v.indexOf(">")!==-1) return v;
+    return v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").split("\n").join("<br>");
   };
   if(readOnly){
     return(
@@ -678,11 +676,13 @@ function PlanApp(){
     if(!wrapper)return;
     const safeZoom=Math.max(50,Math.min(200,zoom||100));
     const ratio=safeZoom/100;
-    wrapper.style.transformOrigin='top center';
+    const vw=window.innerWidth;
+    wrapper.style.transformOrigin='top left';
     wrapper.style.transform=`scale(${ratio})`;
-    wrapper.style.width=`${100/ratio}%`;
+    wrapper.style.width=`${vw}px`;
     wrapper.style.position='relative';
-    wrapper.style.left=`${-(100/ratio-100)/2}%`;
+    wrapper.style.left=`${(vw - vw*ratio)/2}px`;
+    wrapper.parentElement.style.minHeight=`${wrapper.scrollHeight*ratio}px`;
     localStorage.setItem('cst_zoom_v2', String(safeZoom));
   },[zoom]);
   // (yr==="26"?"25":yr==="25"?"24":"23"): yr 기반 자동 계산 (별도 state 불필요)
