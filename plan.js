@@ -1056,97 +1056,217 @@ function PlanApp(){
       <div id="plan-zoom-wrapper" style={{position:"relative",left:0}}>
       <div id="plan-content" style={{maxWidth:1360,margin:"0 auto",padding:"16px",display:"flex",flexDirection:"column",gap:14}}>
 
-        {/* ── [1] KPI 카드 — 한 줄 가로 (반응형) */}
+        {/* ── [1] KPI 카드 — 이미지 스타일 */}
         <style>{`
-          .kpi-row{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto}
-          .kpi-cell{flex:1 1 0;min-width:110px;background:#0a1628;border-radius:10px;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;border:1px solid rgba(255,255,255,.08)}
-          .kpi-cell-lg{flex:1.8 1 0;min-width:160px}
-          .kpi-title{padding:6px 12px;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
-          .kpi-body{padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}
-          .kpi-cell-center .kpi-body{align-items:center;text-align:center}
-          @media(max-width:640px){.kpi-row{flex-wrap:wrap}.kpi-cell{min-width:calc(50% - 3px)}.kpi-cell-lg{min-width:100%}}
+          .kpi-row{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto}
+          .kpi-card{flex:1 1 0;min-width:160px;border-radius:14px;overflow:hidden;
+            box-sizing:border-box;background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,rgba(0,0,0,.1) 100%)}
+          .kpi-card-lg{flex:1.6 1 0;min-width:200px}
+          .kpi-card-header{display:flex;justify-content:space-between;align-items:center;
+            padding:10px 14px 8px}
+          .kpi-card-num{padding:0 14px 6px;display:flex;align-items:baseline;gap:4px}
+          .kpi-card-bar{padding:0 14px 10px}
+          .kpi-card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid rgba(255,255,255,.06)}
+          .kpi-card-stat{padding:7px 0;text-align:center;border-right:1px solid rgba(255,255,255,.05)}
+          .kpi-card-stat:last-child{border-right:none}
+          @media(max-width:720px){.kpi-row{flex-wrap:wrap}.kpi-card{min-width:calc(50% - 5px)}.kpi-card-lg{min-width:100%}}
         `}</style>
         <div className="kpi-row">
-          {/* 누계 실적 */}
-          <div className="kpi-cell kpi-cell-lg kpi-cell-center" style={{border:`2px solid ${color}50`}}>
-            <div className="kpi-title" style={{background:color+"18",color}}>
-              누계 실적{emi>=0?` (${MONTHS[emi]})`:""}{ytdT>0&&` · 목표 ${fmtN(ytdT)}`}
-            </div>
-            <div className="kpi-body">
-              <div style={{display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap",justifyContent:"center",marginBottom:6}}>
-                <span style={{color,fontSize:32,fontWeight:900,letterSpacing:"-1.5px",lineHeight:1}}>{fmtN(ytdP)}</span>
-                {avgMonthly>0&&<span style={{color:C.muted2,fontSize:12,fontWeight:600}}>월평 {avgMonthly}억</span>}
+
+          {/* ① 누계 실적 */}
+          <div className="kpi-card kpi-card-lg" style={{border:`2px solid ${color}50`,borderTop:`3px solid ${color}`}}>
+            <div className="kpi-card-header">
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:8,height:8,borderRadius:2,background:color,boxShadow:`0 0 6px ${color}`}}/>
+                <span style={{color,fontWeight:800,fontSize:12}}>{part} 누계 실적</span>
               </div>
-              {ytdAr&&<div style={{marginBottom:4}}>
-                <span style={{color:pctC(ytdAr),fontWeight:900,fontSize:20,
-                  background:pctC(ytdAr)+"15",padding:"2px 10px",borderRadius:6}}>
-                  {Math.round(gNum(ytdAr))}%
+              {ytdT>0&&ytdAr&&<span style={{color:pctC(ytdAr),fontSize:10,fontWeight:800,
+                background:pctC(ytdAr)+"18",borderRadius:4,padding:"2px 7px"}}>
+                달성 {Math.round(gNum(ytdAr))}%
+              </span>}
+            </div>
+            <div className="kpi-card-num">
+              <span style={{color:C.text,fontSize:28,fontWeight:900,letterSpacing:"-1.5px",lineHeight:1}}>
+                {ytdP>0?Math.round(ytdP).toLocaleString():<span style={{color:C.muted,fontSize:20}}>─</span>}
+              </span>
+              {ytdP>0&&<span style={{color:C.muted2,fontSize:13}}>억</span>}
+            </div>
+            {ytdT>0&&<div className="kpi-card-bar">
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                <span style={{color:C.muted,fontSize:9}}>목표 {fmtN(ytdT)}</span>
+                {ytdP>0&&ytdT>0&&<span style={{color:(ytdP-ytdT)>=0?C.green:C.red,fontSize:9,fontWeight:700}}>
+                  {(ytdP-ytdT)>=0?"▲":"▼"}{Math.abs(Math.round(ytdP-ytdT)).toLocaleString()}억
+                </span>}
+              </div>
+              <div style={{height:5,background:"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${Math.min(ytdT>0?ytdP/ytdT*100:0,100)}%`,
+                  background:`linear-gradient(90deg,${color},${color}aa)`,
+                  borderRadius:3,boxShadow:`0 0 8px ${color}60`,transition:"width .6s"}}/>
+              </div>
+            </div>}
+            <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)"}}>
+              {[
+                {lbl:"전년실적", val:ytdPrev>0?fmtN(ytdPrev):"─", c:C.muted2},
+                {lbl:"전년비",   val:ytdGr?(gNum(ytdGr)>0?"▲":"▼")+Math.abs(gNum(ytdGr)).toFixed(1)+"%":"─", c:ytdGr?grwC(ytdGr):C.muted},
+                {lbl:"월평균",   val:avgMonthly>0?avgMonthly+"억":"─", c:C.orange},
+              ].map(({lbl,val,c})=>(
+                <div key={lbl} className="kpi-card-stat">
+                  <div style={{color:C.muted,fontSize:8,marginBottom:2}}>{lbl}</div>
+                  <div style={{color:c,fontSize:11,fontWeight:700,lineHeight:1}}>{val}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ② 연간 목표 */}
+          <div className="kpi-card kpi-card-lg" style={{border:`2px solid ${C.orange}40`,borderTop:`3px solid ${C.orange}`}}>
+            <div className="kpi-card-header">
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:8,height:8,borderRadius:2,background:C.orange,boxShadow:`0 0 6px ${C.orange}`}}/>
+                <span style={{color:C.orange,fontWeight:800,fontSize:12}}>연간 목표</span>
+              </div>
+              {needPM>0&&<span style={{color:C.blue,fontSize:10,fontWeight:700,
+                background:C.blue+"18",borderRadius:4,padding:"2px 7px"}}>월평 {needPM}억 필요</span>}
+            </div>
+            <div className="kpi-card-num">
+              <span style={{color:C.orange,fontSize:28,fontWeight:900,letterSpacing:"-1.5px",lineHeight:1}}>
+                {annT>0?Math.round(annT).toLocaleString():"─"}
+              </span>
+              {annT>0&&<span style={{color:C.muted2,fontSize:13}}>억</span>}
+            </div>
+            {annT>0&&<div className="kpi-card-bar">
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                <span style={{color:C.muted,fontSize:9}}>잔여 {fmtN(remT)}</span>
+                <span style={{color:ytdAr?pctC(ytdAr):C.muted,fontSize:9,fontWeight:700}}>
+                  진척 {annT>0?Math.round(ytdP/annT*100):0}%
                 </span>
-              </div>}
-              {ytdP>0&&ytdT>0&&<div style={{color:(ytdP-ytdT)>=0?C.green:C.red,fontSize:12,fontWeight:800}}>
-                {(ytdP-ytdT)>=0?"▲":"▼"} {Math.abs(Math.round(ytdP-ytdT)).toLocaleString()}억 {(ytdP-ytdT)<0?"부족":"초과"}
-              </div>}
+              </div>
+              <div style={{height:5,background:"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${Math.min(annT>0?ytdP/annT*100:0,100)}%`,
+                  background:`linear-gradient(90deg,${C.orange},${C.orange}aa)`,
+                  borderRadius:3,transition:"width .6s"}}/>
+              </div>
+            </div>}
+            <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)"}}>
+              {[
+                {lbl:"누계 실적", val:ytdP>0?fmtN(ytdP):"─", c:color},
+                {lbl:"달성률",   val:ytdAr?Math.round(gNum(ytdAr))+"%":"─", c:ytdAr?pctC(ytdAr):C.muted},
+                {lbl:"잔여",     val:remT>0?fmtN(remT):"✓ 달성", c:remT>0?C.blue:C.green},
+              ].map(({lbl,val,c})=>(
+                <div key={lbl} className="kpi-card-stat">
+                  <div style={{color:C.muted,fontSize:8,marginBottom:2}}>{lbl}</div>
+                  <div style={{color:c,fontSize:11,fontWeight:700,lineHeight:1}}>{val}</div>
+                </div>
+              ))}
             </div>
           </div>
-          {/* 연간 목표 */}
-          <div className="kpi-cell kpi-cell-lg" style={{border:`2px solid ${C.orange}40`}}>
-            <div className="kpi-title" style={{background:C.orange+"18",color:C.orange}}>연간 목표</div>
-            <div className="kpi-body">
-              <div style={{color:C.orange,fontSize:26,fontWeight:900,letterSpacing:"-1px",marginBottom:5}}>{fmtN(annT)}</div>
-              <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                <span style={{color:remT>0?C.blue:C.green,fontWeight:700,fontSize:12}}>잔여 {fmtN(remT)}</span>
-                {needPM>0&&<span style={{color:C.muted2,fontSize:11}}>월평 {needPM}억</span>}
+
+          {/* ③ 전년비 성장 */}
+          <div className="kpi-card" style={{border:`1px solid ${ytdGr?grwC(ytdGr):C.muted}40`,
+            borderTop:`3px solid ${ytdGr?grwC(ytdGr):C.muted}`}}>
+            <div className="kpi-card-header">
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:8,height:8,borderRadius:2,background:ytdGr?grwC(ytdGr):C.muted}}/>
+                <span style={{color:ytdGr?grwC(ytdGr):C.muted2,fontWeight:800,fontSize:12}}>전년비 성장</span>
               </div>
             </div>
-          </div>
-          {/* 전년비 성장 */}
-          <div className="kpi-cell" style={{border:`1px solid ${ytdGr?grwC(ytdGr):C.muted}40`}}>
-            <div className="kpi-title" style={{background:"rgba(255,255,255,.04)",color:C.muted2}}>전년비 성장</div>
-            <div className="kpi-body">
-              <div style={{color:ytdGr?grwC(ytdGr):C.muted,fontSize:24,fontWeight:900,marginBottom:4}}>
+            <div className="kpi-card-num">
+              <span style={{color:ytdGr?grwC(ytdGr):C.muted,fontSize:26,fontWeight:900,letterSpacing:"-1px",lineHeight:1}}>
                 {ytdGr?(gNum(ytdGr)>0?"▲":"▼")+Math.abs(gNum(ytdGr)).toFixed(1)+"%":"─"}
-              </div>
-              <div style={{color:C.muted,fontSize:10}}>전년 {fmtN(ytdPrev)}</div>
-              {ytdP>0&&ytdPrev>0&&<div style={{color:(ytdP-ytdPrev)>=0?C.green:C.red,fontSize:10,fontWeight:700}}>
-                차이 {(ytdP-ytdPrev)>=0?"+":""}{Math.round(ytdP-ytdPrev)}억
-              </div>}
+              </span>
+            </div>
+            <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
+              {[
+                {lbl:"전년 실적", val:ytdPrev>0?fmtN(ytdPrev):"─", c:C.muted2},
+                {lbl:"차이",      val:ytdP>0&&ytdPrev>0?(ytdP-ytdPrev>=0?"+":"")+Math.round(ytdP-ytdPrev)+"억":"─",
+                  c:ytdP>0&&ytdPrev>0?(ytdP-ytdPrev>=0?C.green:C.red):C.muted},
+              ].map(({lbl,val,c})=>(
+                <div key={lbl} className="kpi-card-stat">
+                  <div style={{color:C.muted,fontSize:8,marginBottom:2}}>{lbl}</div>
+                  <div style={{color:c,fontSize:11,fontWeight:700,lineHeight:1}}>{val}</div>
+                </div>
+              ))}
             </div>
           </div>
-          {/* CE 비중 */}
+
+          {/* ④ CE 비중 */}
           {ceSharePct!==null&&(
-            <div className="kpi-cell" style={{border:"1px solid #7c83f540"}}>
-              <div className="kpi-title" style={{background:"rgba(124,131,245,.12)",color:"#9da4f5"}}>CE 비중 (누계)</div>
-              <div className="kpi-body">
-                <div style={{color:"#7c83f5",fontSize:24,fontWeight:900,marginBottom:4}}>{ceSharePct.toFixed(1)}%</div>
-                {cePrevSharePct!==null&&<div style={{color:C.muted,fontSize:10}}>
-                  전년 {cePrevSharePct.toFixed(1)}%
-                  <span style={{color:(ceSharePct-cePrevSharePct)>=0?C.green:C.red,marginLeft:3,fontWeight:700}}>
-                    {(ceSharePct-cePrevSharePct)>=0?"▲":"▼"}{Math.abs(ceSharePct-cePrevSharePct).toFixed(1)}%p
-                  </span>
-                </div>}
+            <div className="kpi-card" style={{border:"1px solid #7c83f540",borderTop:"3px solid #7c83f5"}}>
+              <div className="kpi-card-header">
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{width:8,height:8,borderRadius:2,background:"#7c83f5",boxShadow:"0 0 6px #7c83f5"}}/>
+                  <span style={{color:"#9da4f5",fontWeight:800,fontSize:12}}>CE 비중</span>
+                </div>
               </div>
+              <div className="kpi-card-num">
+                <span style={{color:"#7c83f5",fontSize:26,fontWeight:900,letterSpacing:"-1px",lineHeight:1}}>
+                  {ceSharePct.toFixed(1)}%
+                </span>
+              </div>
+              {cePrevSharePct!==null&&<div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
+                {[
+                  {lbl:"전년", val:cePrevSharePct.toFixed(1)+"%", c:C.muted2},
+                  {lbl:"변화", val:((ceSharePct-cePrevSharePct)>=0?"▲":"▼")+Math.abs(ceSharePct-cePrevSharePct).toFixed(1)+"p",
+                    c:(ceSharePct-cePrevSharePct)>=0?C.green:C.red},
+                ].map(({lbl,val,c})=>(
+                  <div key={lbl} className="kpi-card-stat">
+                    <div style={{color:C.muted,fontSize:8,marginBottom:2}}>{lbl}</div>
+                    <div style={{color:c,fontSize:11,fontWeight:700,lineHeight:1}}>{val}</div>
+                  </div>
+                ))}
+              </div>}
             </div>
           )}
-          {/* 누계 전년 */}
-          <div className="kpi-cell" style={{border:`1px solid ${C.muted2}30`}}>
-            <div className="kpi-title" style={{background:"rgba(255,255,255,.04)",color:C.muted2}}>누계 전년</div>
-            <div className="kpi-body">
-              <div style={{color:C.muted2,fontSize:24,fontWeight:900,marginBottom:4}}>{fmtN(ytdPrev)}</div>
-              {prevAvgMonthly>0&&<div style={{color:C.muted,fontSize:10}}>월평 {prevAvgMonthly}억</div>}
+
+          {/* ⑤ 누계 전년 */}
+          <div className="kpi-card" style={{border:`1px solid ${C.muted2}30`,borderTop:`3px solid ${C.muted2}`}}>
+            <div className="kpi-card-header">
+              <div style={{display:"flex",alignItems:"center",gap:6}}>
+                <div style={{width:8,height:8,borderRadius:2,background:C.muted2}}/>
+                <span style={{color:C.muted2,fontWeight:800,fontSize:12}}>누계 전년</span>
+              </div>
+            </div>
+            <div className="kpi-card-num">
+              <span style={{color:C.muted2,fontSize:26,fontWeight:900,letterSpacing:"-1px",lineHeight:1}}>
+                {ytdPrev>0?Math.round(ytdPrev).toLocaleString():"─"}
+              </span>
+              {ytdPrev>0&&<span style={{color:C.muted,fontSize:13}}>억</span>}
+            </div>
+            <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
+              {[
+                {lbl:"월평균", val:prevAvgMonthly>0?prevAvgMonthly+"억":"─", c:C.muted2},
+                {lbl:"대비",   val:ytdP>0&&ytdPrev>0?(ytdP/ytdPrev*100).toFixed(1)+"%":"─",
+                  c:ytdP>0&&ytdPrev>0?(ytdP>=ytdPrev?C.green:C.red):C.muted},
+              ].map(({lbl,val,c})=>(
+                <div key={lbl} className="kpi-card-stat">
+                  <div style={{color:C.muted,fontSize:8,marginBottom:2}}>{lbl}</div>
+                  <div style={{color:c,fontSize:11,fontWeight:700,lineHeight:1}}>{val}</div>
+                </div>
+              ))}
             </div>
           </div>
-          {/* 대외영업 비중 */}
+
+          {/* ⑥ 대외영업 비중 */}
           {daeSharePct!==null&&(
-            <div className="kpi-cell" style={{border:`1px solid ${KC["대외영업"]}40`}}>
-              <div className="kpi-title" style={{background:KC["대외영업"]+"15",color:KC["대외영업"]}}>대외영업 비중</div>
-              <div className="kpi-body">
-                <div style={{color:KC["대외영업"],fontSize:24,fontWeight:900}}>{daeSharePct.toFixed(1)}%</div>
+            <div className="kpi-card" style={{border:`1px solid ${KC["대외영업"]}40`,
+              borderTop:`3px solid ${KC["대외영업"]}`}}>
+              <div className="kpi-card-header">
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <div style={{width:8,height:8,borderRadius:2,background:KC["대외영업"],
+                    boxShadow:`0 0 6px ${KC["대외영업"]}`}}/>
+                  <span style={{color:KC["대외영업"],fontWeight:800,fontSize:12}}>대외영업 비중</span>
+                </div>
+              </div>
+              <div className="kpi-card-num">
+                <span style={{color:KC["대외영업"],fontSize:26,fontWeight:900,letterSpacing:"-1px",lineHeight:1}}>
+                  {daeSharePct.toFixed(1)}%
+                </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* ── [2+3] 월별 + 누계 가로 나란히 (반응형) */}
+{/* ── [2+3] 월별 + 누계 가로 나란히 (반응형) */}
         <style>{`.perf-row{display:flex;gap:12px}
         .perf-col{flex:1 1 0;min-width:0;border-radius:12px;overflow:hidden}
         .perf-col-monthly{background:#0b1d33;border:2px solid rgba(56,182,245,.25)}
