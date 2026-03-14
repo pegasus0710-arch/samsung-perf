@@ -209,13 +209,27 @@ function AutoTextarea({value,onChange,placeholder,minHeight=220,readOnly=false,f
 function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fontSize=14,style={}}){
   const ref=useRef(null);
 
-  // 초기값/외부변경 반영
-  const lastVal=useRef(value);
+  // 일반텍스트 → HTML 변환 (구버전 데이터 호환)
+  const toHTML=(v)=>{
+    if(!v) return "";
+    // 이미 HTML 태그가 있으면 그대로
+    if(/<[a-z][\s\S]*>/i.test(v)) return v;
+    // 일반 텍스트: 줄바꿈을 <br>로, &<> 이스케이프
+    return v
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/
+/g,"<br>");
+  };
+
+  const lastVal=useRef(null);  // 마지막으로 설정한 외부 value
   useEffect(()=>{
     const el=ref.current;
     if(!el)return;
-    if(el.innerHTML!==value && lastVal.current!==value){
-      el.innerHTML=value||"";
+    // value가 외부에서 바뀌었을 때만 innerHTML 갱신 (취소/파트변경 포함)
+    if(lastVal.current!==value){
+      el.innerHTML=toHTML(value);
       lastVal.current=value;
     }
     el.style.height="auto";
@@ -223,8 +237,9 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   },[value,minHeight]);
 
   const emit=()=>{
-    if(onChange) onChange({target:{value:ref.current?.innerHTML||""}});
-    lastVal.current=ref.current?.innerHTML||"";
+    const v=ref.current?.innerHTML||"";
+    if(onChange) onChange({target:{value:v}});
+    lastVal.current=v;  // emit 후엔 현재 HTML을 lastVal로 업데이트
   };
 
   // ── 선택 영역에 span 스타일 적용 (execCommand 대체)
@@ -325,13 +340,20 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   };
   const Sep=()=><div style={{width:1,height:18,background:"rgba(255,255,255,.2)",margin:"0 3px",flexShrink:0}}/>;
 
+  // 일반텍스트 → HTML 변환 (구버전 데이터 호환) - readOnly용
+  const toHTMLStatic=(v)=>{
+    if(!v) return "";
+    if(/<[a-z][\s\S]*>/i.test(v)) return v;
+    return v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/
+/g,"<br>");
+  };
   if(readOnly){
     return(
       <div style={{
         padding:"12px 16px",borderRadius:8,border:"1px solid rgba(255,255,255,.08)",
         minHeight,color:"#c8d8e8",fontSize:14,lineHeight:1.8,
         wordBreak:"break-word",background:"rgba(255,255,255,.02)",opacity:.9,...style}}
-        dangerouslySetInnerHTML={{__html:value||""}}
+        dangerouslySetInnerHTML={{__html:toHTMLStatic(value)}}
       />
     );
   }
@@ -447,8 +469,9 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
         contentEditable
         suppressContentEditableWarning
         onInput={e=>{
-          onChange&&onChange({target:{value:e.currentTarget.innerHTML}});
-          lastVal.current=e.currentTarget.innerHTML;
+          const v=e.currentTarget.innerHTML;
+          onChange&&onChange({target:{value:v}});
+          lastVal.current=v;
         }}
         data-placeholder={placeholder}
         style={{
