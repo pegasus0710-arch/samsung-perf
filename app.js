@@ -3087,19 +3087,22 @@ function App(){
   );
   const [showTgtPwModal,setShowTgtPwModal] = useState(false);
 
-  const [globalZoom,setGlobalZoom] = useState(
-    ()=>parseInt(localStorage.getItem(FONT_SIZE_KEY))||100
-  );
+  const [globalZoom,setGlobalZoom] = useState(()=>{
+    const saved=parseInt(localStorage.getItem(FONT_SIZE_KEY))||100;
+    // 구버전 px 단위값(12~20) → 100%로 초기화
+    return (saved>=50&&saved<=200)?saved:100;
+  });
   // 양방향 zoom (center 기준)
   useEffect(()=>{
     const el=document.getElementById('app-content');
     if(!el)return;
-    const ratio=globalZoom/100;
+    const safeZoom=Math.max(50,Math.min(200,globalZoom||100));
+    const ratio=safeZoom/100;
     el.style.transformOrigin='top center';
     el.style.transform=`scale(${ratio})`;
     el.style.width=`${100/ratio}%`;
     el.style.marginLeft=`${-(100/ratio-100)/2}%`;
-    localStorage.setItem(FONT_SIZE_KEY, String(globalZoom));
+    localStorage.setItem(FONT_SIZE_KEY, String(safeZoom));
   },[globalZoom]);
   const isMobile = useIsMobile();
 

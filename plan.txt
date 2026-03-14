@@ -565,17 +565,21 @@ function PlanApp(){
   const [planInput,setPlanInput]=useState("26");
   const [selMonth,setSelMonth]=useState("annual"); // 'annual' | 0~11
   const [isEditing,setIsEditing]=useState(false);   // 수정 모드 잠금
-  const [zoom,setZoom]=useState(()=>parseInt(localStorage.getItem('cst_font_size_v1'))||100); // 화면 배율 %
+  const [zoom,setZoom]=useState(()=>{
+    const saved=parseInt(localStorage.getItem('cst_font_size_v1'))||100;
+    return (saved>=50&&saved<=200)?saved:100;
+  }); // 화면 배율 %
   // 양방향 zoom (center 기준)
   useEffect(()=>{
     const el=document.getElementById('plan-content');
     if(!el)return;
-    const ratio=zoom/100;
+    const safeZoom=Math.max(50,Math.min(200,zoom||100));
+    const ratio=safeZoom/100;
     el.style.transformOrigin='top center';
     el.style.transform=`scale(${ratio})`;
     el.style.width=`${100/ratio}%`;
     el.style.marginLeft=`${-(100/ratio-100)/2}%`;
-    localStorage.setItem('cst_font_size_v1', String(zoom));
+    localStorage.setItem('cst_font_size_v1', String(safeZoom));
   },[zoom]);
   const [prevNoteYr,setPrevNoteYr]=useState("25");  // 전년도 주요사항 연도 (독립)
   const [showBackup,setShowBackup]=useState(false);
