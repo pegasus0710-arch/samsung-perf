@@ -7,7 +7,7 @@
    반응형: 모바일/태블릿/PC 지원
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
-const APP_VER = "v3.1";
+const APP_VER = "v3.2";
 // 목표 입력 잠금 비번 (SHA-256) — 기본값: tgt2025!
 const TGT_PW_HASH  = "b1c9a90560020cd8f64c5a8a2c30bd2b6ce28dcff2b9e535f9da3c2d14061b68";
 const TGT_UNLOCK_KEY = "cst_tgt_unlock_v1"; // 목표+실적 통합 잠금
@@ -2218,8 +2218,8 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
       {inputMode==="single"&&(
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
 
-          {/* 월 헤딩 */}
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
+          {/* 월 헤딩 + 잠금 버튼 */}
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
             <div style={{width:3,height:24,borderRadius:2,background:mColor}}/>
             <span style={{color:C.text,fontWeight:800,fontSize:15}}>
               {yr}년 {MONTHS[mi]}
@@ -2227,6 +2227,32 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
             <Chip c={mColor}>{mode}</Chip>
             {hasTgt&&<Chip c={C.blue}>실적+목표</Chip>}
             {prevYr&&<Chip c={C.muted2}>전{prevYr}년비 성장률 자동표시</Chip>}
+            {/* 잠금/해제 토글 버튼 */}
+            <div style={{marginLeft:"auto"}}>
+              {isTargetUnlocked?(
+                <button onClick={onTargetLock} style={{
+                  display:"flex",alignItems:"center",gap:5,
+                  padding:"5px 12px",borderRadius:7,cursor:"pointer",fontFamily:"inherit",
+                  fontWeight:700,fontSize:11,
+                  border:`1px solid ${C.muted}`,background:"rgba(255,255,255,.04)",color:C.muted,
+                  transition:"all .15s"}}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=C.orange;e.currentTarget.style.color=C.orange;}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor=C.muted;e.currentTarget.style.color=C.muted;}}>
+                  🔓 <span>입력 잠금</span>
+                </button>
+              ):(
+                <button onClick={onRequestTargetUnlock} style={{
+                  display:"flex",alignItems:"center",gap:5,
+                  padding:"5px 12px",borderRadius:7,cursor:"pointer",fontFamily:"inherit",
+                  fontWeight:700,fontSize:11,
+                  border:`1px solid ${C.orange}60`,background:C.orange+"15",color:C.orange,
+                  transition:"all .15s"}}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=C.orange;e.currentTarget.style.background=C.orange+"25";}}
+                  onMouseLeave={e=>{e.currentTarget.style.borderColor=C.orange+"60";e.currentTarget.style.background=C.orange+"15";}}>
+                  🔒 <span>잠금 해제</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* 행 렌더 */}
@@ -2918,360 +2944,134 @@ function ImportModal({onClose, currentData, onMerge}){
 
 
 function ReportModal({onClose, mode, tab}){
-  const [step,   setStep]   = useState("select"); // select | progress | done
-  const [type,   setType]   = useState(null);     // "excel_img" | "pdf" | "excel_data"
-  const [prog,   setProg]   = useState("");
-  const [error,  setError]  = useState("");
+  const [msg, setMsg] = useState("");
+  const fileRef = useRef(null);
 
-  const OPTS = [
-    {
-      id:"pdf",
-      icon:"📄",
-      title:"PDF 출력",
-      desc:"화면 그대로 PDF로 저장\n보고·공유용 레포트",
-      badge:"추천",
-      badgeC:"#2dd488",
-      color:"#38b6f5",
-    },
-    {
-      id:"excel_img",
-      icon:"🖼️",
-      title:"Excel (이미지)",
-      desc:"차트·화면 캡처 후\nExcel 시트에 이미지 삽입",
-      badge:"시각 동일",
-      badgeC:"#7c83f5",
-      color:"#7c83f5",
-    },
-    {
-      id:"excel_data",
-      icon:"📊",
-      title:"Excel (데이터)",
-      desc:"실적·목표 수치 테이블\n데이터 편집 가능",
-      badge:"편집 가능",
-      badgeC:"#f5b942",
-      color:"#f5b942",
-    },
-  ];
-
-  /* ─── 캡처 대상 요소 ─── */
-  const getTarget = () => {
-    // 메인 콘텐츠 영역만 캡처
-    const el = document.querySelector("#report-content");
-    return el || document.querySelector("#root > div");
+  const getLabel = () => {
+    if(tab==="dashboard") return "대시보드";
+    if(tab==="analysis") return "실적분석";
+    return "실적입력";
   };
 
-  /* ─── PDF 출력 ─── */
-  const exportPDF = async () => {
-    setStep("progress"); setProg("화면 캡처 중...");
-    try {
-      const el = getTarget();
-      const canvas = await window.html2canvas(el, {
-        scale: 1.8,
-        useCORS: true,
-        backgroundColor: "#07101f",
-        logging: false,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
-      });
-      setProg("PDF 생성 중...");
-      const { jsPDF } = window.jspdf;
-      const imgW = canvas.width, imgH = canvas.height;
-      // A4 가로 기준
-      const pageW = 297, pageH = (imgH / imgW) * pageW;
-      const pdf = new jsPDF({
-        orientation: pageW > pageH ? "landscape" : "portrait",
-        unit: "mm",
-        format: [pageW, Math.min(pageH, 420)],
-      });
-      // 긴 화면은 페이지 분할
-      const pxPerMm = imgW / pageW;
-      const pageHpx = Math.min(pageH, 420) * pxPerMm;
-      let yOffset = 0, page = 0;
-      while(yOffset < imgH){
-        if(page>0) pdf.addPage();
-        const sliceH = Math.min(pageHpx, imgH - yOffset);
-        const sliceCanvas = document.createElement("canvas");
-        sliceCanvas.width = imgW;
-        sliceCanvas.height = sliceH;
-        sliceCanvas.getContext("2d").drawImage(canvas, 0, -yOffset);
-        const sliceImg = sliceCanvas.toDataURL("image/jpeg", 0.92);
-        pdf.addImage(sliceImg, "JPEG", 0, 0, pageW, sliceH / pxPerMm);
-        yOffset += pageHpx;
-        page++;
-      }
-      const fname = `충청영업_${mode}_${new Date().toLocaleDateString("ko-KR").replace(/\. /g,"-").replace(".","")}`;
-      pdf.save(`${fname}.pdf`);
-      setStep("done");
-    } catch(e){ setError("PDF 생성 실패: "+e.message); setStep("select"); }
+  const downloadPdf = () => {
+    onClose();
+    setTimeout(()=>window.print(), 350);
   };
 
-  /* ─── Excel (이미지 삽입) ─── */
-  const exportExcelImg = async () => {
-    setStep("progress"); setProg("화면 캡처 중...");
-    try {
-      const el = getTarget();
-      const canvas = await window.html2canvas(el, {
-        scale: 1.5,
-        useCORS: true,
-        backgroundColor: "#07101f",
-        logging: false,
-        windowWidth: el.scrollWidth,
-        windowHeight: el.scrollHeight,
-      });
-      setProg("Excel 생성 중...");
-      const imgData = canvas.toDataURL("image/png");
-      const XLSX = window.XLSX;
+  const downloadExcelImg = async() => {
+    setMsg("⏳ 화면 캡처 중...");
+    onClose();
+    await new Promise(r=>setTimeout(r,400));
+    try{
+      const el = document.getElementById("report-content");
+      const canvas = await window.html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#07101f"});
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet([["충청영업팀 실적 레포트"]]);
-      // 시트 크기 설정
-      ws["!cols"] = Array(30).fill({wch:12});
-      ws["!rows"] = [{hpt:400}];
-      // 이미지는 XLSX에서 직접 삽입 불가 → base64 링크 안내 셀 삽입
-      ws["A2"] = {v:"※ 아래는 캡처 이미지입니다. 별도 이미지 파일도 함께 저장됩니다."};
-      ws["A3"] = {v:`생성일시: ${new Date().toLocaleString("ko-KR")}`};
-      ws["A4"] = {v:`모드: ${mode} | 화면: ${tab==="dashboard"?"대시보드":tab==="analysis"?"실적분석":"실적입력"}`};
       XLSX.utils.book_append_sheet(wb, ws, "레포트");
-      const fname = `충청영업_${mode}_${new Date().toLocaleDateString("ko-KR").replace(/\. /g,"-").replace(".","")}_이미지`;
-      XLSX.writeFile(wb, `${fname}.xlsx`);
-      // 이미지도 별도 다운로드
-      setProg("이미지 저장 중...");
+      // 이미지 삽입은 xlsx 기본 미지원 → 이미지 직접 다운로드
       const a = document.createElement("a");
-      a.href = imgData;
-      a.download = `${fname}.png`;
+      a.href = canvas.toDataURL("image/png");
+      a.download = `충청_레포트_${mode}_${new Date().toISOString().slice(0,10)}.png`;
       a.click();
-      setStep("done");
-    } catch(e){ setError("Excel 생성 실패: "+e.message); setStep("select"); }
+    }catch(e){ alert("캡처 오류: "+e.message); }
   };
 
-  /* ─── Excel (데이터 테이블) ─── */
-  const exportExcelData = async () => {
-    setStep("progress"); setProg("데이터 정리 중...");
-    // mode는 ReportModal props에서 직접 사용
-    const exportMode = mode;
-    const reportData = window.__reportData || {};
-    try {
-      const XLSX = window.XLSX;
-      if(!XLSX){ setError("XLSX 라이브러리 로드 실패"); setStep("select"); return; }
+  const downloadExcelData = () => {
+    try{
+      const reportData = window.__reportData || {};
       const wb = XLSX.utils.book_new();
-      const now = new Date().toLocaleString("ko-KR");
       const months = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
       const keys = ["CE","대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
-      const yrs = ["24","25","26"];
-
-      // 값 계산 헬퍼
-      const calcVal = (m, k) => {
-        if(k==="대외영업") return Number(m.혼수||0)+Number(m.입주||0)+Number(m.이사||0)+Number(m.SMB||0)+Number(m.농협||0)+Number(m.거주중||0)+Number(m.휴대폰||0);
-        if(k==="뉴홈")    return Number(m.입주||0)+Number(m.이사||0);
-        if(k==="B2B")     return Number(m.SMB||0)+Number(m.농협||0)+Number(m.휴대폰||0);
-        return Number(m[k]||0);
+      const calcVal = (m,k)=>{
+        if(k==="대외영업") return ["혼수","입주","이사","SAC","거주중","SMB","농협","휴대폰"].reduce((s,kk)=>s+(parseFloat(m[kk])||0),0);
+        if(k==="뉴홈") return (parseFloat(m.입주)||0)+(parseFloat(m.이사)||0);
+        if(k==="B2B") return (parseFloat(m.SMB)||0)+(parseFloat(m.농협)||0)+(parseFloat(m.휴대폰)||0);
+        return parseFloat(m[k])||0;
       };
-
-      yrs.forEach(yr=>{
-        const pD = reportData[yr]?.[exportMode]?.perf   || {};
-        const tD = reportData[yr]?.[exportMode]?.target || {};
-        const rows = [];
-        rows.push(["항목", ...months, "연간합계"]);
-        // 실적 블록
-        rows.push(["▶ 실적 (억원)", ...Array(13).fill("")]);
-        keys.forEach(k=>{
-          const vals = months.map((_,i)=>calcVal(pD[String(i)]||{}, k));
-          rows.push([k, ...vals, vals.reduce((a,b)=>a+b,0)]);
-        });
-        rows.push([""]);
-        // 목표 블록 (25/26년만)
-        if(yr!=="24"){
-          rows.push(["▶ 목표 (억원)", ...Array(13).fill("")]);
+      ["26","25","24"].forEach(yr=>{
+        [mode].forEach(md=>{
+          const pD = reportData[yr]?.[md]?.perf||{};
+          const tD = reportData[yr]?.[md]?.target||{};
+          const rows = [["항목",...months,"연간합계"]];
+          rows.push(["▶ 실적",...Array(13).fill("")]);
           keys.forEach(k=>{
-            const vals = months.map((_,i)=>calcVal(tD[String(i)]||{}, k));
-            rows.push([k, ...vals, vals.reduce((a,b)=>a+b,0)]);
+            const vals = months.map((_,i)=>calcVal(pD[String(i)]||{},k));
+            rows.push([k,...vals,vals.reduce((a,b)=>a+b,0)]);
           });
-          rows.push([""]);
-          // 달성률 블록
-          rows.push(["▶ 달성률 (%)", ...Array(13).fill("")]);
-          keys.forEach(k=>{
-            const vals = months.map((_,i)=>{
-              const pv=calcVal(pD[String(i)]||{}, k);
-              const tv=calcVal(tD[String(i)]||{}, k);
-              return tv>0 ? parseFloat((pv/tv*100).toFixed(1)) : "";
+          if(yr!=="24"){
+            rows.push([""]);
+            rows.push(["▶ 목표",...Array(13).fill("")]);
+            keys.forEach(k=>{
+              const vals = months.map((_,i)=>calcVal(tD[String(i)]||{},k));
+              rows.push([k,...vals,vals.reduce((a,b)=>a+b,0)]);
             });
-            const sumP=keys.reduce((a,_)=>a,0); // 연간 달성률
-            const totalP = keys.map((_,idx)=>calcVal(pD[String(0)]||{},keys[idx]));
-            const annP = vals.filter(v=>v!=="").length>0 ? parseFloat((vals.filter(v=>v!=="").reduce((a,b)=>Number(a)+Number(b),0)/vals.filter(v=>v!=="").length).toFixed(1)) : "";
-            rows.push([k, ...vals, annP!==""?`${annP}%`:"─"]);
-          });
-        }
-
-        const ws = XLSX.utils.aoa_to_sheet(rows);
-        ws["!cols"] = [{wch:14},...Array(12).fill({wch:7}),{wch:10}];
-        XLSX.utils.book_append_sheet(wb, ws, `${yr}년_${exportMode}`);
+          }
+          XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),`${yr}년_${md}`);
+        });
       });
-
-      // 요약 시트
-      const sumRows = [
-        [`충청영업팀 실적 레포트 — ${exportMode}`, "", `생성: ${now}`],
-        [],
-        ["항목", "26년 누계", "25년 누계", "24년 누계", "전년비(%)", "26년 목표", "달성률(%)"],
-      ];
-      keys.forEach(k=>{
-        const getAnn = (yr, type) => {
-          const d = reportData[yr]?.[exportMode]?.[type] || {};
-          let total=0;
-          for(let i=0;i<12;i++) total += calcVal(d[String(i)]||{}, k);
-          return total;
-        };
-        const v26=getAnn("26","perf"), v25=getAnn("25","perf"), v24=getAnn("24","perf");
-        const t26=getAnn("26","target");
-        const gr = v25>0 ? `${((v26-v25)/v25*100).toFixed(1)}%` : "─";
-        const ar = t26>0 ? `${(v26/t26*100).toFixed(1)}%` : "─";
-        sumRows.push([k, v26||0, v25||0, v24||0, gr, t26||0, ar]);
-      });
-      const wsSum = XLSX.utils.aoa_to_sheet(sumRows);
-      wsSum["!cols"] = [{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:10}];
-      XLSX.utils.book_append_sheet(wb, wsSum, "요약");
-
-      // 파일명: mode·날짜 올바르게
-      const dateStr = new Date().toLocaleDateString("ko-KR").replace(/\. /g,"-").replace(/\.$/,"");
-      XLSX.writeFile(wb, `충청영업_${exportMode}_${dateStr}_데이터.xlsx`);
-      setStep("done");
-    } catch(e){ setError("Excel 생성 실패: "+e.message); setStep("select"); }
+      XLSX.writeFile(wb,`충청_실적데이터_${mode}_${new Date().toISOString().slice(0,10)}.xlsx`);
+      setMsg("✅ 엑셀 저장 완료");
+    }catch(e){ setMsg("❌ 오류: "+e.message); }
   };
 
-  /* ─── 실행 ─── */
-  const run = () => {
-    if(!type) return;
-    if(type==="pdf")        exportPDF();
-    else if(type==="excel_img")  exportExcelImg();
-    else if(type==="excel_data") exportExcelData();
-  };
-
-  return (
-    <div style={{
-      position:"fixed",inset:0,zIndex:9000,
-      background:"rgba(0,0,0,.75)",backdropFilter:"blur(8px)",
-      display:"flex",alignItems:"center",justifyContent:"center",
-      padding:16,
-    }} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{
-        background:`linear-gradient(145deg,#0d1f38,#0a1628)`,
-        border:`1px solid rgba(255,255,255,.1)`,borderRadius:20,
-        padding:28,width:"100%",maxWidth:520,
-        boxShadow:"0 24px 60px rgba(0,0,0,.7)",
-      }}>
-        {/* 헤더 */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-          <div>
-            <div style={{color:"#cce4f7",fontWeight:900,fontSize:16,letterSpacing:"-0.03em"}}>
-              레포트 출력
-            </div>
-            <div style={{color:"#4a6a88",fontSize:11,marginTop:2}}>
-              {mode} · {tab==="dashboard"?"대시보드":tab==="analysis"?"실적분석":"실적입력"} 화면 기준
-            </div>
-          </div>
-          <button onClick={onClose} style={{
-            background:"rgba(255,255,255,.06)",border:"none",borderRadius:8,
-            color:"#4a6a88",fontSize:18,cursor:"pointer",width:32,height:32,
-            display:"flex",alignItems:"center",justifyContent:"center",
-          }}>×</button>
+  const BtnRow=({icon,label,desc,onClick,c,badge})=>(
+    <button onClick={onClick} style={{
+      display:"flex",alignItems:"center",gap:14,width:"100%",padding:"14px 16px",
+      borderRadius:9,cursor:"pointer",textAlign:"left",fontFamily:"inherit",
+      border:`1px solid ${c}40`,background:c+"0d",marginBottom:8,
+      transition:"background .15s"}}
+      onMouseEnter={e=>e.currentTarget.style.background=c+"22"}
+      onMouseLeave={e=>e.currentTarget.style.background=c+"0d"}>
+      <span style={{fontSize:22,flexShrink:0}}>{icon}</span>
+      <div style={{flex:1}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{color:C.text,fontWeight:700,fontSize:13}}>{label}</span>
+          {badge&&<span style={{fontSize:9,fontWeight:700,padding:"2px 6px",borderRadius:3,
+            background:c+"22",color:c,border:`1px solid ${c}40`}}>{badge}</span>}
         </div>
+        <div style={{color:C.muted,fontSize:11,marginTop:3,whiteSpace:"pre-line"}}>{desc}</div>
+      </div>
+    </button>
+  );
 
-        {step==="select"&&(<>
-          {/* 옵션 카드 */}
-          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:20}}>
-            {OPTS.map(o=>(
-              <div key={o.id} onClick={()=>setType(o.id)} style={{
-                border:`1.5px solid ${type===o.id?o.color:o.color+"30"}`,
-                borderRadius:12,padding:"14px 16px",cursor:"pointer",
-                background:type===o.id?o.color+"12":"rgba(255,255,255,.02)",
-                transition:"all .15s",
-                boxShadow:type===o.id?`0 0 16px ${o.color}20`:"none",
-              }}>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontSize:22}}>{o.icon}</span>
-                  <div style={{flex:1}}>
-                    <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3}}>
-                      <span style={{
-                        color:type===o.id?o.color:"#cce4f7",
-                        fontWeight:800,fontSize:13,
-                      }}>{o.title}</span>
-                      <span style={{
-                        color:o.badgeC,fontSize:9,fontWeight:700,
-                        background:o.badgeC+"18",borderRadius:4,padding:"1px 6px",
-                      }}>{o.badge}</span>
-                    </div>
-                    <div style={{color:"#4a6a88",fontSize:11,whiteSpace:"pre-line",lineHeight:1.5}}>
-                      {o.desc}
-                    </div>
-                  </div>
-                  <div style={{
-                    width:20,height:20,borderRadius:"50%",flexShrink:0,
-                    border:`2px solid ${type===o.id?o.color:"#1b3353"}`,
-                    background:type===o.id?o.color:"transparent",
-                    display:"flex",alignItems:"center",justifyContent:"center",
-                    transition:"all .15s",
-                  }}>
-                    {type===o.id&&<div style={{width:6,height:6,borderRadius:"50%",background:"#fff"}}/>}
-                  </div>
-                </div>
-              </div>
-            ))}
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:1000,background:"rgba(0,0,0,.75)",
+      display:"flex",alignItems:"center",justifyContent:"center",backdropFilter:"blur(4px)"}}>
+      <div style={{background:C.card,border:`1px solid ${C.b2}`,borderRadius:16,
+        width:"min(460px,92vw)",maxHeight:"85vh",overflow:"auto",
+        boxShadow:"0 8px 40px rgba(0,0,0,.6)"}}>
+        <div style={{padding:"16px 20px",borderBottom:`1px solid ${C.b1}`,
+          display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div>
+            <div style={{fontWeight:800,fontSize:15,color:C.text}}>🖨️ 레포트 출력</div>
+            <div style={{color:C.muted,fontSize:11,marginTop:2}}>{mode} · {getLabel()} 화면 기준</div>
           </div>
-
-          {error&&<div style={{color:"#f07070",fontSize:11,marginBottom:12,textAlign:"center"}}>{error}</div>}
-
-          <button onClick={run} disabled={!type} style={{
-            width:"100%",padding:"13px",borderRadius:10,border:"none",
-            background:type?`linear-gradient(135deg,${OPTS.find(o=>o.id===type)?.color||"#7c83f5"},${OPTS.find(o=>o.id===type)?.color||"#7c83f5"}99)`:"#1b3353",
-            color:type?"#fff":"#4a6a88",fontWeight:800,fontSize:14,
-            cursor:type?"pointer":"default",fontFamily:"inherit",
-            transition:"all .2s",
-            boxShadow:type?`0 4px 20px ${OPTS.find(o=>o.id===type)?.color||"#7c83f5"}30`:"none",
-          }}>
-            {type?`${OPTS.find(o=>o.id===type)?.title} 출력하기 →`:"출력 방식을 선택해주세요"}
-          </button>
-        </>)}
-
-        {step==="progress"&&(
-          <div style={{textAlign:"center",padding:"40px 0"}}>
-            <div style={{marginBottom:16,fontSize:32}}>⏳</div>
-            <div style={{color:"#cce4f7",fontWeight:700,fontSize:14,marginBottom:8}}>
-              레포트 생성 중...
-            </div>
-            <div style={{color:"#4a6a88",fontSize:12}}>{prog}</div>
-            <div style={{marginTop:20,height:3,background:"#1b3353",borderRadius:2,overflow:"hidden"}}>
-              <div style={{height:"100%",background:"#7c83f5",borderRadius:2,
-                animation:"reportProg 1.5s ease-in-out infinite"}}/>
-            </div>
-            <style>{`@keyframes reportProg{0%{width:10%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:10%;margin-left:90%}}`}</style>
-          </div>
-        )}
-
-        {step==="done"&&(
-          <div style={{textAlign:"center",padding:"40px 0"}}>
-            <div style={{marginBottom:16,fontSize:40}}>✅</div>
-            <div style={{color:"#2dd488",fontWeight:800,fontSize:15,marginBottom:8}}>
-              레포트 저장 완료!
-            </div>
-            <div style={{color:"#4a6a88",fontSize:12,marginBottom:24}}>
-              다운로드 폴더를 확인해주세요
-            </div>
-            <div style={{display:"flex",gap:10}}>
-              <button onClick={()=>{setStep("select");setType(null);setError("");}} style={{
-                flex:1,padding:"10px",borderRadius:8,border:"1px solid #1b3353",
-                background:"transparent",color:"#7a9ab8",cursor:"pointer",
-                fontFamily:"inherit",fontSize:12,
-              }}>다시 출력</button>
-              <button onClick={onClose} style={{
-                flex:1,padding:"10px",borderRadius:8,border:"none",
-                background:"#2dd48822",color:"#2dd488",cursor:"pointer",
-                fontFamily:"inherit",fontSize:12,fontWeight:700,
-              }}>닫기</button>
-            </div>
-          </div>
-        )}
+          <button onClick={onClose} style={{background:"transparent",border:"none",
+            color:C.muted,cursor:"pointer",fontSize:18}}>✕</button>
+        </div>
+        <div style={{padding:"16px"}}>
+          <BtnRow icon="📄" label="PDF 출력" badge="추천" c={C.blue}
+            desc={"화면 그대로 PDF로 저장
+보고·공유용 레포트"}
+            onClick={downloadPdf}/>
+          <BtnRow icon="🖼" label="이미지 저장 (PNG)" badge="시각 동일" c="#7c83f5"
+            desc={"현재 화면 캡처 후 PNG로 저장"}
+            onClick={downloadExcelImg}/>
+          <BtnRow icon="📊" label="엑셀 (데이터)" badge="편집 가능" c={C.orange}
+            desc={"실적·목표 수치 테이블
+데이터 편집 가능"}
+            onClick={downloadExcelData}/>
+          {msg&&<div style={{marginTop:8,padding:"10px 14px",borderRadius:8,
+            background:msg.startsWith("❌")?"rgba(240,112,112,.12)":"rgba(45,212,136,.12)",
+            color:msg.startsWith("❌")?C.red:C.green,fontSize:12,fontWeight:600}}>
+            {msg}
+          </div>}
+        </div>
       </div>
     </div>
   );
 }
+
 
 function App(){
   const [tab,       setTab]       = useState("dashboard");
@@ -3494,7 +3294,7 @@ function App(){
       </div>
 
       {/* 콘텐츠 */}
-      <div id="report-content" style={{maxWidth:1360,margin:"0 auto",padding:isMobile?"12px":"20px 16px"}}>
+      <div id="report-content" style={{maxWidth:1360,margin:"0 auto",padding:isMobile?"12px":"20px 16px",paddingBottom:60}}>
         <div style={{marginBottom:14}}>
           <h1 style={{margin:0,color:C.text,fontSize:isMobile?15:17,fontWeight:900,letterSpacing:"-0.04em"}}>
             {tab==="dashboard"?"실적 대시보드":tab==="analysis"?"실적 분석":"실적 입력"}

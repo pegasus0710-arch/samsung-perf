@@ -27,6 +27,16 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#07101f;color:#e8f4fd;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;min-height:100vh}
     #plan-content{transform-origin:top left;transition:transform .15s ease;}
+    @media print{
+      body{background:#fff!important;color:#111!important;font-size:11pt}
+      #plan-content{transform:none!important;width:100%!important}
+      .kpi-row{display:flex!important;flex-wrap:wrap!important}
+      .perf-row{flex-direction:column!important}
+      .perf-col{page-break-inside:avoid;margin-bottom:12pt}
+      [style*="position:sticky"],[style*="position: sticky"]{position:relative!important}
+      header,nav{display:none!important}
+      *{page-break-inside:avoid}
+    }
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
     @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
