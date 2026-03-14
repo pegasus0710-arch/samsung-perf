@@ -777,9 +777,9 @@ function Dashboard({data,mode}){
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:6}}>
                             {/* 누계실적 / 연간목표 */}
-                            <span style={{color:C.text,fontSize:10,fontWeight:700}}>
-                              {Math.round(perf).toLocaleString()}
-                              <span style={{color:C.muted,fontSize:9,fontWeight:400}}>
+                            <span style={{fontSize:11,fontWeight:700}}>
+                              <span style={{color:color}}>{Math.round(perf).toLocaleString()}</span>
+                              <span style={{color:C.muted2,fontSize:10,fontWeight:600}}>
                                 /{Math.round(annualTgt).toLocaleString()}억
                               </span>
                             </span>
@@ -2444,20 +2444,33 @@ function Analysis({data,mode}){
       </div>
 
       {/* ── 상단 KPI 카드 ── */}
-      <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?2:5},1fr)`,gap:8}}>
-        {[
-          {l:"누계 실적",    v:ytdP>0?Math.round(ytdP)+"억":"─",   c:color, big:true},
-          {l:"연간 목표",    v:annT>0?Math.round(annT)+"억":"─",    c:C.orange},
-          {l:MONTHS[emi]+" 누계달성", v:ytdAr?Math.round(gNum(ytdAr))+"%":"─", c:ytdAr?pctC(ytdAr):C.muted},
-          {l:"전년비 성장",  v:ytdGr?grwT(ytdGr):"─",              c:ytdGr?grwC(ytdGr):C.muted},
-          {l:"월평균 실적",  v:avgPerf>0?avgPerf+"억":"─",           c:C.teal},
-        ].map(({l,v,c,big})=>(
-          <div key={l} style={{background:C.card,border:`1px solid ${c}30`,borderRadius:10,
-            padding:"10px 12px",display:"flex",flexDirection:"column",gap:3}}>
-            <span style={{color:C.muted,fontSize:9,fontWeight:700}}>{l}</span>
-            <span style={{color:c,fontSize:big?18:15,fontWeight:900}}>{v}</span>
-          </div>
-        ))}
+      <div style={{display:"grid",gridTemplateColumns:`repeat(${isMobile?2:4},1fr)`,gap:8}}>
+        {/* 누계실적 + 월평균 통합 */}
+        <div style={{background:C.card,border:`1px solid ${color}30`,borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:3}}>
+          <span style={{color:C.muted,fontSize:9,fontWeight:700}}>누계 실적{avgPerf>0?` (월평균 ${avgPerf}억)`:""}</span>
+          <span style={{color,fontSize:18,fontWeight:900}}>{ytdP>0?Math.round(ytdP)+"억":"─"}</span>
+        </div>
+        {/* 연간 목표 */}
+        <div style={{background:C.card,border:`1px solid ${C.orange}30`,borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:3}}>
+          <span style={{color:C.muted,fontSize:9,fontWeight:700}}>연간 목표</span>
+          <span style={{color:C.orange,fontSize:15,fontWeight:900}}>{annT>0?Math.round(annT)+"억":"─"}</span>
+        </div>
+        {/* 누계달성 + 차이금액 */}
+        <div style={{background:C.card,border:`1px solid ${ytdAr?pctC(ytdAr):C.muted}30`,borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:3}}>
+          <span style={{color:C.muted,fontSize:9,fontWeight:700}}>{MONTHS[emi]} 누계달성</span>
+          <span style={{color:ytdAr?pctC(ytdAr):C.muted,fontSize:15,fontWeight:900}}>{ytdAr?Math.round(gNum(ytdAr))+"%":"─"}</span>
+          {ytdP>0&&annT>0&&<span style={{color:(ytdP-ytdT)>=0?C.green:C.red,fontSize:9,fontWeight:700}}>
+            차이 {(ytdP-ytdT)>=0?"+":""}{Math.round(ytdP-ytdT)}억
+          </span>}
+        </div>
+        {/* 전년비 성장 + 차이금액 */}
+        <div style={{background:C.card,border:`1px solid ${ytdGr?grwC(ytdGr):C.muted}30`,borderRadius:10,padding:"10px 12px",display:"flex",flexDirection:"column",gap:3}}>
+          <span style={{color:C.muted,fontSize:9,fontWeight:700}}>전년비 성장</span>
+          <span style={{color:ytdGr?grwC(ytdGr):C.muted,fontSize:15,fontWeight:900}}>{ytdGr?grwT(ytdGr):"─"}</span>
+          {ytdP>0&&ytdPrev>0&&<span style={{color:(ytdP-ytdPrev)>=0?C.green:C.red,fontSize:9,fontWeight:700}}>
+            차이 {(ytdP-ytdPrev)>=0?"+":""}{Math.round(ytdP-ytdPrev)}억
+          </span>}
+        </div>
       </div>
 
       {/* ── 월별 데이터 테이블 ── */}
@@ -2591,8 +2604,16 @@ function Analysis({data,mode}){
                                : selKey==="B2B"    ? sumR(pD,selKey,0,emi)-hp
                                : sumR(pD,selKey,0,emi);
                     const s = ceYtd>0?(vYtd/ceYtd*100).toFixed(1):null;
-                    return s?<span style={{color:KC.CE,fontWeight:700,fontSize:11}}>{s}%</span>
-                      :<span style={{color:C.muted}}>─</span>;
+                    // 전년 CE비중
+                    const ceYtdPrev=mPrev?sumR(pD25,"CE",0,emi):0;
+                    const vPrev = mPrev&&(selKey==="대외영업"?sumR(pD25,selKey,0,emi)-sumR(pD25,"휴대폰",0,emi)
+                               : selKey==="B2B"?sumR(pD25,selKey,0,emi)-sumR(pD25,"휴대폰",0,emi)
+                               : sumR(pD25,selKey,0,emi));
+                    const sPrev = ceYtdPrev>0?(vPrev/ceYtdPrev*100).toFixed(1):null;
+                    return s?<div>
+                      <span style={{color:KC.CE,fontWeight:700,fontSize:11}}>{s}%</span>
+                      {sPrev&&<span style={{color:C.muted,fontSize:9,marginLeft:4}}>전년{sPrev}%</span>}
+                    </div>:<span style={{color:C.muted}}>─</span>;
                   })()}
                 </td>
               </tr>
