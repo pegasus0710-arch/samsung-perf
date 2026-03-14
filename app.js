@@ -22,7 +22,10 @@ const FONT_SIZE_KEY = "cst_zoom_v2"; // v2: % 단위로 변경
     s.textContent=
       "#app-content{transform-origin:top center;transition:transform .15s ease;}"+
       "@keyframes spin{to{transform:rotate(360deg)}}"+
-      "@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}";
+      "@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}"+
+      "@media print{*{text-shadow:none!important;filter:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}"+
+      "#app-content{transform:none!important;width:100%!important}"+
+      "[style*='filter']{filter:none!important}}";
     document.head.appendChild(s);
   }
 })();
@@ -1571,7 +1574,7 @@ function BackupMainModal({onClose, data, mode}){
         boxShadow:"0 8px 40px rgba(0,0,0,.6)"}}>
         <div style={{padding:"16px 20px",borderBottom:`1px solid ${C.b1}`,
           display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-          <span style={{fontWeight:800,fontSize:15,color:C.text}}>📦 백업 · 복원</span>
+          <span style={{fontWeight:800,fontSize:15,color:C.text}}>📦 다운로드 · 복원</span>
           <button onClick={onClose} style={{background:"transparent",border:"none",
             color:C.muted,cursor:"pointer",fontSize:18}}>✕</button>
         </div>
@@ -3296,7 +3299,7 @@ function App(){
           }}
           onMouseEnter={e=>{e.currentTarget.style.background=C.teal+"22";e.currentTarget.style.borderColor=C.teal;}}
           onMouseLeave={e=>{e.currentTarget.style.background=C.teal+"10";e.currentTarget.style.borderColor=C.teal+"40";}}>
-            {isMobile?"백업":"📦 백업"}
+            {isMobile?"다운로드":"📦 다운로드"}
           </button>
           {/* 화면 확대/축소 */}
           <div style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,.05)",
