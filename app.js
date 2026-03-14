@@ -3242,17 +3242,22 @@ function App(){
               </button>
             ))}
           </nav>
-          {/* 레포트 버튼 */}
-          <button onClick={()=>setShowReport(true)} style={{
-            padding:"5px 12px",borderRadius:7,border:`1px solid #f5b94240`,
-            background:"#f5b94210",color:"#f5b942",fontWeight:700,fontSize:11,
-            cursor:"pointer",fontFamily:"inherit",display:"flex",alignItems:"center",gap:5,
-            transition:"all .15s",marginLeft:4,
+          {/* 달성계획 탭 (탭 메뉴 바로 옆) */}
+          <a href="plan.html" style={{
+            padding:isMobile?"6px 10px":"6px 14px",borderRadius:7,
+            border:"none",cursor:"pointer",
+            background:"transparent",color:C.muted,
+            fontWeight:500,fontSize:isMobile?11:12,fontFamily:"inherit",
+            textDecoration:"none",display:"flex",alignItems:"center",gap:4,
+            borderBottom:"2px solid transparent",whiteSpace:"nowrap",
+            transition:"color .15s, border-color .15s",
           }}
-          onMouseEnter={e=>{e.currentTarget.style.background="#f5b94222";e.currentTarget.style.borderColor="#f5b942";}}
-          onMouseLeave={e=>{e.currentTarget.style.background="#f5b94210";e.currentTarget.style.borderColor="#f5b94240";}}>
-            🖨️{!isMobile&&" 레포트"}
-          </button>
+          onMouseEnter={e=>{e.currentTarget.style.color="#7c83f5";e.currentTarget.style.borderBottomColor="#7c83f540";}}
+          onMouseLeave={e=>{e.currentTarget.style.color=C.muted;e.currentTarget.style.borderBottomColor="transparent";}}>
+            📋{!isMobile&&" 달성계획"}
+          </a>
+          <div style={{width:1,height:20,background:C.b1,margin:"0 4px",flexShrink:0}}/>
+
           {/* 백업 버튼 */}
           <button onClick={()=>setShowBackupMain(true)} style={{
             padding:"5px 12px",borderRadius:7,border:`1px solid ${C.teal}40`,
@@ -3285,17 +3290,7 @@ function App(){
               background:"rgba(255,255,255,.04)",color:C.muted2,
               cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>+</button>
           </div>
-          {/* 달성계획 링크 버튼 */}
-          <a href="plan.html" style={{
-            padding:"5px 12px",borderRadius:7,border:`1px solid #7c83f540`,
-            background:"#7c83f510",color:"#7c83f5",fontWeight:700,fontSize:11,
-            textDecoration:"none",display:"flex",alignItems:"center",gap:5,
-            transition:"all .15s",marginLeft:4,whiteSpace:"nowrap",
-          }}
-          onMouseEnter={e=>{e.currentTarget.style.background="#7c83f522";e.currentTarget.style.borderColor="#7c83f5";}}
-          onMouseLeave={e=>{e.currentTarget.style.background="#7c83f510";e.currentTarget.style.borderColor="#7c83f540";}}>
-            📋{!isMobile&&" 달성계획"}
-          </a>
+
 
         </div>
       </div>
