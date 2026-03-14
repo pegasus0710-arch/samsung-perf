@@ -9,10 +9,10 @@
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const APP_VER = "v3.1";
 // 목표 입력 잠금 비번 (SHA-256) — 기본값: tgt2025!
-const TGT_PW_HASH  = "c5b73f68877be4d57580ed9003b101f2483cb6e108e73ed07f7f180d485bb59a";
+const TGT_PW_HASH  = "b1c9a90560020cd8f64c5a8a2c30bd2b6ce28dcff2b9e535f9da3c2d14061b68";
 const TGT_UNLOCK_KEY = "cst_tgt_unlock_v1";
-// 실적 입력 잠금 비번 (기본값: perf2025!)
-const PERF_PW_HASH = "ab507ee58016d69020db20097985c716987ed43d9b05655c0e84ab5b7633d6a9";
+// 실적 입력 잠금 비번 (ce2025! 공통)
+const PERF_PW_HASH = "b1c9a90560020cd8f64c5a8a2c30bd2b6ce28dcff2b9e535f9da3c2d14061b68";
 const PERF_UNLOCK_KEY = "cst_perf_unlock_v1";
 // 전역 폰트 크기 (plan.html → localStorage 공유)
 const FONT_SIZE_KEY = "cst_font_size_v1";
