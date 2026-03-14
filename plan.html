@@ -281,6 +281,7 @@ function AutoTextarea({value,onChange,placeholder,minHeight=220,readOnly=false,f
   useEffect(()=>{
     const el=ref.current;
     if(!el)return;
+    el.style.fontSize=fontSize+"px";
     el.style.height="auto";
     el.style.height=Math.max(minHeight,el.scrollHeight)+"px";
   },[value,minHeight,fontSize]);
@@ -302,6 +303,7 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   useEffect(()=>{
     const el=ref.current;
     if(!el)return;
+    el.style.fontSize=fontSize+"px";  // DOM 직접 업데이트로 확실히 반영
     el.style.height="auto";
     el.style.height=Math.max(minHeight,el.scrollHeight)+"px";
   },[value,minHeight,fontSize]);
@@ -546,7 +548,7 @@ function PlanApp(){
   const [planInput,setPlanInput]=useState("26");
   const [selMonth,setSelMonth]=useState("annual"); // 'annual' | 0~11
   const [isEditing,setIsEditing]=useState(false);   // 수정 모드 잠금
-  const [fontSize,setFontSize]=useState(14);         // 글자 크기
+  const [fontSize,setFontSize]=useState(16);         // 글자 크기 (기본 16px)
   const [prevNoteYr,setPrevNoteYr]=useState("25");  // 전년도 주요사항 연도 (독립)
   const [showBackup,setShowBackup]=useState(false);
   const autoSaveTimer=useRef(null);
@@ -816,14 +818,15 @@ function PlanApp(){
             ))}
           </div>
           {/* 글자 크기 */}
-          <div style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,.05)",borderRadius:6,padding:"3px 6px"}}>
-            <button onClick={()=>setFontSize(f=>Math.max(11,f-1))} style={{
-              padding:"2px 6px",border:"none",background:"transparent",color:C.muted,
-              cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:700}}>A−</button>
-            <span style={{color:C.muted2,fontSize:10,minWidth:22,textAlign:"center"}}>{fontSize}</span>
-            <button onClick={()=>setFontSize(f=>Math.min(20,f+1))} style={{
-              padding:"2px 6px",border:"none",background:"transparent",color:C.muted,
-              cursor:"pointer",fontSize:12,fontFamily:"inherit",fontWeight:700}}>A+</button>
+          <div style={{display:"flex",alignItems:"center",gap:4,background:"rgba(255,255,255,.06)",borderRadius:7,padding:"4px 8px",border:`1px solid ${C.b1}`}}>
+            <span style={{color:C.muted2,fontSize:13,fontWeight:900,marginRight:2}}>T</span>
+            <button onClick={()=>setFontSize(Math.max(12,fontSize-1))} style={{
+              padding:"2px 8px",borderRadius:4,border:`1px solid ${C.b1}`,background:"rgba(255,255,255,.04)",color:C.muted2,
+              cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>−</button>
+            <span style={{color:C.text,fontSize:11,fontWeight:700,minWidth:28,textAlign:"center"}}>{fontSize}px</span>
+            <button onClick={()=>setFontSize(Math.min(22,fontSize+1))} style={{
+              padding:"2px 8px",borderRadius:4,border:`1px solid ${C.b1}`,background:"rgba(255,255,255,.04)",color:C.muted2,
+              cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>+</button>
           </div>
           <button onClick={()=>setShowBackup(true)} style={{
             padding:"6px 14px",borderRadius:6,cursor:"pointer",fontWeight:700,fontSize:11,
