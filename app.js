@@ -3303,13 +3303,7 @@ function App(){
           onMouseLeave={e=>{e.currentTarget.style.background="#7c83f510";e.currentTarget.style.borderColor="#7c83f540";}}>
             📋{!isMobile&&" 달성계획"}
           </a>
-          {!isMobile&&(
-            <div style={{marginLeft:"auto",display:"flex",gap:5}}>
-              <Chip c={C.muted2}>24년</Chip>
-              <Chip c={C.accent}>25년</Chip>
-              <Chip c={mColor}>26년</Chip>
-            </div>
-          )}
+
         </div>
       </div>
       {/* ── sticky 헤더 끝 ── */}
