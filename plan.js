@@ -460,6 +460,26 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
         }} style={BtnS} title="강조 박스">□ 박스</button>
         <Sep/>
 
+        {/* 표 삽입 */}
+        <select style={{...SelS,maxWidth:60}}
+          defaultValue=""
+          onChange={e=>{
+            const v=e.target.value;
+            if(v){
+              const [r,c]=v.split("x").map(Number);
+              insertTable(r,c);
+            }
+            e.target.value="";
+          }}>
+          <option value="">표▾</option>
+          <option value="2x2">2×2</option>
+          <option value="2x3">2×3</option>
+          <option value="3x3">3×3</option>
+          <option value="3x4">3×4</option>
+          <option value="4x4">4×4</option>
+          <option value="4x5">4×5</option>
+        </select>
+        <Sep/>
         {/* 초기화 */}
         <button onMouseDown={e=>{e.preventDefault();execCmd("removeFormat");}} style={{...BtnS,color:"#f87171"}} title="서식 제거">초기화</button>
       </div>
@@ -659,6 +679,7 @@ function PlanApp(){
   const [chartTab,setChartTab]=useState("실적");
   const [cumChartTab,setCumChartTab]=useState("실적");
   const [saveState,setSaveState]=useState("idle");
+  const [tempSaved,setTempSaved]=useState(false); // 로컬 임시저장 완료 표시
   const [dbReady,setDbReady]=useState(false);
   const [selMonth,setSelMonth]=useState("annual"); // 'annual' | 0~11
   const [isEditing,setIsEditing]=useState(false);   // 수정 모드 잠금
@@ -715,12 +736,16 @@ function PlanApp(){
     }catch{}
   },[]);
 
-  // 텍스트 draft 3초 자동저장
+  // 텍스트 draft 3초 자동저장 (임시저장 표시)
   useEffect(()=>{
     clearTimeout(autoSaveTimer.current);
+    setTempSaved(false); // 변경 즉시 임시저장 해제
     if(Object.keys(textDraft).length>0){
       autoSaveTimer.current=setTimeout(()=>{
-        try{localStorage.setItem(LS_TEXT,JSON.stringify(textDraft));}catch{}
+        try{
+          localStorage.setItem(LS_TEXT,JSON.stringify(textDraft));
+          setTempSaved(true); // 임시저장 완료 표시
+        }catch{}
       },3000);
     }
     return()=>clearTimeout(autoSaveTimer.current);
@@ -763,6 +788,7 @@ function PlanApp(){
       );
       setPlanTextData(merged);
       setTextDraft({});
+      setTempSaved(false);
       localStorage.removeItem(LS_TEXT);
       setSaveState("saved");
       setIsEditing(false); // 저장 후 잠금
@@ -1316,14 +1342,14 @@ function PlanApp(){
             <table style={{borderCollapse:"collapse",width:"100%",tableLayout:"fixed"}}>
               <thead>
                 <tr style={{borderBottom:`2px solid ${C.b1}`}}>
-                  <td style={{padding:"5px 10px",color:C.muted,fontWeight:700,fontSize:10,width:56}}>항목</td>
+                  <td style={{padding:"3px 8px",color:C.muted,fontWeight:700,fontSize:10,width:52}}>항목</td>
                   {MONTHS.map((m,i)=>(
                     <td key={m} style={{padding:"4px 4px",textAlign:"right",
-                      color:i<=emi?C.muted2:C.muted,fontSize:10,fontWeight:600}}>
+                      color:i<=emi?C.muted2:C.muted,fontSize:9,fontWeight:600}}>
                       {m.replace("월","")}{i===emi&&<span style={{color,fontSize:7,display:"block",textAlign:"center"}}>▲</span>}
                     </td>
                   ))}
-                  <td style={{padding:"4px 8px",textAlign:"right",color:C.accent,fontSize:10,fontWeight:700,width:48}}>누계</td>
+                  <td style={{padding:"3px 6px",textAlign:"right",color:C.accent,fontSize:10,fontWeight:700,width:44}}>누계</td>
                 </tr>
               </thead>
               <tbody>
@@ -1335,22 +1361,25 @@ function PlanApp(){
                   {key:"전년",   data:mPrev,   c:C.muted2, sum:ytdPrev, useEmi:true, bg:"rgba(255,255,255,.02)"},
                   {key:"목표차질",data:mPerf,  c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:mTgt, bg:"rgba(255,255,255,.015)"},
                   {key:"전년차질",data:mPerf,  c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:mPrev, bg:"rgba(255,255,255,.01)"},
-                ].map(({key,data,c,sum,useEmi,isPct,isGrw,isDiff,diffBase,bg})=>(
-                  <tr key={key} style={{borderBottom:`1px solid ${C.b1}14`,background:bg||"transparent"}}>
-                    <td style={{padding:"4px 8px",fontWeight:700,fontSize:10,
+                ].map(({key,data,c,sum,useEmi,isPct,isGrw,isDiff,diffBase,bg},ri)=>(
+                  <tr key={key} style={{
+                    borderBottom:ri%2===0?`1px solid ${C.b1}20`:`1px solid ${C.b1}08`,
+                    background:bg||(ri%2===0?"rgba(255,255,255,.018)":"transparent")}}>
+                    <td style={{padding:"3px 6px",fontWeight:700,fontSize:10,
                       color:isDiff?C.muted2:c,
-                      background:bg||"transparent",whiteSpace:"nowrap"}}>{key}</td>
+                      background:bg||(ri%2===0?"rgba(255,255,255,.018)":"transparent"),
+                      whiteSpace:"nowrap"}}>{key}</td>
                     {(isDiff?mPerf:data).map((v,i)=>{
                       if(isDiff){
-                        if(i>emi)return<td key={i} style={{textAlign:"right",padding:"3px 4px"}}><span style={{color:C.muted,fontSize:9}}>─</span></td>;
+                        if(i>emi)return<td key={i} style={{textAlign:"right",padding:"2px 3px"}}><span style={{color:C.muted,fontSize:9}}>─</span></td>;
                         const d=mPerf[i]-(diffBase[i]||0);
-                        return<td key={i} style={{padding:"3px 4px",textAlign:"right"}}>
+                        return<td key={i} style={{padding:"2px 3px",textAlign:"right"}}>
                           <span style={{color:d>=0?C.green:C.red,fontSize:10,fontWeight:600}}>{d>=0?"+":""}{Math.round(d)}</span>
                         </td>;
                       }
                       const hide=(useEmi&&i>emi)||(isPct&&v===null);
                       return(
-                        <td key={i} style={{padding:"3px 4px",textAlign:"right"}}>
+                        <td key={i} style={{padding:"2px 3px",textAlign:"right"}}>
                           {hide?<span style={{color:C.muted,fontSize:9}}>─</span>:
                             <span style={{color:isPct?(isGrw?grwC(String(v)):pctC(gNum(v))):i<=emi?c:C.muted,fontSize:10,fontWeight:i<=emi?600:400}}>
                               {isPct?(gNum(v)>0&&isGrw?"+":"")+Math.round(gNum(v))+"%":Math.round(gNum(v)).toLocaleString()}
@@ -1419,11 +1448,11 @@ function PlanApp(){
                   <td style={{padding:"5px 8px",color:C.muted,fontWeight:700,fontSize:10,width:60}}>항목</td>
                   {MONTHS.map((m,i)=>(
                     <td key={m} style={{padding:"4px 4px",textAlign:"right",
-                      color:i<=emi?C.muted2:C.muted,fontSize:10,fontWeight:600}}>
+                      color:i<=emi?C.muted2:C.muted,fontSize:9,fontWeight:600}}>
                       {m.replace("월","")}{i===emi&&<span style={{color,fontSize:7,display:"block",textAlign:"center"}}>▲</span>}
                     </td>
                   ))}
-                  <td style={{padding:"4px 8px",textAlign:"right",color:C.accent,fontSize:10,fontWeight:700,width:48}}>누계</td>
+                  <td style={{padding:"3px 6px",textAlign:"right",color:C.accent,fontSize:10,fontWeight:700,width:44}}>누계</td>
                 </tr>
               </thead>
               <tbody>
@@ -1435,22 +1464,25 @@ function PlanApp(){
                   {key:"전년",   data:cumPrevArr,c:C.muted2, sum:ytdPrev,   bg:"rgba(255,255,255,.02)"},
                   {key:"목표차질",data:cumPerf,  c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:cumTgt, bg:"rgba(255,255,255,.015)"},
                   {key:"전년차질",data:cumPerf,  c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:cumPrevArr, bg:"rgba(255,255,255,.01)"},
-                ].map(({key,data,c,sum,isPct,isGrw,isDiff,diffBase,bg})=>(
-                  <tr key={key} style={{borderBottom:`1px solid ${C.b1}14`,background:bg||"transparent"}}>
-                    <td style={{padding:"4px 8px",fontWeight:700,fontSize:10,
+                ].map(({key,data,c,sum,isPct,isGrw,isDiff,diffBase,bg},ri)=>(
+                  <tr key={key} style={{
+                    borderBottom:ri%2===0?`1px solid ${C.b1}20`:`1px solid ${C.b1}08`,
+                    background:bg||(ri%2===0?"rgba(255,255,255,.018)":"transparent")}}>
+                    <td style={{padding:"3px 6px",fontWeight:700,fontSize:10,
                       color:isDiff?C.muted2:c,
-                      background:bg||"transparent",whiteSpace:"nowrap"}}>{key}</td>
+                      background:bg||(ri%2===0?"rgba(255,255,255,.018)":"transparent"),
+                      whiteSpace:"nowrap"}}>{key}</td>
                     {(isDiff?cumPerf:data).map((v,i)=>{
                       if(isDiff){
-                        if(v===null)return<td key={i} style={{textAlign:"right",padding:"3px 4px"}}><span style={{color:C.muted,fontSize:9}}>─</span></td>;
+                        if(v===null)return<td key={i} style={{textAlign:"right",padding:"2px 3px"}}><span style={{color:C.muted,fontSize:9}}>─</span></td>;
                         const base=diffBase[i];
                         const d=v-(base||0);
-                        return<td key={i} style={{padding:"3px 4px",textAlign:"right"}}>
+                        return<td key={i} style={{padding:"2px 3px",textAlign:"right"}}>
                           <span style={{color:d>=0?C.green:C.red,fontSize:10,fontWeight:600}}>{d>=0?"+":""}{Math.round(d)}</span>
                         </td>;
                       }
                       return(
-                        <td key={i} style={{padding:"3px 4px",textAlign:"right"}}>
+                        <td key={i} style={{padding:"2px 3px",textAlign:"right"}}>
                           {v===null?<span style={{color:C.muted,fontSize:9}}>─</span>:
                             <span style={{color:isPct?(isGrw?grwC(String(v)):pctC(gNum(v))):i<=emi?c:C.muted,fontSize:10,fontWeight:i<=emi?600:400}}>
                               {isPct?(gNum(v)>0&&isGrw?"+":"")+Math.round(gNum(v))+"%":Math.round(gNum(v)).toLocaleString()}
@@ -1492,7 +1524,8 @@ function PlanApp(){
                 color:isEditing?C.orange:C.muted,border:`1px solid ${isEditing?C.orange+"50":C.b1}`}}>
                 {isEditing?"편집 중":"저장됨"}
               </span>
-              {hasDraft&&isEditing&&<Chip c={C.orange}>● 미저장</Chip>}
+              {hasDraft&&isEditing&&!tempSaved&&<Chip c={C.orange}>● 미저장</Chip>}
+              {hasDraft&&isEditing&&tempSaved&&<Chip c={C.teal}>💾 임시저장됨</Chip>}
             </div>
 
           </div>
@@ -1609,12 +1642,13 @@ function PlanApp(){
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               {saveState==="saved"&&<span style={{color:C.green,fontSize:11,fontWeight:700}}>✅ 저장 완료</span>}
               {saveState==="error"&&<span style={{color:C.red,fontSize:11,fontWeight:700}}>❌ 저장 오류</span>}
-              {hasDraft&&isEditing&&saveState==="idle"&&<span style={{color:C.muted,fontSize:10}}>● 3초 후 로컬 자동저장</span>}
+              {hasDraft&&isEditing&&saveState==="idle"&&!tempSaved&&<span style={{color:C.muted,fontSize:10}}>● 3초 후 임시저장...</span>}
+              {hasDraft&&isEditing&&saveState==="idle"&&tempSaved&&<span style={{color:C.teal,fontSize:10,fontWeight:600}}>💾 임시저장됨 (저장 버튼으로 확정)</span>}
             </div>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
               {isEditing?(
                 <>
-                  <button onClick={()=>{setTextDraft({});setIsEditing(false);setEditorKey(k=>k+1);}} style={{
+                  <button onClick={()=>{setTextDraft({});setTempSaved(false);setIsEditing(false);setEditorKey(k=>k+1);}} style={{
                     padding:"8px 18px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:12,
                     fontFamily:"inherit",border:`1px solid ${C.muted}`,background:"transparent",color:C.muted}}>
                     취소
