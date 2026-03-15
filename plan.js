@@ -1242,7 +1242,7 @@ function PlanApp(){
             <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
               {[
                 {lbl:"월평균", val:prevAvgMonthly>0?prevAvgMonthly+"억":"─", c:C.muted2},
-                {lbl:"대비",   val:ytdP>0&&ytdPrev>0?(ytdP/ytdPrev*100).toFixed(1)+"%":"─",
+                {lbl:"전년비",   val:ytdP>0&&ytdPrev>0?(ytdP/ytdPrev*100).toFixed(1)+"%":"─",
                   c:ytdP>0&&ytdPrev>0?(ytdP>=ytdPrev?C.green:C.red):C.muted},
               ].map(({lbl,val,c})=>(
                 <div key={lbl} className="kpi-card-stat">
