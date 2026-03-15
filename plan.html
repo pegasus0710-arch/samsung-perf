@@ -29,20 +29,7 @@
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:#07101f;color:#e8f4fd;font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;min-height:100vh}
     #plan-content{transform-origin:top center;transition:transform .15s ease;}
-    @media print{
-      @page{size:A4 landscape;margin:10mm}
-      body{background:#07101f!important;color:#e8f4fd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      #plan-content{transform:none!important;width:100%!important;padding:0!important}
-      .kpi-row{display:flex!important;flex-wrap:wrap!important;gap:4px!important}
-      .kpi-cell{min-width:100px!important;padding:8px!important}
-      .perf-row{flex-direction:row!important}
-      .perf-col{flex:1!important;page-break-inside:avoid}
-      [style*="position:sticky"],[style*="position: sticky"]{position:relative!important;top:auto!important}
-      div[style*="sticky"]{position:relative!important}
-      .no-print{display:none!important}
-      /* 헤더는 유지하되 2행만 */
-      header{display:block!important}
-    }
+
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
     @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}

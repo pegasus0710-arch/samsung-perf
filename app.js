@@ -22,10 +22,7 @@ const FONT_SIZE_KEY = "cst_zoom_v2"; // v2: % 단위로 변경
     s.textContent=
       "#app-content{transform-origin:top center;transition:transform .15s ease;}"+
       "@keyframes spin{to{transform:rotate(360deg)}}"+
-      "@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}"+
-      "@media print{*{text-shadow:none!important;filter:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}"+
-      "#app-content{transform:none!important;width:100%!important}"+
-      "[style*='filter']{filter:none!important}}";
+      "@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}";
     document.head.appendChild(s);
   }
 })();
@@ -1516,11 +1513,6 @@ function BackupMainModal({onClose, data, mode}){
     setMsg("✅ 엑셀 백업 완료");
   };
 
-  const downloadPdf=()=>{
-    onClose();
-    setTimeout(()=>window.print(),300);
-  };
-
   const downloadImage=async()=>{
     setMsg("⏳ 이미지 생성 중...");
     onClose();
@@ -1602,9 +1594,7 @@ function BackupMainModal({onClose, data, mode}){
               <BtnRow icon="🖼" label="이미지 저장 (PNG)" c={C.blue}
                 desc="현재 화면 전체를 고해상도 이미지로 저장"
                 onClick={downloadImage}/>
-              <BtnRow icon="🖨" label="PDF 저장 / 인쇄" c={C.orange}
-                desc="브라우저 인쇄 기능으로 PDF 저장 또는 인쇄"
-                onClick={downloadPdf}/>
+
             </>
           )}
           {tab==="import"&&(
@@ -2983,11 +2973,6 @@ function ReportModal({onClose, mode, tab}){
     return "실적입력";
   };
 
-  const downloadPdf = () => {
-    onClose();
-    setTimeout(()=>window.print(), 350);
-  };
-
   const downloadExcelImg = async() => {
     setMsg("⏳ 화면 캡처 중...");
     onClose();
@@ -3080,9 +3065,7 @@ function ReportModal({onClose, mode, tab}){
             color:C.muted,cursor:"pointer",fontSize:18}}>✕</button>
         </div>
         <div style={{padding:"16px"}}>
-          <BtnRow icon="📄" label="PDF 출력" badge="추천" c={C.blue}
-            desc={"화면 그대로 PDF로 저장\n보고·공유용 레포트"}
-            onClick={downloadPdf}/>
+
           <BtnRow icon="🖼" label="이미지 저장 (PNG)" badge="시각 동일" c="#7c83f5"
             desc={"현재 화면 캡처 후 PNG로 저장"}
             onClick={downloadExcelImg}/>

@@ -509,11 +509,6 @@ function BackupModal({onClose,perfData,planTextData,onImportJson,excelFn}){
     setMsg("✅ JSON 다운로드 완료");
   };
 
-  const downloadPdf=()=>{
-    onClose(); // 모달 먼저 닫기
-    setTimeout(()=>window.print(),350);
-  };
-
   const downloadImage=async()=>{
     onClose(); // 모달 먼저 닫기
     await new Promise(r=>setTimeout(r,400));
@@ -605,9 +600,7 @@ function BackupModal({onClose,perfData,planTextData,onImportJson,excelFn}){
               <BtnRow icon="🖼" label="이미지 저장 (PNG)" c={C.teal}
                 desc="현재 화면 전체를 고해상도 이미지로 저장"
                 onClick={downloadImage}/>
-              <BtnRow icon="🖨" label="PDF 저장 / 인쇄" c={C.orange}
-                desc="브라우저 인쇄 기능으로 PDF 저장 또는 인쇄"
-                onClick={downloadPdf}/>
+
             </>
           )}
           {tab==="import"&&(
