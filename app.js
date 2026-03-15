@@ -390,7 +390,7 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
           position:"absolute",
           left:`${Math.min(tooltip.tx+2,75)}%`,
           top:`${Math.max(tooltip.ty-10,0)}%`,
-          background:"rgba(7,16,31,.95)",
+          background:"rgba(7,16,31,.72)",backdropFilter:"blur(6px)",
           border:`1px solid rgba(255,255,255,.12)`,
           borderRadius:8,padding:"8px 12px",
           pointerEvents:"none",zIndex:10,
