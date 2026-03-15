@@ -161,7 +161,7 @@ function MiniChart({series,labels,h=240,pctMode=false,grMode=false}){
       </svg>
       {tip&&(
         <div style={{position:"absolute",left:`${Math.min(tip.xi/11*84+4,62)}%`,top:"10%",
-          background:"rgba(7,16,31,.97)",border:`1px solid ${C.b2}`,
+          background:"rgba(7,16,31,.72)",border:`1px solid ${C.b2}`,backdropFilter:"blur(6px)",
           borderRadius:8,padding:"10px 14px",pointerEvents:"none",zIndex:10,
           boxShadow:"0 4px 16px rgba(0,0,0,.6)",minWidth:120}}>
           <div style={{color:C.muted,fontSize:10,marginBottom:5,fontWeight:700}}>{labels[tip.mi]}</div>
@@ -1261,8 +1261,8 @@ function PlanApp(){
             </div>
           </div>
 
-          {/* ④ CE 비중 */}
-          {ceSharePct!==null&&(
+          {/* ④ CE 비중 — 휴대폰 파트 선택 시 제외 */}
+          {ceSharePct!==null&&part!=="휴대폰"&&(
             <div className="kpi-card" style={{border:"1px solid #7c83f540",borderTop:"3px solid #7c83f5"}}>
               <div className="kpi-card-header">
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -1542,14 +1542,14 @@ function PlanApp(){
             <table style={{borderCollapse:"collapse",width:"100%",tableLayout:"fixed"}}>
               <thead>
                 <tr style={{borderBottom:`2px solid ${C.b1}`}}>
-                  <td style={{padding:"5px 4px",color:C.muted,fontWeight:700,fontSize:9,width:40}}>항목</td>
+                  <td style={{padding:"5px 4px",color:C.muted,fontWeight:700,fontSize:9,width:36}}>항목</td>
                   {MONTHS.map((m,i)=>(
                     <td key={m} style={{padding:"3px 2px",textAlign:"right",
                       color:i<=emi?C.muted2:C.muted,fontSize:8,fontWeight:600}}>
                       {m.replace("월","")}{i===emi&&<span style={{color,fontSize:6,display:"block",textAlign:"center"}}>▲</span>}
                     </td>
                   ))}
-                  <td style={{padding:"3px 4px",textAlign:"right",color:C.accent,fontSize:9,fontWeight:700,width:38}}>누계</td>
+                  <td style={{padding:"3px 4px",textAlign:"right",color:C.accent,fontSize:9,fontWeight:700,width:54,whiteSpace:"nowrap"}}>누계</td>
                 </tr>
               </thead>
               <tbody>
@@ -1574,7 +1574,7 @@ function PlanApp(){
                         const base=diffBase[i];
                         const d=v-(base||0);
                         return<td key={i} style={{padding:"1px 2px",textAlign:"right"}}>
-                          <span style={{color:d>=0?C.green:C.red,fontSize:9,fontWeight:600}}>{d>=0?"+":""}{Math.round(d)}</span>
+                          <span style={{color:d>=0?C.green:C.red,fontSize:9,fontWeight:600,whiteSpace:"nowrap"}}>{d>=0?"+":""}{Math.round(d)}</span>
                         </td>;
                       }
                       return(
@@ -1586,13 +1586,13 @@ function PlanApp(){
                         </td>
                       );
                     })}
-                    <td style={{padding:"3px 4px",textAlign:"right"}}>
+                    <td style={{padding:"3px 4px",textAlign:"right",whiteSpace:"nowrap"}}>
                       {isDiff?(
-                        <span style={{color:sum>=0?C.green:C.red,fontWeight:800,fontSize:10}}>
+                        <span style={{color:sum>=0?C.green:C.red,fontWeight:800,fontSize:10,whiteSpace:"nowrap"}}>
                           {sum>=0?"+":""}{Math.round(sum)}억
                         </span>
                       ):sum!=null&&(
-                        <span style={{color:c,fontWeight:800,fontSize:10}}>
+                        <span style={{color:c,fontWeight:800,fontSize:10,whiteSpace:"nowrap"}}>
                           {isPct?Math.round(gNum(sum))+"%":Math.round(gNum(sum)).toLocaleString()+"억"}
                         </span>
                       )}
