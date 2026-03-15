@@ -1224,6 +1224,29 @@ function PlanApp(){
                 {ytdGr?(gNum(ytdGr)>0?"▲":"▼")+Math.abs(gNum(ytdGr)).toFixed(1)+"%":"─"}
               </span>
             </div>
+            {/* ③ 발산형 성장률 바 */}
+            {ytdGr&&ytdPrev>0?(()=>{
+              const gr=gNum(ytdGr), maxR=30;
+              const barW=Math.min(Math.abs(gr),maxR)/maxR*50;
+              const isUp=gr>=0;
+              const bc=isUp?C.green:C.red;
+              return(
+                <div className="kpi-card-bar">
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                    <span style={{color:C.muted,fontSize:9}}>전년 {fmtN(ytdPrev)}</span>
+                    <span style={{color:C.muted,fontSize:9}}>현재 {fmtN(ytdP)}</span>
+                  </div>
+                  <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                    <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:"rgba(255,255,255,.25)",zIndex:1}}/>
+                    <div style={{position:"absolute",top:0,bottom:0,
+                      ...(isUp?{left:"50%",width:`${barW}%`}:{right:"50%",width:`${barW}%`}),
+                      background:`linear-gradient(${isUp?"90deg":"-90deg"},${bc}70,${bc})`,
+                      borderRadius:isUp?"0 3px 3px 0":"3px 0 0 3px",
+                      boxShadow:`0 0 6px ${bc}50`,transition:"width .6s"}}/>
+                  </div>
+                </div>
+              );
+            })():null}
             <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
               {[
                 {lbl:"전년 실적", val:ytdPrev>0?fmtN(ytdPrev):"─", c:C.muted2},
@@ -1251,6 +1274,22 @@ function PlanApp(){
                 <span style={{color:"#7c83f5",fontSize:26,fontWeight:900,letterSpacing:"-1px",lineHeight:1}}>
                   {ceSharePct.toFixed(1)}%
                 </span>
+              </div>
+              {/* ④ CE 비중 채움 바 */}
+              <div className="kpi-card-bar">
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                  <span style={{color:C.muted,fontSize:9}}>CE 대비 비중</span>
+                  {cePrevSharePct!==null&&<span style={{color:C.muted,fontSize:9}}>전년 {cePrevSharePct.toFixed(1)}%</span>}
+                </div>
+                <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                  <div style={{height:"100%",width:`${Math.min(ceSharePct,100)}%`,
+                    background:"linear-gradient(90deg,#7c83f580,#7c83f5)",
+                    borderRadius:3,boxShadow:"0 0 8px #7c83f550",transition:"width .6s"}}/>
+                  {cePrevSharePct!==null&&(
+                    <div style={{position:"absolute",top:0,bottom:0,left:`${Math.min(cePrevSharePct,100)}%`,
+                      width:2,background:"rgba(255,255,255,.45)",borderRadius:1,zIndex:2}}/>
+                  )}
+                </div>
               </div>
               {cePrevSharePct!==null&&<div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
                 {[
@@ -1281,6 +1320,30 @@ function PlanApp(){
               </span>
               {ytdPrev>0&&<span style={{color:C.muted,fontSize:13}}>억</span>}
             </div>
+            {/* ⑤ 전년 기준 비교 바 */}
+            {ytdPrev>0&&ytdP>0?(()=>{
+              const ratio=ytdP/ytdPrev*100;
+              const isUp=ytdP>=ytdPrev;
+              const bc=isUp?C.green:C.red;
+              // 0~150% 범위로 정규화 → 100%가 전체의 66.7%
+              const barW=Math.min(ratio/150*100, 100);
+              const markerLeft=Math.min(100/150*100, 100); // 100% 지점
+              return(
+                <div className="kpi-card-bar">
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                    <span style={{color:C.muted,fontSize:9}}>전년 기준</span>
+                    <span style={{color:bc,fontSize:9,fontWeight:700}}>{ratio.toFixed(0)}%</span>
+                  </div>
+                  <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                    <div style={{position:"absolute",left:`${markerLeft}%`,top:0,bottom:0,
+                      width:1.5,background:"rgba(255,255,255,.3)",zIndex:2}}/>
+                    <div style={{height:"100%",width:`${barW}%`,
+                      background:`linear-gradient(90deg,${bc}70,${bc})`,
+                      borderRadius:3,boxShadow:`0 0 6px ${bc}40`,transition:"width .6s"}}/>
+                  </div>
+                </div>
+              );
+            })():null}
             <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
               {[
                 {lbl:"월평균", val:prevAvgMonthly>0?prevAvgMonthly+"억":"─", c:C.muted2},
@@ -1310,6 +1373,18 @@ function PlanApp(){
                 <span style={{color:KC["대외영업"],fontSize:26,fontWeight:900,letterSpacing:"-1px",lineHeight:1}}>
                   {daeSharePct.toFixed(1)}%
                 </span>
+              </div>
+              {/* ⑥ 대외영업 비중 채움 바 */}
+              <div className="kpi-card-bar">
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                  <span style={{color:C.muted,fontSize:9}}>대외영업 비중</span>
+                  <span style={{color:KC["대외영업"],fontSize:9,fontWeight:700}}>{daeSharePct.toFixed(1)}%</span>
+                </div>
+                <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${Math.min(daeSharePct,100)}%`,
+                    background:`linear-gradient(90deg,${KC["대외영업"]}80,${KC["대외영업"]})`,
+                    borderRadius:3,boxShadow:`0 0 8px ${KC["대외영업"]}50`,transition:"width .6s"}}/>
+                </div>
               </div>
             </div>
           )}
@@ -1360,63 +1435,62 @@ function PlanApp(){
             ]}/>}
           </div>
           {/* 핵심 4행 표 */}
-          <div style={{overflowX:"auto"}}>
-          <div style={{minWidth:680}}>
+          <div style={{overflowX:"hidden"}}>
+          <div>
             <table style={{borderCollapse:"collapse",width:"100%",tableLayout:"fixed"}}>
               <thead>
                 <tr style={{borderBottom:`2px solid ${C.b1}`}}>
-                  <td style={{padding:"3px 8px",color:C.muted,fontWeight:700,fontSize:10,width:52}}>항목</td>
+                  <td style={{padding:"3px 4px",color:C.muted,fontWeight:700,fontSize:9,width:40}}>항목</td>
                   {MONTHS.map((m,i)=>(
-                    <td key={m} style={{padding:"4px 4px",textAlign:"right",
-                      color:i<=emi?C.muted2:C.muted,fontSize:9,fontWeight:600}}>
-                      {m.replace("월","")}{i===emi&&<span style={{color,fontSize:7,display:"block",textAlign:"center"}}>▲</span>}
+                    <td key={m} style={{padding:"3px 2px",textAlign:"right",
+                      color:i<=emi?C.muted2:C.muted,fontSize:8,fontWeight:600}}>
+                      {m.replace("월","")}{i===emi&&<span style={{color,fontSize:6,display:"block",textAlign:"center"}}>▲</span>}
                     </td>
                   ))}
-                  <td style={{padding:"3px 6px",textAlign:"right",color:C.accent,fontSize:10,fontWeight:700,width:44}}>누계</td>
+                  <td style={{padding:"3px 4px",textAlign:"right",color:C.accent,fontSize:9,fontWeight:700,width:38}}>누계</td>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  {key:"목표",   data:mTgt,    c:C.orange, sum:annT,      bg:"rgba(245,185,66,.06)"},
-                  {key:"실적",   data:mPerf,   c:color,    sum:ytdP,    useEmi:true, bg:"rgba(56,182,245,.1)"},
-                  {key:"달성률", data:mArArr,  c:C.teal,   sum:ytdAr,   isPct:true,  bg:"rgba(45,212,136,.05)"},
-                  {key:"성장률", data:mGrArr,  c:C.green,  sum:ytdGr,   isPct:true,  isGrw:true, bg:"rgba(45,212,136,.03)"},
-                  {key:"전년",   data:mPrev,   c:C.muted2, sum:ytdPrev, useEmi:true, bg:"rgba(255,255,255,.02)"},
-                  {key:"목표차질",data:mPerf,  c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:mTgt, bg:"rgba(255,255,255,.015)"},
-                  {key:"전년차질",data:mPerf,  c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:mPrev, bg:"rgba(255,255,255,.01)"},
+                  {key:"목표",    data:mTgt,    c:C.orange, sum:annT,         bg:"rgba(245,185,66,.10)"},
+                  {key:"실적",    data:mPerf,   c:color,    sum:ytdP,    useEmi:true, bg:"rgba(0,0,0,.18)"},
+                  {key:"달성률",  data:mArArr,  c:C.teal,   sum:ytdAr,   isPct:true,  bg:"rgba(45,212,136,.09)"},
+                  {key:"성장률",  data:mGrArr,  c:C.green,  sum:ytdGr,   isPct:true,  isGrw:true, bg:"rgba(0,0,0,.18)"},
+                  {key:"전년",    data:mPrev,   c:C.muted2, sum:ytdPrev, useEmi:true, bg:"rgba(255,255,255,.05)"},
+                  {key:"목표차질",data:mPerf,   c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:mTgt, bg:"rgba(0,0,0,.18)"},
+                  {key:"전년차질",data:mPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:mPrev, bg:"rgba(255,255,255,.04)"},
                 ].map(({key,data,c,sum,useEmi,isPct,isGrw,isDiff,diffBase,bg},ri)=>(
                   <tr key={key} style={{
-                    borderBottom:ri%2===0?`1px solid ${C.b1}20`:`1px solid ${C.b1}08`,
-                    background:bg||(ri%2===0?"rgba(255,255,255,.018)":"transparent")}}>
-                    <td style={{padding:"3px 6px",fontWeight:700,fontSize:10,
-                      color:isDiff?C.muted2:c,
-                      background:bg||(ri%2===0?"rgba(255,255,255,.018)":"transparent"),
+                    borderBottom:`1px solid ${ri%2===0?"rgba(255,255,255,.09)":"rgba(0,0,0,.25)"}`,
+                    background:bg}}>
+                    <td style={{padding:"3px 4px",fontWeight:700,fontSize:9,
+                      color:isDiff?C.muted2:c, background:bg,
                       whiteSpace:"nowrap"}}>{key}</td>
                     {(isDiff?mPerf:data).map((v,i)=>{
                       if(isDiff){
-                        if(i>emi)return<td key={i} style={{textAlign:"right",padding:"2px 3px"}}><span style={{color:C.muted,fontSize:9}}>─</span></td>;
+                        if(i>emi)return<td key={i} style={{textAlign:"right",padding:"1px 2px"}}><span style={{color:C.muted,fontSize:8}}>─</span></td>;
                         const d=mPerf[i]-(diffBase[i]||0);
-                        return<td key={i} style={{padding:"2px 3px",textAlign:"right"}}>
-                          <span style={{color:d>=0?C.green:C.red,fontSize:10,fontWeight:600}}>{d>=0?"+":""}{Math.round(d)}</span>
+                        return<td key={i} style={{padding:"1px 2px",textAlign:"right"}}>
+                          <span style={{color:d>=0?C.green:C.red,fontSize:9,fontWeight:600}}>{d>=0?"+":""}{Math.round(d)}</span>
                         </td>;
                       }
                       const hide=(useEmi&&i>emi)||(isPct&&v===null);
                       return(
-                        <td key={i} style={{padding:"2px 3px",textAlign:"right"}}>
-                          {hide?<span style={{color:C.muted,fontSize:9}}>─</span>:
-                            <span style={{color:isPct?(isGrw?grwC(String(v)):pctC(gNum(v))):i<=emi?c:C.muted,fontSize:10,fontWeight:i<=emi?600:400}}>
+                        <td key={i} style={{padding:"1px 2px",textAlign:"right"}}>
+                          {hide?<span style={{color:C.muted,fontSize:8}}>─</span>:
+                            <span style={{color:isPct?(isGrw?grwC(String(v)):pctC(gNum(v))):i<=emi?c:C.muted,fontSize:9,fontWeight:i<=emi?600:400}}>
                               {isPct?(gNum(v)>0&&isGrw?"+":"")+Math.round(gNum(v))+"%":Math.round(gNum(v)).toLocaleString()}
                             </span>}
                         </td>
                       );
                     })}
-                    <td style={{padding:"3px 8px",textAlign:"right"}}>
+                    <td style={{padding:"3px 4px",textAlign:"right"}}>
                       {isDiff?(
-                        <span style={{color:sum>=0?C.green:C.red,fontWeight:800,fontSize:11}}>
+                        <span style={{color:sum>=0?C.green:C.red,fontWeight:800,fontSize:10}}>
                           {sum>=0?"+":""}{Math.round(sum)}억
                         </span>
                       ):sum!=null&&(
-                        <span style={{color:c,fontWeight:800,fontSize:11}}>
+                        <span style={{color:c,fontWeight:800,fontSize:10}}>
                           {isPct?Math.round(gNum(sum))+"%":Math.round(gNum(sum)).toLocaleString()+"억"}
                         </span>
                       )}
@@ -1463,63 +1537,62 @@ function PlanApp(){
             ]}/>}
           </div>
           {/* 표 — 전체폭 */}
-          <div style={{overflowX:"auto"}}>
-          <div style={{minWidth:680}}>
+          <div style={{overflowX:"hidden"}}>
+          <div>
             <table style={{borderCollapse:"collapse",width:"100%",tableLayout:"fixed"}}>
               <thead>
                 <tr style={{borderBottom:`2px solid ${C.b1}`}}>
-                  <td style={{padding:"5px 8px",color:C.muted,fontWeight:700,fontSize:10,width:60}}>항목</td>
+                  <td style={{padding:"5px 4px",color:C.muted,fontWeight:700,fontSize:9,width:40}}>항목</td>
                   {MONTHS.map((m,i)=>(
-                    <td key={m} style={{padding:"4px 4px",textAlign:"right",
-                      color:i<=emi?C.muted2:C.muted,fontSize:9,fontWeight:600}}>
-                      {m.replace("월","")}{i===emi&&<span style={{color,fontSize:7,display:"block",textAlign:"center"}}>▲</span>}
+                    <td key={m} style={{padding:"3px 2px",textAlign:"right",
+                      color:i<=emi?C.muted2:C.muted,fontSize:8,fontWeight:600}}>
+                      {m.replace("월","")}{i===emi&&<span style={{color,fontSize:6,display:"block",textAlign:"center"}}>▲</span>}
                     </td>
                   ))}
-                  <td style={{padding:"3px 6px",textAlign:"right",color:C.accent,fontSize:10,fontWeight:700,width:44}}>누계</td>
+                  <td style={{padding:"3px 4px",textAlign:"right",color:C.accent,fontSize:9,fontWeight:700,width:38}}>누계</td>
                 </tr>
               </thead>
               <tbody>
                 {[
-                  {key:"목표",   data:cumTgt,    c:C.orange, sum:annT,      bg:"rgba(245,185,66,.06)"},
-                  {key:"실적",   data:cumPerf,   c:color,    sum:ytdP,      bg:"rgba(56,182,245,.1)"},
-                  {key:"달성률", data:cumAr,     c:C.teal,   sum:ytdAr,   isPct:true,  bg:"rgba(45,212,136,.05)"},
-                  {key:"성장률", data:cumGr,     c:C.green,  sum:ytdGr,   isPct:true, isGrw:true, bg:"rgba(45,212,136,.03)"},
-                  {key:"전년",   data:cumPrevArr,c:C.muted2, sum:ytdPrev,   bg:"rgba(255,255,255,.02)"},
-                  {key:"목표차질",data:cumPerf,  c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:cumTgt, bg:"rgba(255,255,255,.015)"},
-                  {key:"전년차질",data:cumPerf,  c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:cumPrevArr, bg:"rgba(255,255,255,.01)"},
+                  {key:"목표",    data:cumTgt,    c:C.orange, sum:annT,         bg:"rgba(245,185,66,.10)"},
+                  {key:"실적",    data:cumPerf,   c:color,    sum:ytdP,         bg:"rgba(0,0,0,.18)"},
+                  {key:"달성률",  data:cumAr,     c:C.teal,   sum:ytdAr,   isPct:true,  bg:"rgba(45,212,136,.09)"},
+                  {key:"성장률",  data:cumGr,     c:C.green,  sum:ytdGr,   isPct:true, isGrw:true, bg:"rgba(0,0,0,.18)"},
+                  {key:"전년",    data:cumPrevArr,c:C.muted2, sum:ytdPrev,      bg:"rgba(255,255,255,.05)"},
+                  {key:"목표차질",data:cumPerf,   c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:cumTgt, bg:"rgba(0,0,0,.18)"},
+                  {key:"전년차질",data:cumPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:cumPrevArr, bg:"rgba(255,255,255,.04)"},
                 ].map(({key,data,c,sum,isPct,isGrw,isDiff,diffBase,bg},ri)=>(
                   <tr key={key} style={{
-                    borderBottom:ri%2===0?`1px solid ${C.b1}20`:`1px solid ${C.b1}08`,
-                    background:bg||(ri%2===0?"rgba(255,255,255,.018)":"transparent")}}>
-                    <td style={{padding:"3px 6px",fontWeight:700,fontSize:10,
-                      color:isDiff?C.muted2:c,
-                      background:bg||(ri%2===0?"rgba(255,255,255,.018)":"transparent"),
+                    borderBottom:`1px solid ${ri%2===0?"rgba(255,255,255,.09)":"rgba(0,0,0,.25)"}`,
+                    background:bg}}>
+                    <td style={{padding:"3px 4px",fontWeight:700,fontSize:9,
+                      color:isDiff?C.muted2:c, background:bg,
                       whiteSpace:"nowrap"}}>{key}</td>
                     {(isDiff?cumPerf:data).map((v,i)=>{
                       if(isDiff){
-                        if(v===null)return<td key={i} style={{textAlign:"right",padding:"2px 3px"}}><span style={{color:C.muted,fontSize:9}}>─</span></td>;
+                        if(v===null)return<td key={i} style={{textAlign:"right",padding:"1px 2px"}}><span style={{color:C.muted,fontSize:8}}>─</span></td>;
                         const base=diffBase[i];
                         const d=v-(base||0);
-                        return<td key={i} style={{padding:"2px 3px",textAlign:"right"}}>
-                          <span style={{color:d>=0?C.green:C.red,fontSize:10,fontWeight:600}}>{d>=0?"+":""}{Math.round(d)}</span>
+                        return<td key={i} style={{padding:"1px 2px",textAlign:"right"}}>
+                          <span style={{color:d>=0?C.green:C.red,fontSize:9,fontWeight:600}}>{d>=0?"+":""}{Math.round(d)}</span>
                         </td>;
                       }
                       return(
-                        <td key={i} style={{padding:"2px 3px",textAlign:"right"}}>
-                          {v===null?<span style={{color:C.muted,fontSize:9}}>─</span>:
-                            <span style={{color:isPct?(isGrw?grwC(String(v)):pctC(gNum(v))):i<=emi?c:C.muted,fontSize:10,fontWeight:i<=emi?600:400}}>
+                        <td key={i} style={{padding:"1px 2px",textAlign:"right"}}>
+                          {v===null?<span style={{color:C.muted,fontSize:8}}>─</span>:
+                            <span style={{color:isPct?(isGrw?grwC(String(v)):pctC(gNum(v))):i<=emi?c:C.muted,fontSize:9,fontWeight:i<=emi?600:400}}>
                               {isPct?(gNum(v)>0&&isGrw?"+":"")+Math.round(gNum(v))+"%":Math.round(gNum(v)).toLocaleString()}
                             </span>}
                         </td>
                       );
                     })}
-                    <td style={{padding:"3px 8px",textAlign:"right"}}>
+                    <td style={{padding:"3px 4px",textAlign:"right"}}>
                       {isDiff?(
-                        <span style={{color:sum>=0?C.green:C.red,fontWeight:800,fontSize:11}}>
+                        <span style={{color:sum>=0?C.green:C.red,fontWeight:800,fontSize:10}}>
                           {sum>=0?"+":""}{Math.round(sum)}억
                         </span>
                       ):sum!=null&&(
-                        <span style={{color:c,fontWeight:800,fontSize:11}}>
+                        <span style={{color:c,fontWeight:800,fontSize:10}}>
                           {isPct?Math.round(gNum(sum))+"%":Math.round(gNum(sum)).toLocaleString()+"억"}
                         </span>
                       )}
