@@ -3294,7 +3294,7 @@ function App(){
           }}
           onMouseEnter={e=>{e.currentTarget.style.background=C.teal+"22";e.currentTarget.style.borderColor=C.teal;}}
           onMouseLeave={e=>{e.currentTarget.style.background=C.teal+"10";e.currentTarget.style.borderColor=C.teal+"40";}}>
-            {isMobile?"다운로드":"📦 다운로드"}
+            {isMobile?"⬇":"📦 다운로드"}
           </button>
           {/* 화면 확대/축소 */}
           <div style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,.05)",
