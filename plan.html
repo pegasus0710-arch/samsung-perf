@@ -4,6 +4,16 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>달성 계획 | 충청영업팀</title>
+
+  <!-- ── PWA 필수 설정 ── -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#818cf8" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="충청실적" />
+
+  <!-- ── 아이콘 ── -->
   <link rel="icon" type="image/png" href="icon_192.png"/>
   <link rel="apple-touch-icon" href="icon_180.png"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
@@ -101,5 +111,16 @@
 </script>
 
 <script type="text/babel" src="plan.js"></script>
+
+  <!-- ── Service Worker 등록 ── -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js")
+          .catch(err => console.warn("SW 등록 실패:", err));
+      });
+    }
+  </script>
+
 </body>
 </html>
