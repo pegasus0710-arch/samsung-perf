@@ -88,7 +88,7 @@ const sumR  = (d,k,f,t) => Array.from({length:t-f+1},(_,i)=>gNum(fullRow(d?.[sk(
 const pct   = (a,b) => b?(a/b*100).toFixed(1):null;
 const grw   = (c,p) => p?((c-p)/p*100).toFixed(1):null;
 const fmt   = v => {const n=gNum(v); return n>0?Math.round(n).toLocaleString():"-";};
-const fmtD  = v => {const n=gNum(v); return n>0?n.toFixed(1)+"억":"";};
+const fmtD  = v => {const n=gNum(v); return n>0?Math.round(n).toLocaleString()+"억":"";};
 const lastMiOf = d => {for(let i=11;i>=0;i--) if(INP_KEYS.some(k=>gNum(d?.[sk(i)]?.[k])>0)) return i; return -1;};
 
 // ─── 색상 ────────────────────────────────────────
