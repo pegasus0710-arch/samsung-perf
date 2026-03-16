@@ -40,9 +40,9 @@ const KC_DARK={
   "SMB":"#facc15","농협":"#a3e635","휴대폰":"#94a3b8","CE":"#7c83f5"
 };
 const KC_LIGHT={
-  "대외영업":"#0369a1","혼수":"#b45309","뉴홈":"#047857","입주":"#059669",
-  "이사":"#0284c7","SAC":"#7c3aed","거주중":"#be185d","B2B":"#c2410c",
-  "SMB":"#ca8a04","농협":"#65a30d","휴대폰":"#475569","CE":"#4f46e5"
+  "대외영업":"#0369a1","혼수":"#92400e","뉴홈":"#065f46","입주":"#047857",
+  "이사":"#0e7490","SAC":"#6d28d9","거주중":"#9d174d","B2B":"#9a3412",
+  "SMB":"#92400e","농협":"#3f6212","휴대폰":"#334155","CE":"#4338ca"
 };
 const COLORS_DARK_P={
   bg:"#07101f",surf:"#0d1b2e",card:"#0f2138",card2:"#0a1628",
@@ -54,13 +54,13 @@ const COLORS_DARK_P={
   tooltip:"rgba(7,16,31,.85)",
 };
 const COLORS_LIGHT_P={
-  bg:"#f0f4f8",surf:"#ffffff",card:"#ffffff",card2:"#eef2f7",
-  b1:"rgba(0,0,0,.1)",b2:"rgba(0,0,0,.18)",
-  text:"#1e293b",muted:"#64748b",muted2:"#475569",
+  bg:"#e8edf4",surf:"#f4f7fb",card:"#ffffff",card2:"#f0f4f8",
+  b1:"rgba(0,0,0,.12)",b2:"rgba(0,0,0,.22)",
+  text:"#1e293b",muted:"#5a7a96",muted2:"#3d5a74",
   accent:"#4f46e5",blue:"#0369a1",green:"#047857",
   orange:"#b45309",teal:"#0f766e",red:"#b91c1c",
   판매:"#b45309",매출:"#0369a1",
-  tooltip:"rgba(255,255,255,.95)",
+  tooltip:"rgba(255,255,255,.97)",
 };
 const _initThemeP=(()=>{try{return localStorage.getItem(THEME_KEY)||'light';}catch{return 'light';}})();
 let KC = _initThemeP==='light'?{...KC_LIGHT}:{...KC_DARK};
@@ -1076,14 +1076,15 @@ function PlanApp(){
           {/* 우측: zoom + 테마 + 백업 */}
           <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}}>
             {/* 테마 토글 */}
-            <button onClick={toggleTheme} title={theme==='dark'?"라이트 모드":"다크 모드"} style={{
+            <button onClick={toggleTheme} title={theme==='dark'?"라이트 모드로 전환":"다크 모드로 전환"} style={{
               padding:"4px 10px",borderRadius:6,cursor:"pointer",fontFamily:"inherit",
               fontWeight:700,fontSize:12,border:`1px solid ${C.b1}`,
-              background:"transparent",color:C.muted2,transition:"all .15s",
+              background:theme==='light'?"rgba(255,200,50,.12)":"rgba(100,120,200,.15)",
+              color:theme==='light'?C.orange:C.accent,transition:"all .15s",
               display:"flex",alignItems:"center",gap:5}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent;e.currentTarget.style.color=C.accent;}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.b1;e.currentTarget.style.color=C.muted2;}}>
-              {theme==='dark'?'☀️':'🌙'}<span style={{fontSize:10}}>{theme==='dark'?'라이트':'다크'}</span>
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent;e.currentTarget.style.opacity=".8";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.b1;e.currentTarget.style.opacity="1";}}>
+              {theme==='light'?'☀️':'🌙'}<span style={{fontSize:10}}>{theme==='light'?'라이트':'다크'}</span>
             </button>
             <div style={{display:"flex",alignItems:"center",gap:3,background:C.card2,borderRadius:7,padding:"3px 6px",border:`1px solid ${C.b1}`}}>
               <span style={{fontSize:12,color:C.muted2}}>🔍</span>
@@ -1164,7 +1165,7 @@ function PlanApp(){
         <style>{`
           .kpi-row{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto}
           .kpi-card{flex:1 1 0;min-width:160px;border-radius:14px;overflow:hidden;
-            box-sizing:border-box;background:${C.card}}
+            box-sizing:border-box;background:${C.card};box-shadow:0 2px 8px rgba(0,0,0,.07)}
           .kpi-card-lg{flex:1.6 1 0;min-width:200px}
           .kpi-card-header{display:flex;justify-content:space-between;align-items:center;
             padding:10px 14px 8px}
@@ -1270,7 +1271,7 @@ function PlanApp(){
           </div>
 
           {/* ③ 전년비 성장 */}
-          <div className="kpi-card" style={{border:`1px solid ${ytdGr?grwC(ytdGr):C.muted}40`,
+          <div className="kpi-card" style={{border:`2px solid ${ytdGr?grwC(ytdGr):C.muted}55`,
             borderTop:`3px solid ${ytdGr?grwC(ytdGr):C.muted}`}}>
             <div className="kpi-card-header">
               <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -1322,7 +1323,7 @@ function PlanApp(){
 
           {/* ④ CE 비중 — 휴대폰 파트 선택 시 제외 */}
           {ceSharePct!==null&&part!=="휴대폰"&&(
-            <div className="kpi-card" style={{border:"1px solid #7c83f540",borderTop:"3px solid #7c83f5"}}>
+            <div className="kpi-card" style={{border:"2px solid #7c83f555",borderTop:"3px solid #7c83f5"}}>
               <div className="kpi-card-header">
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <div style={{width:8,height:8,borderRadius:2,background:"#7c83f5",boxShadow:"0 0 6px #7c83f5"}}/>
@@ -1366,7 +1367,7 @@ function PlanApp(){
           )}
 
           {/* ⑤ 누계 전년 */}
-          <div className="kpi-card" style={{border:`1px solid ${C.muted2}30`,borderTop:`3px solid ${C.muted2}`}}>
+          <div className="kpi-card" style={{border:`2px solid ${C.muted2}55`,borderTop:`3px solid ${C.muted2}`}}>
             <div className="kpi-card-header">
               <div style={{display:"flex",alignItems:"center",gap:6}}>
                 <div style={{width:8,height:8,borderRadius:2,background:C.muted2}}/>
@@ -1419,7 +1420,7 @@ function PlanApp(){
 
           {/* ⑥ 대외영업 비중 */}
           {daeSharePct!==null&&(
-            <div className="kpi-card" style={{border:`1px solid ${KC["대외영업"]}40`,
+            <div className="kpi-card" style={{border:`2px solid ${KC["대외영업"]}55`,
               borderTop:`3px solid ${KC["대외영업"]}`}}>
               <div className="kpi-card-header">
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -1452,11 +1453,11 @@ function PlanApp(){
 {/* ── [2+3] 월별 + 누계 가로 나란히 (반응형) */}
         <style>{`.perf-row{display:flex;gap:12px}
         .perf-col{flex:1 1 0;min-width:0;border-radius:12px;overflow:hidden}
-        .perf-col-monthly{background:${C.card};border:2px solid ${C.b1}}
-        .perf-col-cum{background:${C.card2};border:2px solid ${C.b1}}
+        .perf-col-monthly{background:${C.card};border:2px solid ${C.b1};box-shadow:0 2px 8px rgba(0,0,0,.06)}
+        .perf-col-cum{background:${C.surf};border:2px solid ${C.b1};box-shadow:0 2px 8px rgba(0,0,0,.06)}
         .perf-col-header{padding:10px 14px 10px}
         .perf-col-monthly .perf-col-header{border-bottom:2px solid ${C.b1};background:${C.card2}}
-        .perf-col-cum .perf-col-header{border-bottom:2px solid ${C.b1};background:${C.card}}
+        .perf-col-cum .perf-col-header{border-bottom:2px solid ${C.b1};background:${C.card2}}
         .perf-col-body{padding:14px}
         @media(max-width:900px){.perf-row{flex-direction:column}}`}</style>
         <div className="perf-row">
@@ -1667,7 +1668,8 @@ function PlanApp(){
         </div>{/* perf-row 끝 */}
 
         {/* ── [4+5] 달성 계획 + 전년도 주요사항 통합 */}
-        <div style={{background:C.card2,border:`2px solid ${C.accent}44`,borderRadius:12,padding:16}}>
+        <div style={{background:C.card,border:`2px solid ${C.accent}55`,borderRadius:12,padding:16,
+          boxShadow:"0 2px 10px rgba(0,0,0,.06)"}}>
 
           {/* 헤더 */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>

@@ -103,20 +103,20 @@ const COLORS_DARK = {
   tooltip:"rgba(7,16,31,.85)",
 };
 const COLORS_LIGHT = {
-  bg:"#f0f4f8",surf:"#ffffff",card:"#ffffff",card2:"#eef2f7",
-  b1:"#dde5ef",b2:"#c4d2e0",
-  text:"#1e293b",muted:"#64748b",muted2:"#475569",
+  bg:"#e8edf4",surf:"#f4f7fb",card:"#ffffff",card2:"#f0f4f8",
+  b1:"#c8d6e5",b2:"#a0b4c8",
+  text:"#1e293b",muted:"#5a7a96",muted2:"#3d5a74",
   accent:"#4f46e5",blue:"#0369a1",green:"#047857",orange:"#b45309",
   red:"#b91c1c",purple:"#7c3aed",teal:"#0f766e",
   매출:"#0369a1",판매:"#047857",
-  tooltip:"rgba(255,255,255,.95)",
+  tooltip:"rgba(255,255,255,.97)",
 };
 const KC_DARK = {CE:"#7c83f5",대외영업:"#38b6f5",혼수:"#f5b942",뉴홈:"#2dd488",
   입주:"#5ee8b0",이사:"#80f0de",SAC:"#d97af5",거주중:"#b87af5",
   B2B:"#f58f42",SMB:"#f5c090",농협:"#f5e090",휴대폰:"#90a8c0"};
-const KC_LIGHT = {CE:"#4f46e5",대외영업:"#0369a1",혼수:"#b45309",뉴홈:"#047857",
-  입주:"#059669",이사:"#0891b2",SAC:"#7c3aed",거주중:"#6d28d9",
-  B2B:"#c2410c",SMB:"#d97706",농협:"#ca8a04",휴대폰:"#475569"};
+const KC_LIGHT = {CE:"#4338ca",대외영업:"#0369a1",혼수:"#92400e",뉴홈:"#065f46",
+  입주:"#047857",이사:"#0e7490",SAC:"#6d28d9",거주중:"#9d174d",
+  B2B:"#9a3412",SMB:"#92400e",농협:"#3f6212",휴대폰:"#334155"};
 
 // 모듈 초기화 시 테마 즉시 적용 (렌더 전 flash 방지)
 const _initTheme=(()=>{try{return localStorage.getItem(THEME_KEY)||'light';}catch{return 'light';}})();
@@ -348,7 +348,7 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
           const y=cy(v);
           return (
             <g key={i}>
-              <line x1={PL} y1={y} x2={W-PR} y2={y} stroke={C.b1} strokeWidth={.5}/>
+              <line x1={PL} y1={y} x2={W-PR} y2={y} stroke={C.b2} strokeWidth={.8} opacity={.6}/>
               <text x={PL-3} y={y+3} fill={C.muted} fontSize={8} textAnchor="end">
                 {Math.round(v)>0?Math.round(v):""}
               </text>
@@ -357,14 +357,14 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
         })}
         {/* X 라벨 */}
         {labels.map((l,i)=>(
-          <text key={i} x={cx(i)} y={H} fill={C.muted} fontSize={8} textAnchor="middle">
+          <text key={i} x={cx(i)} y={H} fill={C.muted2} fontSize={8} textAnchor="middle">
             {l.replace("월","")}
           </text>
         ))}
         {/* 세로 호버 가이드 */}
         {tooltip&&(
           <line x1={cx(tooltip.mi)} y1={PT} x2={cx(tooltip.mi)} y2={PT+iH}
-            stroke="rgba(255,255,255,.15)" strokeWidth={1} strokeDasharray="3,2"/>
+            stroke={C.b2} strokeWidth={1} strokeDasharray="3,2" opacity={.7}/>
         )}
         {/* 시리즈 */}
         {seriesData.map((s,si)=>{
@@ -606,9 +606,9 @@ function Dashboard({data,mode}){
 
       {/* ── 상단 헤더 카드 ── */}
       <div style={{
-        background:`linear-gradient(135deg, #0d1f38 0%, #0a1628 60%, #061018 100%)`,
+        background:C.card,
         border:`1px solid ${mColor}33`,borderRadius:16,padding:"20px 24px",
-        boxShadow:`0 8px 32px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.04)`}}>
+        boxShadow:`0 8px 32px rgba(0,0,0,.12), inset 0 1px 0 ${C.b1}`}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:16}}>
           <div>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
@@ -639,11 +639,11 @@ function Dashboard({data,mode}){
               const avg = mCount>0&&v26>0 ? (v26/mCount).toFixed(1) : null;
               return (
                 <div key={k} style={{
-                  background:`linear-gradient(135deg, rgba(255,255,255,.05) 0%, rgba(0,0,0,.1) 100%)`,
+                  background:C.card2,
                   border:`1px solid ${color}40`,
                   borderRadius:14,padding:"14px 18px",minWidth:220,flex:1,
                   borderTop:`3px solid ${color}`,
-                  boxShadow:`0 4px 20px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.04)`
+                  boxShadow:`0 4px 20px rgba(0,0,0,.1)`
                 }}>
                   {/* 헤더 */}
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -715,8 +715,8 @@ function Dashboard({data,mode}){
         alignItems:"stretch"}}>
 
         {/* 도넛 달성률 패널 */}
-        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18,
-          boxShadow:"0 4px 20px rgba(0,0,0,.2)",
+        <div style={{background:C.card,border:`2px solid ${C.b1}`,borderRadius:14,padding:18,
+          boxShadow:theme==='light'?"0 2px 12px rgba(0,0,0,.08)":"0 4px 20px rgba(0,0,0,.2)",
           display:"flex",flexDirection:"column",
           alignSelf:"stretch",minHeight:0}}>
           <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:2}}>목표 달성률</div>
@@ -776,8 +776,8 @@ function Dashboard({data,mode}){
 
             return (
               <div style={{marginTop:14,padding:"12px 10px",
-                background:"rgba(0,0,0,.18)",borderRadius:10,
-                border:"1px solid rgba(255,255,255,.06)",
+                background:theme==='light'?"rgba(0,0,0,.04)":C.bg,borderRadius:10,
+                border:`1px solid ${C.b1}`,
                 flex:1,overflowY:"auto"}}>
                 {/* 헤더 */}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",
@@ -893,8 +893,9 @@ function Dashboard({data,mode}){
         <div style={{display:"flex",flexDirection:"column",gap:14,alignSelf:"stretch"}}>
 
           {/* 선택 파트 월별 추이 */}
-          <div style={{background:C.card2,border:`1px solid ${KC[selKey]||C.accent}44`,
-            borderRadius:14,padding:18,boxShadow:"0 4px 20px rgba(0,0,0,.2)"}}>
+          <div style={{background:C.card,border:`2px solid ${KC[selKey]||C.accent}55`,
+            borderRadius:14,padding:18,
+            boxShadow:theme==='light'?"0 2px 12px rgba(0,0,0,.08)":"0 4px 20px rgba(0,0,0,.2)"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
               marginBottom:12,flexWrap:"wrap",gap:8}}>
               <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -960,7 +961,8 @@ function Dashboard({data,mode}){
           </div>
 
           {/* 누계 추이 */}
-          <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18}}>
+          <div style={{background:C.card,border:`2px solid ${C.b1}`,borderRadius:14,padding:18,
+            boxShadow:theme==='light'?"0 2px 12px rgba(0,0,0,.08)":"none"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
               marginBottom:12,flexWrap:"wrap",gap:8}}>
               <div>
@@ -1016,7 +1018,8 @@ function Dashboard({data,mode}){
             const avgMonthlyAr = monthlyAr.filter(v=>v!==null);
             const avgV = avgMonthlyAr.length>0 ? (avgMonthlyAr.reduce((a,b)=>a+b,0)/avgMonthlyAr.length).toFixed(1) : null;
             return (
-              <div style={{background:C.card2,border:`1px solid ${C.teal}33`,borderRadius:14,padding:18}}>
+              <div style={{background:C.card,border:`2px solid ${C.teal}44`,borderRadius:14,padding:18,
+                boxShadow:theme==='light'?"0 2px 12px rgba(0,0,0,.08)":"0 4px 20px rgba(0,0,0,.2)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
                   marginBottom:10,flexWrap:"wrap",gap:8}}>
                   <div>
@@ -1083,7 +1086,8 @@ function Dashboard({data,mode}){
             const offsetVal = v => v!==null ? parseFloat((v+negMax).toFixed(1)) : null;
             const zeroLine = totalRange>0 ? negMax : 0;
             return (
-              <div style={{background:C.card2,border:`1px solid ${C.orange}33`,borderRadius:14,padding:18}}>
+              <div style={{background:C.card,border:`2px solid ${C.orange}44`,borderRadius:14,padding:18,
+                boxShadow:theme==='light'?"0 2px 12px rgba(0,0,0,.08)":"0 4px 20px rgba(0,0,0,.2)"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",
                   marginBottom:10,flexWrap:"wrap",gap:8}}>
                   <div>
@@ -1131,7 +1135,8 @@ function Dashboard({data,mode}){
       <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:14}}>
 
           {/* 전년비 성장률 — 수평 발산형 바 (성장=오른쪽, 역성장=왼쪽) */}
-        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18}}>
+        <div style={{background:C.card,border:`2px solid ${C.b1}`,borderRadius:14,padding:18,
+          boxShadow:theme==='light'?"0 2px 12px rgba(0,0,0,.08)":"0 4px 20px rgba(0,0,0,.25)"}}>
           <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:2}}>전년비 성장률</div>
           <div style={{color:C.muted,fontSize:10,marginBottom:16}}>26년 vs 25년 · {MONTHS[emi]} 누계</div>
           {(()=>{
@@ -1305,7 +1310,8 @@ function Dashboard({data,mode}){
           const ceBarRef = ce>0 ? ce : 1;
           const hp = ytd(p26,"휴대폰"); // 루프 밖으로 이동 (반복 계산 방지)
           return (
-            <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:14,padding:18}}>
+            <div style={{background:C.card,border:`2px solid ${C.b1}`,borderRadius:14,padding:18,
+              boxShadow:theme==='light'?"0 2px 12px rgba(0,0,0,.08)":"0 4px 20px rgba(0,0,0,.25)"}}>
               <div style={{color:C.text,fontWeight:800,fontSize:13,marginBottom:2}}>CE 비중 분석</div>
               <div style={{color:C.muted,fontSize:10,marginBottom:14}}>
                 {MONTHS[emi]} 누계 · CE = {ce>0?Math.round(ce).toLocaleString()+"억":"─"}
@@ -2017,10 +2023,10 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
 
       {/* ── 컨트롤 바 ── */}
       <div style={{
-        background:`linear-gradient(135deg,${C.card2},${C.card})`,
-        border:`1px solid ${C.b1}`,borderRadius:12,
+        background:C.surf,
+        border:`2px solid ${C.b1}`,borderRadius:12,
         padding:"10px 14px",display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",
-        boxShadow:"0 4px 16px rgba(0,0,0,.2)",
+        boxShadow:theme==='light'?"0 2px 8px rgba(0,0,0,.06)":"0 4px 16px rgba(0,0,0,.2)",
       }}>
         {/* 연도 */}
         <div style={{display:"flex",gap:4}}>
@@ -2133,7 +2139,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
 
           {/* ── 실적 블록 ── */}
           <div style={{
-            background:C.card,border:`1px solid ${mColor}44`,borderRadius:14,
+            background:C.card,border:`2px solid ${mColor}55`,borderRadius:14,
             overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.25)",
           }}>
             {/* 블록 헤더 */}
@@ -2199,7 +2205,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
           {/* ── 목표 블록 (25/26년만) ── */}
           {hasTgt&&(
             <div style={{
-              background:C.card,border:`1px solid ${isTargetUnlocked?C.blue:C.b1}44`,borderRadius:14,
+              background:C.card,border:`2px solid ${isTargetUnlocked?C.blue:C.b1}`,borderRadius:14,
               overflow:"hidden",boxShadow:"0 4px 20px rgba(0,0,0,.25)",
             }}>
               <div style={{
@@ -2294,7 +2300,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
 
           {/* 행 렌더 */}
           <div style={{
-            background:C.card,border:`1px solid ${C.b1}`,borderRadius:12,
+            background:C.card,border:`2px solid ${C.b1}`,borderRadius:12,
             padding:"6px 0",boxShadow:"0 4px 16px rgba(0,0,0,.2)",overflow:"hidden",
           }}>
             {INPUT_ROWS.map((row,ri)=>(
@@ -2310,7 +2316,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
 
           {/* ── 파트별 도넛 카드 (전체 12개) ── */}
           <div style={{
-            background:C.card,border:`1px solid ${C.b1}`,borderRadius:12,padding:16,
+            background:C.card,border:`2px solid ${C.b1}`,borderRadius:12,padding:16,
             boxShadow:"0 4px 16px rgba(0,0,0,.2)",
           }}>
             <div style={{color:C.text,fontWeight:800,fontSize:12,marginBottom:12}}>
@@ -2456,7 +2462,7 @@ function Analysis({data,mode}){
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
 
       {/* ── 컨트롤 바: 연도 + 파트 선택 ── */}
-      <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:10,
+      <div style={{background:C.surf,border:`1px solid ${C.b1}`,borderRadius:10,
         padding:"10px 14px",display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
         <div style={{display:"flex",gap:4}}>
           <span style={{color:C.muted,fontSize:10,fontWeight:700,alignSelf:"center",marginRight:2}}>연도</span>
@@ -2504,7 +2510,7 @@ function Analysis({data,mode}){
       </div>
 
       {/* ── 월별 데이터 테이블 ── */}
-      <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:10,
+      <div style={{background:C.card,border:`2px solid ${C.b1}`,borderRadius:10,
         padding:"12px 14px",overflowX:"auto"}}>
         <div style={{color:C.text,fontWeight:800,fontSize:12,marginBottom:10}}>
           <span style={{color}}>{selKey}</span>
@@ -2656,7 +2662,7 @@ function Analysis({data,mode}){
       <div style={{display:"grid",gridTemplateColumns:isMobile?"1fr":"1fr 1fr",gap:12}}>
 
         {/* 월별 실적 추이 */}
-        <div style={{background:C.card2,border:`1px solid ${color}33`,borderRadius:10,padding:14}}>
+        <div style={{background:C.card,border:`2px solid ${color}44`,borderRadius:10,padding:14}}>
           <div style={{color:C.text,fontWeight:700,fontSize:12,marginBottom:8}}>
             월별 실적 추이
             <span style={{color:C.muted,fontSize:9,fontWeight:400,marginLeft:6}}>당월 실적 vs 목표 vs {prevYr||"전년"}년</span>
@@ -2672,7 +2678,7 @@ function Analysis({data,mode}){
         </div>
 
         {/* 누계 추이 */}
-        <div style={{background:C.card2,border:`1px solid ${C.b1}`,borderRadius:10,padding:14}}>
+        <div style={{background:C.card,border:`2px solid ${C.b1}`,borderRadius:10,padding:14}}>
           <div style={{color:C.text,fontWeight:700,fontSize:12,marginBottom:8}}>
             누계 실적 추이
             <span style={{color:C.muted,fontSize:9,fontWeight:400,marginLeft:6}}>3개년 비교</span>
@@ -2694,7 +2700,7 @@ function Analysis({data,mode}){
 
         {/* 달성률 추이 */}
         {annT>0&&(
-          <div style={{background:C.card2,border:`1px solid ${C.teal}33`,borderRadius:10,padding:14}}>
+          <div style={{background:C.card,border:`2px solid ${C.teal}44`,borderRadius:10,padding:14}}>
             <div style={{color:C.text,fontWeight:700,fontSize:12,marginBottom:8}}>
               달성률 추이
               <span style={{color:C.muted,fontSize:9,fontWeight:400,marginLeft:6}}>당월 및 누계 달성률</span>
@@ -2712,7 +2718,7 @@ function Analysis({data,mode}){
 
         {/* 성장률 추이 */}
         {mPrev&&(
-          <div style={{background:C.card2,border:`1px solid ${C.orange}33`,borderRadius:10,padding:14}}>
+          <div style={{background:C.card,border:`2px solid ${C.orange}44`,borderRadius:10,padding:14}}>
             <div style={{color:C.text,fontWeight:700,fontSize:12,marginBottom:8}}>
               전년비 성장률
               <span style={{color:C.muted,fontSize:9,fontWeight:400,marginLeft:6}}>당월 및 누계 성장률</span>
@@ -2844,7 +2850,7 @@ function ImportModal({onClose, currentData, onMerge}){
       display:"flex",alignItems:"center",justifyContent:"center",padding:16,
     }} onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div style={{
-        background:`linear-gradient(145deg,#0d1f38,#0a1628)`,
+        background:C.card,
         border:`1px solid rgba(255,255,255,.1)`,borderRadius:20,
         padding:28,width:"100%",maxWidth:580,
         boxShadow:"0 24px 60px rgba(0,0,0,.7)",
@@ -3284,12 +3290,13 @@ function App(){
             <button onClick={toggleTheme} title={theme==='dark'?"라이트 모드로 전환":"다크 모드로 전환"} style={{
               padding:"4px 10px",borderRadius:6,cursor:"pointer",fontFamily:"inherit",
               fontWeight:700,fontSize:12,border:`1px solid ${C.b1}`,
-              background:"transparent",color:C.muted2,transition:"all .15s",lineHeight:1.4,
+              background:theme==='light'?"rgba(255,200,50,.12)":"rgba(100,120,200,.15)",
+              color:theme==='light'?C.orange:C.accent,transition:"all .15s",lineHeight:1.4,
               display:"flex",alignItems:"center",gap:5}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent;e.currentTarget.style.color=C.accent;}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.b1;e.currentTarget.style.color=C.muted2;}}>
-              {theme==='dark'?'☀️':'🌙'}
-              {!isMobile&&<span style={{fontSize:10}}>{theme==='dark'?'라이트':'다크'}</span>}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent;e.currentTarget.style.opacity=".8";}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.b1;e.currentTarget.style.opacity="1";}}>
+              {theme==='light'?'☀️':'🌙'}
+              {!isMobile&&<span style={{fontSize:10}}>{theme==='light'?'라이트':'다크'}</span>}
             </button>
             <span style={{color:C.muted,fontSize:9}}>{APP_VER}</span>
             <span style={{fontSize:10,fontWeight:600,
