@@ -2,7 +2,7 @@
 // React + Firebase + Babel 인라인 JSX
 // 이 파일은 plan.html에서 type="text/babel" 로 로드됩니다.
 
-const {useState,useEffect,useRef,useMemo}=React;
+const {useState,useEffect,useRef,useMemo,useCallback}=React;
 
 // ── ErrorBoundary
 class ErrorBoundary extends React.Component {
@@ -11,9 +11,9 @@ class ErrorBoundary extends React.Component {
   componentDidCatch(e,info){console.error("PlanApp 에러:",e,info);}
   render(){
     if(this.state.err) return(
-      <div style={{padding:40,color:"#f07070",fontFamily:"monospace",background:"#07101f",minHeight:"100vh"}}>
+      <div style={{padding:40,color:C.red,fontFamily:"monospace",background:C.bg,minHeight:"100vh"}}>
         <div style={{fontSize:18,fontWeight:700,marginBottom:16}}>⚠ 렌더 오류</div>
-        <pre style={{fontSize:12,whiteSpace:"pre-wrap",color:"#e8f4fd"}}>{String(this.state.err)}</pre>
+        <pre style={{fontSize:12,whiteSpace:"pre-wrap",color:C.text}}>{String(this.state.err)}</pre>
         <button onClick={()=>this.setState({err:null})}
           style={{marginTop:20,padding:"8px 20px",background:"#7c83f5",color:"#fff",border:"none",borderRadius:8,cursor:"pointer",fontSize:14}}>
           재시도
@@ -32,19 +32,54 @@ const YRS=["26","25","24"];
 const LS_PLAN="cst_plan_draft_v1";
 const LS_TEXT="cst_plan_text_v1";
 
-const KC={
+// ── 테마 시스템
+const THEME_KEY="cst_theme_v1";
+const KC_DARK={
   "대외영업":"#38b6f5","혼수":"#f5b942","뉴홈":"#2dd488","입주":"#34d399",
   "이사":"#60a5fa","SAC":"#c084fc","거주중":"#f472b6","B2B":"#fb923c",
   "SMB":"#facc15","농협":"#a3e635","휴대폰":"#94a3b8","CE":"#7c83f5"
 };
-const C={
+const KC_LIGHT={
+  "대외영업":"#0369a1","혼수":"#b45309","뉴홈":"#047857","입주":"#059669",
+  "이사":"#0284c7","SAC":"#7c3aed","거주중":"#be185d","B2B":"#c2410c",
+  "SMB":"#ca8a04","농협":"#65a30d","휴대폰":"#475569","CE":"#4f46e5"
+};
+const COLORS_DARK_P={
   bg:"#07101f",surf:"#0d1b2e",card:"#0f2138",card2:"#0a1628",
   b1:"rgba(255,255,255,.08)",b2:"rgba(255,255,255,.14)",
   text:"#e8f4fd",muted:"#4a7090",muted2:"#6a9ab8",
   accent:"#7c83f5",blue:"#3b82f6",green:"#2dd488",
   orange:"#f5b942",teal:"#2dd4bf",red:"#f07070",
   판매:"#f5b942",매출:"#38b6f5",
+  tooltip:"rgba(7,16,31,.85)",
 };
+const COLORS_LIGHT_P={
+  bg:"#f0f4f8",surf:"#ffffff",card:"#ffffff",card2:"#eef2f7",
+  b1:"rgba(0,0,0,.1)",b2:"rgba(0,0,0,.18)",
+  text:"#1e293b",muted:"#64748b",muted2:"#475569",
+  accent:"#4f46e5",blue:"#0369a1",green:"#047857",
+  orange:"#b45309",teal:"#0f766e",red:"#b91c1c",
+  판매:"#b45309",매출:"#0369a1",
+  tooltip:"rgba(255,255,255,.95)",
+};
+const _initThemeP=(()=>{try{return localStorage.getItem(THEME_KEY)||'dark';}catch{return 'dark';}})();
+let KC = _initThemeP==='light'?{...KC_LIGHT}:{...KC_DARK};
+let C = _initThemeP==='light'?{...COLORS_LIGHT_P}:{...COLORS_DARK_P};
+(()=>{try{document.body.style.background=C.bg;document.body.style.color=C.text;}catch{}})();
+
+function applyThemeCSSP(theme){
+  let el=document.getElementById('cst-theme-css');
+  if(!el){el=document.createElement('style');el.id='cst-theme-css';document.head.appendChild(el);}
+  if(theme==='light'){
+    el.textContent=`body{background:${COLORS_LIGHT_P.bg}!important;color:${COLORS_LIGHT_P.text}!important}
+      ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18)!important}
+      select,textarea,input{color-scheme:light}`;
+  } else {
+    el.textContent=`body{background:${COLORS_DARK_P.bg}!important;color:${COLORS_DARK_P.text}!important}
+      ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12)!important}
+      select,textarea,input{color-scheme:dark}`;
+  }
+}
 
 const gNum=v=>parseFloat(v)||0;
 const sk=i=>`${i}`;
@@ -111,7 +146,7 @@ function MiniChart({series,labels,h=240,pctMode=false,grMode=false}){
         {/* 그리드 */}
         {yTicks.map(({r,v})=>(
           <g key={r}>
-            <line x1={PL} y1={PT+iH*(1-r)} x2={W-PR} y2={PT+iH*(1-r)} stroke="rgba(255,255,255,.06)" strokeWidth={1}/>
+            <line x1={PL} y1={PT+iH*(1-r)} x2={W-PR} y2={PT+iH*(1-r)} stroke={C.b1} strokeWidth={1} opacity={.8}/>
             <text x={PL-5} y={PT+iH*(1-r)+4} fill={C.muted} fontSize={10} textAnchor="end">
               {pctMode||grMode?Math.round(v)+"%":Math.round(v)}
             </text>
@@ -161,7 +196,7 @@ function MiniChart({series,labels,h=240,pctMode=false,grMode=false}){
       </svg>
       {tip&&(
         <div style={{position:"absolute",left:`${Math.min(tip.xi/11*84+4,62)}%`,top:"10%",
-          background:"rgba(7,16,31,.72)",border:`1px solid ${C.b2}`,backdropFilter:"blur(6px)",
+          background:C.tooltip,border:`1px solid ${C.b2}`,backdropFilter:"blur(6px)",
           borderRadius:8,padding:"10px 14px",pointerEvents:"none",zIndex:10,
           boxShadow:"0 4px 16px rgba(0,0,0,.6)",minWidth:120}}>
           <div style={{color:C.muted,fontSize:10,marginBottom:5,fontWeight:700}}>{labels[tip.mi]}</div>
@@ -197,7 +232,7 @@ function AutoTextarea({value,onChange,placeholder,minHeight=220,readOnly=false,f
     <textarea ref={ref} value={value} onChange={readOnly?undefined:onChange}
       readOnly={readOnly} placeholder={readOnly?"":placeholder}
       style={{width:"100%",minHeight:minHeight,background:C.bg,
-        border:`1px solid ${readOnly?"rgba(255,255,255,.12)":C.accent+"60"}`,borderRadius:8,
+        border:`1px solid ${readOnly?C.b1:C.accent+"60"}`,borderRadius:8,
         padding:"14px 16px",color:C.text,fontSize:fontSize,lineHeight:1.75,
         outline:"none",resize:readOnly?"none":"vertical",overflow:"hidden",
         cursor:readOnly?"default":"text",opacity:readOnly?.85:1,
@@ -246,8 +281,8 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
     const el = ref.current;
     if(!el) return;
     el.focus();
-    const cellStyle = "border:1px solid rgba(255,255,255,.25);padding:6px 10px;min-width:60px;font-size:13px;";
-    const headerStyle = cellStyle + "background:rgba(56,182,245,.12);font-weight:700;color:#e8f4fd;";
+    const cellStyle = `border:1px solid ${C.b2};padding:6px 10px;min-width:60px;font-size:13px;color:${C.text};`;
+    const headerStyle = cellStyle + `background:${C.accent}18;font-weight:700;`;
     let html = `<table style="border-collapse:collapse;width:100%;margin:8px 0;">`;
     for(let r=0; r<rows; r++){
       html += "<tr>";
@@ -334,11 +369,11 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   ];
   const HEADING_STYLES=[
     {l:"일반",       tag:"p",   s:""},
-    {l:"제목 1",     tag:"h2",  s:"font-size:26px;font-weight:900;margin:8px 0 4px;color:#e8f4fd;border-bottom:2px solid rgba(56,182,245,.4);padding-bottom:4px"},
-    {l:"제목 2",     tag:"h3",  s:"font-size:20px;font-weight:800;margin:6px 0 4px;color:#e8f4fd"},
-    {l:"제목 3",     tag:"h4",  s:"font-size:16px;font-weight:700;margin:4px 0;color:#b0d0e8"},
-    {l:"강조 블록",  tag:"div", s:"border-left:3px solid #38b6f5;padding:6px 12px;margin:6px 0;background:rgba(56,182,245,.08);color:#e8f4fd"},
-    {l:"경고 블록",  tag:"div", s:"border-left:3px solid #f87171;padding:6px 12px;margin:6px 0;background:rgba(248,113,113,.08);color:#e8f4fd"},
+    {l:"제목 1",     tag:"h2",  s:`font-size:26px;font-weight:900;margin:8px 0 4px;color:${C.text};border-bottom:2px solid rgba(56,182,245,.4);padding-bottom:4px`},
+    {l:"제목 2",     tag:"h3",  s:`font-size:20px;font-weight:800;margin:6px 0 4px;color:${C.text}`},
+    {l:"제목 3",     tag:"h4",  s:`font-size:16px;font-weight:700;margin:4px 0;color:${C.muted2}`},
+    {l:"강조 블록",  tag:"div", s:`border-left:3px solid #38b6f5;padding:6px 12px;margin:6px 0;background:rgba(56,182,245,.08);color:${C.text}`},
+    {l:"경고 블록",  tag:"div", s:`border-left:3px solid #f87171;padding:6px 12px;margin:6px 0;background:rgba(248,113,113,.08);color:${C.text}`},
   ];
   const COLORS=[
     {l:"기본",  v:""},{l:"빨강",v:"#ef4444"},{l:"주황",v:"#f97316"},
@@ -353,17 +388,17 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   ];
 
   const BtnS={
-    padding:"3px 9px",border:"1px solid rgba(255,255,255,.18)",borderRadius:4,
-    background:"rgba(255,255,255,.07)",color:"#c8d8e8",cursor:"pointer",
+    padding:"3px 9px",border:`1px solid ${C.b2}`,borderRadius:4,
+    background:C.card,color:C.muted2,cursor:"pointer",
     fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1.5,
     transition:"background .1s",userSelect:"none",whiteSpace:"nowrap",
   };
   const SelS={
-    background:"#0c1e32",border:"1px solid rgba(255,255,255,.2)",
-    color:"#c8d8e8",fontSize:11,borderRadius:4,padding:"3px 6px",
+    background:C.card2,border:`1px solid ${C.b1}`,
+    color:C.muted2,fontSize:11,borderRadius:4,padding:"3px 6px",
     cursor:"pointer",fontFamily:"inherit",
   };
-  const Sep=()=><div style={{width:1,height:18,background:"rgba(255,255,255,.2)",margin:"0 3px",flexShrink:0}}/>;
+  const Sep=()=><div style={{width:1,height:18,background:C.b2,margin:"0 3px",flexShrink:0}}/>;
 
   // 일반텍스트 → HTML 변환 (구버전 데이터 호환) - readOnly용
   const toHTMLStatic=(v)=>{
@@ -374,8 +409,8 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   if(readOnly){
     return(
       <div style={{
-        padding:"12px 16px",borderRadius:8,border:"1px solid rgba(255,255,255,.08)",
-        minHeight,color:"#c8d8e8",fontSize:14,lineHeight:1.8,
+        padding:"12px 16px",borderRadius:8,border:`1px solid ${C.b1}`,
+        minHeight,color:C.text,fontSize:14,lineHeight:1.8,
         wordBreak:"break-word",background:"rgba(255,255,255,.02)",opacity:.9,...style}}
         dangerouslySetInnerHTML={{__html:toHTMLStatic(value)}}
       />
@@ -385,7 +420,7 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   return(
     <div style={{borderRadius:8,border:"1px solid rgba(56,182,245,.3)",overflow:"hidden",...style}}>
       {/* ── 툴바 */}
-      <div style={{background:"#0c1e32",borderBottom:"1px solid rgba(255,255,255,.12)",
+      <div style={{background:C.card2,borderBottom:`1px solid ${C.b1}`,
         padding:"6px 10px",display:"flex",gap:4,flexWrap:"wrap",alignItems:"center"}}>
 
         {/* 서식 (execCommand 동작 OK) */}
@@ -520,15 +555,15 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
         data-placeholder={placeholder}
         style={{
           minHeight,padding:"14px 16px",
-          color:"#e8f4fd",fontSize:14,lineHeight:1.6,
-          outline:"none",background:"rgba(255,255,255,.015)",
+          color:C.text,fontSize:14,lineHeight:1.6,
+          outline:"none",background:C.bg,
           wordBreak:"break-word",
         }}
       />
       <style>{`
         [contenteditable]:empty:before{
           content:attr(data-placeholder);
-          color:rgba(255,255,255,.2);
+          color:${C.muted};
           font-style:italic;pointer-events:none;
           display:block;white-space:pre-line;
         }
@@ -558,7 +593,7 @@ function BackupModal({onClose,perfData,planTextData,onImportJson,excelFn}){
     try{
       const el=document.getElementById("root");
       const canvas=await html2canvas(el,{
-        scale:2,useCORS:true,backgroundColor:"#07101f",
+        scale:2,useCORS:true,backgroundColor:C.bg,
         logging:false,
         ignoreElements:el=>el.getAttribute&&el.getAttribute("id")==="backup-plan-modal"
       });
@@ -710,7 +745,21 @@ function PlanApp(){
   const [zoom,setZoom]=useState(()=>{
     const saved=parseInt(localStorage.getItem('cst_zoom_v2'));
     return (saved>=50&&saved<=200)?saved:100;
-  }); // 화면 배율 %
+  });
+  // ── 테마
+  const [theme,setTheme]=useState(_initThemeP);
+  const [themeKey,setThemeKey]=useState(0);
+  const toggleTheme=useCallback(()=>{
+    const next=theme==='dark'?'light':'dark';
+    Object.assign(C, next==='light'?COLORS_LIGHT_P:COLORS_DARK_P);
+    Object.assign(KC, next==='light'?KC_LIGHT:KC_DARK);
+    localStorage.setItem(THEME_KEY,next);
+    document.body.style.background=C.bg;
+    document.body.style.color=C.text;
+    applyThemeCSSP(next);
+    setTheme(next);
+    setThemeKey(k=>k+1);
+  },[theme]); // 화면 배율 %
   // 양방향 zoom (center 기준)
   useEffect(()=>{
     const wrapper=document.getElementById('plan-zoom-wrapper');
@@ -975,15 +1024,15 @@ function PlanApp(){
 
   if(!dbReady) return(
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",
-      height:"100vh",gap:14,background:"#07101f"}}>
-      <div style={{width:36,height:36,borderRadius:"50%",border:"4px solid rgba(56,182,245,.2)",
-        borderTopColor:"#38b6f5",animation:"spin 0.9s linear infinite"}}/>
-      <span style={{color:"#6a9ab8",fontSize:14,fontWeight:600}}>데이터 불러오는 중...</span>
+      height:"100vh",gap:14,background:C.bg}}>
+      <div style={{width:36,height:36,borderRadius:"50%",border:`4px solid ${C.b1}`,
+        borderTopColor:C.accent,animation:"spin 0.9s linear infinite"}}/>
+      <span style={{color:C.muted2,fontSize:14,fontWeight:600}}>데이터 불러오는 중...</span>
     </div>
   );
 
   return(
-    <div style={{background:C.bg,minHeight:"100vh"}}>
+    <div key={themeKey} style={{background:C.bg,minHeight:"100vh",color:C.text}}>
 
       {/* ── 헤더 2행 구조 */}
       <div className="no-print" style={{position:"sticky",top:0,zIndex:100,background:C.surf,borderBottom:`1px solid ${C.b1}`}}>
@@ -1024,24 +1073,34 @@ function PlanApp(){
               📋 달성계획
             </a>
           </nav>
-          {/* 우측: zoom + 백업 */}
+          {/* 우측: zoom + 테마 + 백업 */}
           <div style={{marginLeft:"auto",display:"flex",alignItems:"center",gap:6}}>
-            <div style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,.06)",borderRadius:7,padding:"3px 6px",border:`1px solid ${C.b1}`}}>
+            {/* 테마 토글 */}
+            <button onClick={toggleTheme} title={theme==='dark'?"라이트 모드":"다크 모드"} style={{
+              padding:"4px 10px",borderRadius:6,cursor:"pointer",fontFamily:"inherit",
+              fontWeight:700,fontSize:12,border:`1px solid ${C.b1}`,
+              background:"transparent",color:C.muted2,transition:"all .15s",
+              display:"flex",alignItems:"center",gap:5}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent;e.currentTarget.style.color=C.accent;}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.b1;e.currentTarget.style.color=C.muted2;}}>
+              {theme==='dark'?'☀️':'🌙'}<span style={{fontSize:10}}>{theme==='dark'?'라이트':'다크'}</span>
+            </button>
+            <div style={{display:"flex",alignItems:"center",gap:3,background:C.card2,borderRadius:7,padding:"3px 6px",border:`1px solid ${C.b1}`}}>
               <span style={{fontSize:12,color:C.muted2}}>🔍</span>
               <button onClick={()=>setZoom(z=>Math.max(50,z-10))} style={{
                 padding:"2px 6px",borderRadius:4,border:`1px solid ${C.b1}`,
-                background:"rgba(255,255,255,.04)",color:C.muted2,
+                background:theme==="light"?"rgba(0,0,0,.02)":"rgba(255,255,255,.04)",color:C.muted2,
                 cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>−</button>
               <select value={zoom} onChange={e=>setZoom(parseInt(e.target.value))}
                 style={{background:"transparent",border:"none",color:C.text,fontSize:11,
                   fontWeight:700,cursor:"pointer",outline:"none",fontFamily:"inherit",minWidth:46}}>
                 {[50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200].map(v=>(
-                  <option key={v} value={v} style={{background:"#07101f",color:"#e8f4fd"}}>{v}%</option>
+                  <option key={v} value={v} style={{background:C.card,color:C.text}}>{v}%</option>
                 ))}
               </select>
               <button onClick={()=>setZoom(z=>Math.min(200,z+10))} style={{
                 padding:"2px 6px",borderRadius:4,border:`1px solid ${C.b1}`,
-                background:"rgba(255,255,255,.04)",color:C.muted2,
+                background:theme==="light"?"rgba(0,0,0,.02)":"rgba(255,255,255,.04)",color:C.muted2,
                 cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>+</button>
             </div>
             <button onClick={()=>setShowBackup(true)} style={{
@@ -1105,14 +1164,14 @@ function PlanApp(){
         <style>{`
           .kpi-row{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto}
           .kpi-card{flex:1 1 0;min-width:160px;border-radius:14px;overflow:hidden;
-            box-sizing:border-box;background:linear-gradient(135deg,rgba(255,255,255,.04) 0%,rgba(0,0,0,.1) 100%)}
+            box-sizing:border-box;background:${C.card}}
           .kpi-card-lg{flex:1.6 1 0;min-width:200px}
           .kpi-card-header{display:flex;justify-content:space-between;align-items:center;
             padding:10px 14px 8px}
           .kpi-card-num{padding:0 14px 6px;display:flex;align-items:baseline;gap:4px}
           .kpi-card-bar{padding:0 14px 10px}
-          .kpi-card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid rgba(255,255,255,.06)}
-          .kpi-card-stat{padding:7px 0;text-align:center;border-right:1px solid rgba(255,255,255,.05)}
+          .kpi-card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid ${C.b1}}
+          .kpi-card-stat{padding:7px 0;text-align:center;border-right:1px solid ${C.b1}}
           .kpi-card-stat:last-child{border-right:none}
           @media(max-width:720px){.kpi-row{flex-wrap:wrap}.kpi-card{min-width:calc(50% - 5px)}.kpi-card-lg{min-width:100%}}
         `}</style>
@@ -1125,7 +1184,7 @@ function PlanApp(){
                 <div style={{width:8,height:8,borderRadius:2,background:color,boxShadow:`0 0 6px ${color}`}}/>
                 <span style={{color,fontWeight:800,fontSize:12}}>{part} 누계 실적</span>
                 {emi>=0&&<span style={{color:C.muted,fontSize:9,fontWeight:600,
-                  background:"rgba(255,255,255,.06)",borderRadius:3,padding:"1px 5px"}}>
+                  background:theme==="light"?"rgba(0,0,0,.06)":"rgba(255,255,255,.06)",borderRadius:3,padding:"1px 5px"}}>
                   {MONTHS[emi]} 마감기준
                 </span>}
               </div>
@@ -1147,13 +1206,13 @@ function PlanApp(){
                   {(ytdP-ytdT)>=0?"▲":"▼"}{Math.abs(Math.round(ytdP-ytdT)).toLocaleString()}억
                 </span>}
               </div>
-              <div style={{height:5,background:"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
+              <div style={{height:5,background:theme==="light"?"rgba(0,0,0,.07)":"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
                 <div style={{height:"100%",width:`${Math.min(ytdT>0?ytdP/ytdT*100:0,100)}%`,
                   background:`linear-gradient(90deg,${color},${color}aa)`,
                   borderRadius:3,boxShadow:`0 0 8px ${color}60`,transition:"width .6s"}}/>
               </div>
             </div>}
-            <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)"}}>
+            <div className="kpi-card-stats" style={{background:C.card2}}>
               {[
                 {lbl:"전년실적", val:ytdPrev>0?fmtN(ytdPrev):"─", c:C.muted2},
                 {lbl:"전년비",   val:ytdGr?(gNum(ytdGr)>0?"▲":"▼")+Math.abs(gNum(ytdGr)).toFixed(1)+"%":"─", c:ytdGr?grwC(ytdGr):C.muted},
@@ -1190,13 +1249,13 @@ function PlanApp(){
                   진척 {annT>0?Math.round(ytdP/annT*100):0}%
                 </span>
               </div>
-              <div style={{height:5,background:"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
+              <div style={{height:5,background:theme==="light"?"rgba(0,0,0,.07)":"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
                 <div style={{height:"100%",width:`${Math.min(annT>0?ytdP/annT*100:0,100)}%`,
                   background:`linear-gradient(90deg,${C.orange},${C.orange}aa)`,
                   borderRadius:3,transition:"width .6s"}}/>
               </div>
             </div>}
-            <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)"}}>
+            <div className="kpi-card-stats" style={{background:C.card2}}>
               {[
                 {lbl:"누계 실적", val:ytdP>0?fmtN(ytdP):"─", c:color},
                 {lbl:"달성률",   val:ytdAr?Math.round(gNum(ytdAr))+"%":"─", c:ytdAr?pctC(ytdAr):C.muted},
@@ -1236,8 +1295,8 @@ function PlanApp(){
                     <span style={{color:C.muted,fontSize:9}}>전년 {fmtN(ytdPrev)}</span>
                     <span style={{color:C.muted,fontSize:9}}>현재 {fmtN(ytdP)}</span>
                   </div>
-                  <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
-                    <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:"rgba(255,255,255,.25)",zIndex:1}}/>
+                  <div style={{height:5,background:theme==="light"?"rgba(0,0,0,.06)":"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                    <div style={{position:"absolute",left:"50%",top:0,bottom:0,width:1,background:theme==="light"?"rgba(0,0,0,.3)":"rgba(255,255,255,.25)",zIndex:1}}/>
                     <div style={{position:"absolute",top:0,bottom:0,
                       ...(isUp?{left:"50%",width:`${barW}%`}:{right:"50%",width:`${barW}%`}),
                       background:`linear-gradient(${isUp?"90deg":"-90deg"},${bc}70,${bc})`,
@@ -1247,7 +1306,7 @@ function PlanApp(){
                 </div>
               );
             })():null}
-            <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
+            <div className="kpi-card-stats" style={{background:C.card2,gridTemplateColumns:"1fr 1fr"}}>
               {[
                 {lbl:"전년 실적", val:ytdPrev>0?fmtN(ytdPrev):"─", c:C.muted2},
                 {lbl:"차이",      val:ytdP>0&&ytdPrev>0?(ytdP-ytdPrev>=0?"+":"")+Math.round(ytdP-ytdPrev)+"억":"─",
@@ -1267,7 +1326,7 @@ function PlanApp(){
               <div className="kpi-card-header">
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <div style={{width:8,height:8,borderRadius:2,background:"#7c83f5",boxShadow:"0 0 6px #7c83f5"}}/>
-                  <span style={{color:"#9da4f5",fontWeight:800,fontSize:12}}>CE 비중</span>
+                  <span style={{color:C.accent,fontWeight:800,fontSize:12}}>CE 비중</span>
                 </div>
               </div>
               <div className="kpi-card-num">
@@ -1281,17 +1340,17 @@ function PlanApp(){
                   <span style={{color:C.muted,fontSize:9}}>CE 대비 비중</span>
                   {cePrevSharePct!==null&&<span style={{color:C.muted,fontSize:9}}>전년 {cePrevSharePct.toFixed(1)}%</span>}
                 </div>
-                <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                <div style={{height:5,background:theme==="light"?"rgba(0,0,0,.06)":"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
                   <div style={{height:"100%",width:`${Math.min(ceSharePct,100)}%`,
                     background:"linear-gradient(90deg,#7c83f580,#7c83f5)",
                     borderRadius:3,boxShadow:"0 0 8px #7c83f550",transition:"width .6s"}}/>
                   {cePrevSharePct!==null&&(
                     <div style={{position:"absolute",top:0,bottom:0,left:`${Math.min(cePrevSharePct,100)}%`,
-                      width:2,background:"rgba(255,255,255,.45)",borderRadius:1,zIndex:2}}/>
+                      width:2,background:theme==="light"?"rgba(0,0,0,.4)":"rgba(255,255,255,.45)",borderRadius:1,zIndex:2}}/>
                   )}
                 </div>
               </div>
-              {cePrevSharePct!==null&&<div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
+              {cePrevSharePct!==null&&<div className="kpi-card-stats" style={{background:C.card2,gridTemplateColumns:"1fr 1fr"}}>
                 {[
                   {lbl:"전년", val:cePrevSharePct.toFixed(1)+"%", c:C.muted2},
                   {lbl:"변화", val:((ceSharePct-cePrevSharePct)>=0?"▲":"▼")+Math.abs(ceSharePct-cePrevSharePct).toFixed(1)+"p",
@@ -1334,9 +1393,9 @@ function PlanApp(){
                     <span style={{color:C.muted,fontSize:9}}>전년 기준</span>
                     <span style={{color:bc,fontSize:9,fontWeight:700}}>{ratio.toFixed(0)}%</span>
                   </div>
-                  <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                  <div style={{height:5,background:theme==="light"?"rgba(0,0,0,.06)":"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden",position:"relative"}}>
                     <div style={{position:"absolute",left:`${markerLeft}%`,top:0,bottom:0,
-                      width:1.5,background:"rgba(255,255,255,.3)",zIndex:2}}/>
+                      width:1.5,background:theme==="light"?"rgba(0,0,0,.3)":"rgba(255,255,255,.3)",zIndex:2}}/>
                     <div style={{height:"100%",width:`${barW}%`,
                       background:`linear-gradient(90deg,${bc}70,${bc})`,
                       borderRadius:3,boxShadow:`0 0 6px ${bc}40`,transition:"width .6s"}}/>
@@ -1344,7 +1403,7 @@ function PlanApp(){
                 </div>
               );
             })():null}
-            <div className="kpi-card-stats" style={{background:"rgba(0,0,0,.2)",gridTemplateColumns:"1fr 1fr"}}>
+            <div className="kpi-card-stats" style={{background:C.card2,gridTemplateColumns:"1fr 1fr"}}>
               {[
                 {lbl:"월평균", val:prevAvgMonthly>0?prevAvgMonthly+"억":"─", c:C.muted2},
                 {lbl:"전년비",   val:ytdP>0&&ytdPrev>0?(ytdP/ytdPrev*100).toFixed(1)+"%":"─",
@@ -1380,7 +1439,7 @@ function PlanApp(){
                   <span style={{color:C.muted,fontSize:9}}>대외영업 비중</span>
                   <span style={{color:KC["대외영업"],fontSize:9,fontWeight:700}}>{daeSharePct.toFixed(1)}%</span>
                 </div>
-                <div style={{height:5,background:"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden"}}>
+                <div style={{height:5,background:theme==="light"?"rgba(0,0,0,.06)":"rgba(255,255,255,.06)",borderRadius:3,overflow:"hidden"}}>
                   <div style={{height:"100%",width:`${Math.min(daeSharePct,100)}%`,
                     background:`linear-gradient(90deg,${KC["대외영업"]}80,${KC["대외영업"]})`,
                     borderRadius:3,boxShadow:`0 0 8px ${KC["대외영업"]}50`,transition:"width .6s"}}/>
@@ -1393,11 +1452,11 @@ function PlanApp(){
 {/* ── [2+3] 월별 + 누계 가로 나란히 (반응형) */}
         <style>{`.perf-row{display:flex;gap:12px}
         .perf-col{flex:1 1 0;min-width:0;border-radius:12px;overflow:hidden}
-        .perf-col-monthly{background:#0b1d33;border:2px solid rgba(56,182,245,.25)}
-        .perf-col-cum{background:#0d1430;border:2px solid rgba(167,139,250,.25)}
+        .perf-col-monthly{background:${C.card};border:2px solid ${C.b1}}
+        .perf-col-cum{background:${C.card2};border:2px solid ${C.b1}}
         .perf-col-header{padding:10px 14px 10px}
-        .perf-col-monthly .perf-col-header{border-bottom:2px solid rgba(56,182,245,.2);background:rgba(56,182,245,.06)}
-        .perf-col-cum .perf-col-header{border-bottom:2px solid rgba(167,139,250,.2);background:rgba(167,139,250,.06)}
+        .perf-col-monthly .perf-col-header{border-bottom:2px solid ${C.b1};background:${C.card2}}
+        .perf-col-cum .perf-col-header{border-bottom:2px solid ${C.b1};background:${C.card}}
         .perf-col-body{padding:14px}
         @media(max-width:900px){.perf-row{flex-direction:column}}`}</style>
         <div className="perf-row">
@@ -1453,15 +1512,15 @@ function PlanApp(){
               <tbody>
                 {[
                   {key:"목표",    data:mTgt,    c:C.orange, sum:annT,         bg:"rgba(245,185,66,.10)"},
-                  {key:"실적",    data:mPerf,   c:color,    sum:ytdP,    useEmi:true, bg:"rgba(0,0,0,.18)"},
+                  {key:"실적",    data:mPerf,   c:color,    sum:ytdP,    useEmi:true, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
                   {key:"달성률",  data:mArArr,  c:C.teal,   sum:ytdAr,   isPct:true,  bg:"rgba(45,212,136,.09)"},
-                  {key:"성장률",  data:mGrArr,  c:C.green,  sum:ytdGr,   isPct:true,  isGrw:true, bg:"rgba(0,0,0,.18)"},
-                  {key:"전년",    data:mPrev,   c:C.muted2, sum:ytdPrev, useEmi:true, bg:"rgba(255,255,255,.05)"},
-                  {key:"목표차질",data:mPerf,   c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:mTgt, bg:"rgba(0,0,0,.18)"},
-                  {key:"전년차질",data:mPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:mPrev, bg:"rgba(255,255,255,.04)"},
+                  {key:"성장률",  data:mGrArr,  c:C.green,  sum:ytdGr,   isPct:true,  isGrw:true, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
+                  {key:"전년",    data:mPrev,   c:C.muted2, sum:ytdPrev, useEmi:true, bg:theme==="light"?"rgba(0,0,0,.02)":"rgba(255,255,255,.05)"},
+                  {key:"목표차질",data:mPerf,   c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:mTgt, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
+                  {key:"전년차질",data:mPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:mPrev, bg:theme==="light"?"rgba(0,0,0,.015)":C.card2},
                 ].map(({key,data,c,sum,useEmi,isPct,isGrw,isDiff,diffBase,bg},ri)=>(
                   <tr key={key} style={{
-                    borderBottom:`1px solid ${ri%2===0?"rgba(255,255,255,.09)":"rgba(0,0,0,.25)"}`,
+                    borderBottom:`1px solid ${ri%2===0?(theme==="light"?"rgba(0,0,0,.08)":"rgba(255,255,255,.09)"):(theme==="light"?"rgba(0,0,0,.14)":"rgba(0,0,0,.25)")}`,
                     background:bg}}>
                     <td style={{padding:"3px 4px",fontWeight:700,fontSize:9,
                       color:isDiff?C.muted2:c, background:bg,
@@ -1555,15 +1614,15 @@ function PlanApp(){
               <tbody>
                 {[
                   {key:"목표",    data:cumTgt,    c:C.orange, sum:annT,         bg:"rgba(245,185,66,.10)"},
-                  {key:"실적",    data:cumPerf,   c:color,    sum:ytdP,         bg:"rgba(0,0,0,.18)"},
+                  {key:"실적",    data:cumPerf,   c:color,    sum:ytdP,         bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
                   {key:"달성률",  data:cumAr,     c:C.teal,   sum:ytdAr,   isPct:true,  bg:"rgba(45,212,136,.09)"},
-                  {key:"성장률",  data:cumGr,     c:C.green,  sum:ytdGr,   isPct:true, isGrw:true, bg:"rgba(0,0,0,.18)"},
-                  {key:"전년",    data:cumPrevArr,c:C.muted2, sum:ytdPrev,      bg:"rgba(255,255,255,.05)"},
-                  {key:"목표차질",data:cumPerf,   c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:cumTgt, bg:"rgba(0,0,0,.18)"},
-                  {key:"전년차질",data:cumPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:cumPrevArr, bg:"rgba(255,255,255,.04)"},
+                  {key:"성장률",  data:cumGr,     c:C.green,  sum:ytdGr,   isPct:true, isGrw:true, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
+                  {key:"전년",    data:cumPrevArr,c:C.muted2, sum:ytdPrev,      bg:theme==="light"?"rgba(0,0,0,.02)":"rgba(255,255,255,.05)"},
+                  {key:"목표차질",data:cumPerf,   c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:cumTgt, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
+                  {key:"전년차질",data:cumPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:cumPrevArr, bg:theme==="light"?"rgba(0,0,0,.015)":C.card2},
                 ].map(({key,data,c,sum,isPct,isGrw,isDiff,diffBase,bg},ri)=>(
                   <tr key={key} style={{
-                    borderBottom:`1px solid ${ri%2===0?"rgba(255,255,255,.09)":"rgba(0,0,0,.25)"}`,
+                    borderBottom:`1px solid ${ri%2===0?(theme==="light"?"rgba(0,0,0,.08)":"rgba(255,255,255,.09)"):(theme==="light"?"rgba(0,0,0,.14)":"rgba(0,0,0,.25)")}`,
                     background:bg}}>
                     <td style={{padding:"3px 4px",fontWeight:700,fontSize:9,
                       color:isDiff?C.muted2:c, background:bg,
@@ -1661,11 +1720,11 @@ function PlanApp(){
             {(()=>{
               const cards=[
                 {label:selMonth==="annual"?"연간 목표":`${MONTHS[selMonth]} 목표`,val:fmtN(selTgt),c:C.orange,bg:C.orange+"12"},
-                {label:selMonth==="annual"?"전년 연간 실적":`${MONTHS[selMonth]} 전년 실적`,val:fmtN(selPrev),c:C.muted2,bg:"rgba(255,255,255,.04)"},
+                {label:selMonth==="annual"?"전년 연간 실적":`${MONTHS[selMonth]} 전년 실적`,val:fmtN(selPrev),c:C.muted2,bg:theme==="light"?"rgba(0,0,0,.015)":C.card2},
                 {label:"성장 목표",
                  val:selGrowthTarget?(gNum(selGrowthTarget)>=0?"▲":"▼")+Math.abs(gNum(selGrowthTarget)).toFixed(1)+"%":"─",
                  c:selGrowthTarget?grwC(selGrowthTarget):C.muted,
-                 bg:selGrowthTarget?(gNum(selGrowthTarget)>=0?"rgba(34,197,94,.08)":"rgba(239,68,68,.08)"):"rgba(255,255,255,.04)"},
+                 bg:selGrowthTarget?(gNum(selGrowthTarget)>=0?"rgba(34,197,94,.08)":"rgba(239,68,68,.08)"):C.card2},
                 ...(selMi!==null&&selPerf>0?[{
                   label:`${MONTHS[selMi]} 실적`,
                   val:fmtN(selPerf),
@@ -1674,9 +1733,9 @@ function PlanApp(){
               ];
               return cards.map(({label,val,sub,c,bg})=>(
                 <div key={label} style={{
-                  background:"#0a1628",borderRadius:8,overflow:"hidden",
+                  background:C.card,borderRadius:8,overflow:"hidden",
                   border:`1px solid ${c}30`,flex:1,minWidth:110}}>
-                  <div style={{background:bg||"rgba(255,255,255,.04)",padding:"5px 12px",
+                  <div style={{background:bg||C.card2,padding:"5px 12px",
                     color:c,fontSize:9,fontWeight:800,letterSpacing:".4px",textAlign:"center",
                     borderBottom:"1px solid rgba(255,255,255,.06)"}}>{label}</div>
                   <div style={{padding:"10px 12px",textAlign:"center",display:"flex",
@@ -1752,7 +1811,7 @@ function PlanApp(){
                   <button onClick={handleSave} disabled={!hasDraft||saveState==="saving"} style={{
                     padding:"8px 22px",borderRadius:7,fontWeight:700,fontSize:12,fontFamily:"inherit",
                     border:"none",cursor:hasDraft?"pointer":"default",
-                    background:hasDraft?C.accent:"rgba(255,255,255,.08)",
+                    background:hasDraft?C.accent:C.b1,
                     color:hasDraft?"#fff":C.muted,opacity:saveState==="saving"?.6:1}}>
                     {saveState==="saving"?"저장 중...":"💾 저장"}
                   </button>

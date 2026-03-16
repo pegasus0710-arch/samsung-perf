@@ -52,20 +52,33 @@
   <link rel="stylesheet" href="style.css" />
 
   <style>
+    /* ── 테마 CSS 변수 ── */
+    :root {
+      --pw-bg: #060e1c; --pw-box: #0e1e32; --pw-border: #1a2f47;
+      --pw-title: #d8eaf8; --pw-sub: #3d5f7e; --pw-label: #6b8fa8;
+      --pw-input-bg: #060e1c; --pw-input-border: #1f3652; --pw-input-color: #d8eaf8;
+      --pw-hint: #3d5f7e; --pw-spin-border: #1a2f47; --pw-spin-top: #818cf8;
+    }
+    body.theme-light {
+      --pw-bg: #f0f4f8; --pw-box: #ffffff; --pw-border: #dde5ef;
+      --pw-title: #1e293b; --pw-sub: #64748b; --pw-label: #475569;
+      --pw-input-bg: #f8fafc; --pw-input-border: #cbd5e1; --pw-input-color: #1e293b;
+      --pw-hint: #94a3b8; --pw-spin-border: #dde5ef; --pw-spin-top: #4f46e5;
+    }
     /* ── 비밀번호 게이트 화면 ── */
     #pw-gate {
       position: fixed; inset: 0; z-index: 9999;
-      background: #060e1c;
+      background: var(--pw-bg);
       display: flex; align-items: center; justify-content: center;
     }
     .pw-box {
-      background: #0e1e32;
-      border: 1px solid #1a2f47;
+      background: var(--pw-box);
+      border: 1px solid var(--pw-border);
       border-radius: 16px;
       padding: 48px 44px;
       width: 100%; max-width: 380px;
       display: flex; flex-direction: column; gap: 20px;
-      box-shadow: 0 24px 60px rgba(0,0,0,.6);
+      box-shadow: 0 24px 60px rgba(0,0,0,.15);
     }
     .pw-logo {
       width: 44px; height: 44px;
@@ -75,14 +88,14 @@
       font-size: 22px; font-weight: 900; color: #fff;
       box-shadow: 0 0 18px #818cf860;
     }
-    .pw-title { color: #d8eaf8; font-size: 20px; font-weight: 900; letter-spacing: -0.04em; }
-    .pw-sub   { color: #3d5f7e; font-size: 12px; margin-top: 2px; }
-    .pw-label { color: #6b8fa8; font-size: 11px; font-weight: 700;
+    .pw-title { color: var(--pw-title); font-size: 20px; font-weight: 900; letter-spacing: -0.04em; }
+    .pw-sub   { color: var(--pw-sub); font-size: 12px; margin-top: 2px; }
+    .pw-label { color: var(--pw-label); font-size: 11px; font-weight: 700;
                 letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 6px; }
     .pw-input {
-      width: 100%; background: #060e1c;
-      border: 1px solid #1f3652; border-radius: 9px;
-      padding: 12px 14px; color: #d8eaf8; font-size: 15px;
+      width: 100%; background: var(--pw-input-bg);
+      border: 1px solid var(--pw-input-border); border-radius: 9px;
+      padding: 12px 14px; color: var(--pw-input-color); font-size: 15px;
       outline: none; font-family: inherit; letter-spacing: 0.08em;
       transition: border-color .15s, box-shadow .15s;
     }
@@ -97,7 +110,7 @@
     .pw-btn:hover  { opacity: 0.88; }
     .pw-btn:active { opacity: 0.75; }
     .pw-error { color: #f87171; font-size: 12px; font-weight: 600; text-align: center; min-height: 18px; }
-    .pw-hint  { color: #3d5f7e; font-size: 11px; text-align: center; line-height: 1.6; }
+    .pw-hint  { color: var(--pw-hint); font-size: 11px; text-align: center; line-height: 1.6; }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
       20%      { transform: translateX(-8px); }
@@ -109,19 +122,32 @@
     /* ── 로딩 스피너 ── */
     #db-loading {
       position: fixed; inset: 0; z-index: 8888;
-      background: #060e1c;
+      background: var(--pw-bg);
       display: none; align-items: center; justify-content: center;
       flex-direction: column; gap: 16px;
     }
     .spinner {
       width: 36px; height: 36px;
-      border: 3px solid #1a2f47;
-      border-top-color: #818cf8;
+      border: 3px solid var(--pw-spin-border);
+      border-top-color: var(--pw-spin-top);
       border-radius: 50%;
       animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
+  <!-- ── 테마 플래시 방지: body 클래스 즉시 적용 ── -->
+  <script>
+    (function(){
+      try{
+        if(localStorage.getItem('cst_theme_v1')==='light'){
+          document.documentElement.classList.add('theme-light');
+          document.addEventListener('DOMContentLoaded',function(){
+            document.body.classList.add('theme-light');
+          });
+        }
+      }catch(e){}
+    })();
+  </script>
 </head>
 <body>
 

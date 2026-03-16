@@ -91,18 +91,56 @@ const fmt   = v => {const n=gNum(v); return n>0?Math.round(n).toLocaleString():"
 const fmtD  = v => {const n=gNum(v); return n>0?Math.round(n).toLocaleString()+"억":"";};
 const lastMiOf = d => {for(let i=11;i>=0;i--) if(INP_KEYS.some(k=>gNum(d?.[sk(i)]?.[k])>0)) return i; return -1;};
 
-// ─── 색상 ────────────────────────────────────────
-const C = {
+// ─── 테마 시스템 ──────────────────────────────────
+const THEME_KEY = "cst_theme_v1";
+const COLORS_DARK = {
   bg:"#07101f",surf:"#0b1929",card:"#0f2035",card2:"#132843",
   b1:"#1b3353",b2:"#213d63",
   text:"#cce4f7",muted:"#4a6a88",muted2:"#7a9ab8",
   accent:"#7c83f5",blue:"#38b6f5",green:"#2dd488",orange:"#f5b942",
   red:"#f07070",purple:"#d97af5",teal:"#2dd4c0",
   매출:"#38b6f5",판매:"#2dd488",
+  tooltip:"rgba(7,16,31,.85)",
 };
-const KC={CE:"#7c83f5",대외영업:"#38b6f5",혼수:"#f5b942",뉴홈:"#2dd488",
+const COLORS_LIGHT = {
+  bg:"#f0f4f8",surf:"#ffffff",card:"#ffffff",card2:"#eef2f7",
+  b1:"#dde5ef",b2:"#c4d2e0",
+  text:"#1e293b",muted:"#64748b",muted2:"#475569",
+  accent:"#4f46e5",blue:"#0369a1",green:"#047857",orange:"#b45309",
+  red:"#b91c1c",purple:"#7c3aed",teal:"#0f766e",
+  매출:"#0369a1",판매:"#047857",
+  tooltip:"rgba(255,255,255,.95)",
+};
+const KC_DARK = {CE:"#7c83f5",대외영업:"#38b6f5",혼수:"#f5b942",뉴홈:"#2dd488",
   입주:"#5ee8b0",이사:"#80f0de",SAC:"#d97af5",거주중:"#b87af5",
   B2B:"#f58f42",SMB:"#f5c090",농협:"#f5e090",휴대폰:"#90a8c0"};
+const KC_LIGHT = {CE:"#4f46e5",대외영업:"#0369a1",혼수:"#b45309",뉴홈:"#047857",
+  입주:"#059669",이사:"#0891b2",SAC:"#7c3aed",거주중:"#6d28d9",
+  B2B:"#c2410c",SMB:"#d97706",농협:"#ca8a04",휴대폰:"#475569"};
+
+// 모듈 초기화 시 테마 즉시 적용 (렌더 전 flash 방지)
+const _initTheme=(()=>{try{return localStorage.getItem(THEME_KEY)||'dark';}catch{return 'dark';}})();
+let C = _initTheme==='light'?{...COLORS_LIGHT}:{...COLORS_DARK};
+let KC = _initTheme==='light'?{...KC_LIGHT}:{...KC_DARK};
+(()=>{try{document.body.style.background=C.bg;document.body.style.color=C.text;}catch{}})();
+
+function applyThemeCSS(theme){
+  let el=document.getElementById('cst-theme-css');
+  if(!el){el=document.createElement('style');el.id='cst-theme-css';document.head.appendChild(el);}
+  if(theme==='light'){
+    el.textContent=`
+      body{background:${COLORS_LIGHT.bg}!important;color:${COLORS_LIGHT.text}!important}
+      ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.18)!important}
+      select,textarea,input{color-scheme:light}
+    `;
+  } else {
+    el.textContent=`
+      body{background:${COLORS_DARK.bg}!important;color:${COLORS_DARK.text}!important}
+      ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12)!important}
+      select,textarea,input{color-scheme:dark}
+    `;
+  }
+}
 
 // ─── 행 정의 ─────────────────────────────────────
 const ROWS=[
@@ -390,7 +428,7 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
           position:"absolute",
           left:`${Math.min(tooltip.tx+2,75)}%`,
           top:`${Math.max(tooltip.ty-10,0)}%`,
-          background:"rgba(7,16,31,.72)",backdropFilter:"blur(6px)",
+          background:C.tooltip,border:`1px solid ${C.b1}`,backdropFilter:"blur(6px)",
           border:`1px solid rgba(255,255,255,.12)`,
           borderRadius:8,padding:"8px 12px",
           pointerEvents:"none",zIndex:10,
@@ -494,13 +532,13 @@ class ErrorBoundary extends React.Component {
     if(this.state.error){
       // 자동 재시도 1회 실패 시 → 수동 버튼 표시
       return (
-        <div style={{padding:24,background:"#1a0a0a",border:"1px solid #f0707060",
-          borderRadius:12,color:"#f07070",margin:16}}>
+        <div style={{padding:24,background:C.card,border:`1px solid ${C.red}60`,
+          borderRadius:12,color:C.red,margin:16}}>
           <div style={{fontWeight:800,fontSize:14,marginBottom:8}}>⚠ 화면 렌더 오류</div>
-          <div style={{fontSize:11,color:"#7a9ab8",marginBottom:12}}>
+          <div style={{fontSize:11,color:C.muted2,marginBottom:12}}>
             화면을 불러오는 중 오류가 발생했습니다. 다시 시도해 주세요.
           </div>
-          <div style={{fontSize:10,fontFamily:"monospace",color:"#f5b942",
+          <div style={{fontSize:10,fontFamily:"monospace",color:C.orange,
             background:"rgba(0,0,0,.3)",padding:"8px 12px",borderRadius:6,wordBreak:"break-all"}}>
             {String(this.state.error)}
           </div>
@@ -642,7 +680,7 @@ function Dashboard({data,mode}){
                           달성 {ar?Math.round(gNum(ar)):"─"}%
                         </span>
                       </div>
-                      <div style={{height:5,background:"rgba(255,255,255,.08)",borderRadius:3,overflow:"hidden"}}>
+                      <div style={{height:5,background:C.b1,borderRadius:3,overflow:"hidden"}}>
                         <div style={{height:"100%",width:`${Math.min(gNum(ar),100)}%`,
                           background:`linear-gradient(90deg,${color},${color}aa)`,
                           borderRadius:3,boxShadow:`0 0 8px ${color}60`,transition:"width .6s"}}/>
@@ -694,7 +732,7 @@ function Dashboard({data,mode}){
                 <div key={k} onClick={()=>setSelKey(k)}
                   style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,
                     cursor:"pointer",padding:"8px 4px",borderRadius:8,
-                    background:selKey===k?color+"18":"rgba(255,255,255,.02)",
+                    background:selKey===k?color+"18":C.bg,
                     border:`1px solid ${selKey===k?color+"70":C.b1}`,
                     transition:"all .18s",
                     boxShadow:selKey===k?`0 0 10px ${color}25`:"none"}}>
@@ -750,7 +788,7 @@ function Dashboard({data,mode}){
                     <span style={{color:C.muted2,fontSize:10,fontWeight:700}}>
                       파트별 연간 목표 진척 현황
                     </span>
-                    <span style={{color:C.muted,fontSize:9,background:"rgba(255,255,255,.06)",
+                    <span style={{color:C.muted,fontSize:9,background:C.b1,
                       padding:"1px 5px",borderRadius:3}}>
                       {MONTHS[emi]} 마감기준
                     </span>
@@ -794,7 +832,7 @@ function Dashboard({data,mode}){
                         </div>
 
                         {/* 가로 바 */}
-                        <div style={{height:8,background:"rgba(255,255,255,.06)",
+                        <div style={{height:8,background:C.b1,
                           borderRadius:4,overflow:"visible",position:"relative"}}>
                           {/* 실적 채움 */}
                           <div style={{
@@ -889,7 +927,7 @@ function Dashboard({data,mode}){
                         ytdVal:ytd25, avgVal:avg25},
                     ].map(({l,c,bold,dash,ytdVal,avgVal,ytdLabel})=>(
                       <div key={l} style={{display:"flex",flexDirection:"column",gap:2,
-                        padding:"5px 8px",borderRadius:7,background:"rgba(255,255,255,.04)",
+                        padding:"5px 8px",borderRadius:7,background:C.card2,
                         border:`1px solid ${c}22`}}>
                         <span style={{display:"flex",alignItems:"center",gap:4}}>
                           <svg width={16} height={3}>
@@ -1113,7 +1151,7 @@ function Dashboard({data,mode}){
                 {/* 0% 헤더 라인 */}
                 <div style={{position:"relative",marginBottom:6,height:12}}>
                   <div style={{position:"absolute",left:`${zeroLeft}%`,top:0,bottom:0,
-                    width:1,background:"rgba(255,255,255,.15)"}}/>
+                    width:1,background:C.b2+"80"}}/>
                   <span style={{position:"absolute",left:`${zeroLeft}%`,
                     transform:"translateX(-50%)",bottom:0,
                     color:C.muted,fontSize:9}}>0%</span>
@@ -1164,10 +1202,10 @@ function Dashboard({data,mode}){
                         <div style={{flex:1,position:"relative",height:22}}>
                           {/* 배경 + 0% 기준선 */}
                           <div style={{position:"absolute",inset:0,
-                            background:"rgba(255,255,255,.025)",borderRadius:3}}/>
+                            background:C.b1+"30",borderRadius:3}}/>
                           <div style={{position:"absolute",top:0,bottom:0,
                             left:`${zeroLeft}%`,width:1,
-                            background:"rgba(255,255,255,.18)",zIndex:1}}/>
+                            background:C.b2,zIndex:1}}/>
                           {/* 바 */}
                           {gr!==null&&(isUp||isDown||isFlat)&&(
                             <div style={{
@@ -1281,7 +1319,7 @@ function Dashboard({data,mode}){
                       <div style={{width:7,height:7,borderRadius:2,background:KC.CE,flexShrink:0}}/>
                       <span style={{color:C.text,fontSize:11,fontWeight:700}}>CE</span>
                     </div>
-                    <div style={{flex:1,height:20,background:"rgba(255,255,255,.03)",
+                    <div style={{flex:1,height:20,background:C.card2,
                       borderRadius:5,overflow:"hidden",position:"relative"}}>
                       <div style={{
                         position:"absolute",left:0,top:0,bottom:0,width:"100%",
@@ -1315,7 +1353,7 @@ function Dashboard({data,mode}){
                             whiteSpace:"nowrap"}}>{k}</span>
                         </div>
                         {/* 막대 */}
-                        <div style={{flex:1,height:20,background:"rgba(255,255,255,.03)",
+                        <div style={{flex:1,height:20,background:C.card2,
                           borderRadius:5,overflow:"hidden",position:"relative"}}>
                           <div style={{
                             position:"absolute",left:0,top:0,bottom:0,
@@ -1519,7 +1557,7 @@ function BackupMainModal({onClose, data, mode}){
     await new Promise(r=>setTimeout(r,400));
     try{
       const el=document.getElementById("root");
-      const canvas=await (window.html2canvas||html2canvas)(el,{scale:2,useCORS:true,backgroundColor:"#07101f",ignoreElements:e=>e.id==="backup-modal"});
+      const canvas=await (window.html2canvas||html2canvas)(el,{scale:2,useCORS:true,backgroundColor:C.bg,ignoreElements:e=>e.id==="backup-modal"});
       const a=document.createElement("a");
       a.href=canvas.toDataURL("image/png");
       a.download=`충청_메인화면_${new Date().toISOString().slice(0,10)}.png`;
@@ -1759,7 +1797,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
 
         {/* ── 실적 셀: 입력 + 달성률 + 성장률 ── */}
         <div style={{
-          background:isTargetUnlocked?mColor+"0d":"rgba(255,255,255,.03)",
+          background:isTargetUnlocked?mColor+"0d":C.card2,
           border:`1px solid ${isTargetUnlocked?mColor+"33":C.b1}`,borderRadius:7,
           padding:"5px 8px",display:"flex",flexDirection:"column",gap:2,
           position:"relative",
@@ -1768,7 +1806,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
             <button onClick={onRequestTargetUnlock} style={{
               position:"absolute",top:3,right:4,zIndex:5,cursor:"pointer",
               background:"rgba(245,185,66,.15)",border:"1px solid rgba(245,185,66,.4)",
-              borderRadius:4,padding:"1px 5px",fontSize:9,fontFamily:"inherit",color:"#f5b942",
+              borderRadius:4,padding:"1px 5px",fontSize:9,fontFamily:"inherit",color:C.orange,
               fontWeight:700,lineHeight:1.4}}>
               🔒
             </button>
@@ -1799,7 +1837,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
         {/* ── 목표 셀: 입력 + 전년비 ── */}
         {hasTgt&&(
           <div style={{
-            background:isTargetUnlocked?C.blue+"0d":"rgba(255,255,255,.03)",
+            background:isTargetUnlocked?C.blue+"0d":C.card2,
             border:`1px solid ${isTargetUnlocked?C.blue+"33":C.b1}`,borderRadius:7,
             padding:"5px 8px",display:"flex",flexDirection:"column",gap:2,
             position:"relative",
@@ -2233,7 +2271,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
                   display:"flex",alignItems:"center",gap:5,
                   padding:"5px 12px",borderRadius:7,cursor:"pointer",fontFamily:"inherit",
                   fontWeight:700,fontSize:11,
-                  border:`1px solid ${C.muted}`,background:"rgba(255,255,255,.04)",color:C.muted,
+                  border:`1px solid ${C.muted}`,background:C.card2,color:C.muted,
                   transition:"all .15s"}}
                   onMouseEnter={e=>{e.currentTarget.style.borderColor=C.orange;e.currentTarget.style.color=C.orange;}}
                   onMouseLeave={e=>{e.currentTarget.style.borderColor=C.muted;e.currentTarget.style.color=C.muted;}}>
@@ -2331,7 +2369,7 @@ function InputTab({data,setData,mode,onSave,saveState,hasUnsaved,onImport,isTarg
 // ═══════════════════════════════════════════════
 // AnalysisBtn: Analysis 밖에 정의 (안에 두면 매 렌더마다 새 타입 → hook 오염)
 function AnalysisBtn({label,active,onClick,clr,color}){
-  const c = clr||color||"#7c83f5";
+  const c = clr||color||C.accent;
   return (
     <button onClick={onClick} style={{
       padding:"5px 10px",borderRadius:6,cursor:"pointer",fontWeight:700,fontSize:11,
@@ -2821,7 +2859,7 @@ function ImportModal({onClose, currentData, onMerge}){
             </div>
           </div>
           <button onClick={onClose} style={{
-            background:"rgba(255,255,255,.06)",border:"none",borderRadius:8,
+            background:C.card2,border:"none",borderRadius:8,
             color:C.muted,fontSize:18,cursor:"pointer",width:32,height:32,
             display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,
           }}>×</button>
@@ -2878,7 +2916,7 @@ function ImportModal({onClose, currentData, onMerge}){
             }}>취소</button>
             <button onClick={parseAndPreview} disabled={!jsonText.trim()} style={{
               padding:"8px 20px",borderRadius:8,border:"none",
-              background:jsonText.trim()?`linear-gradient(135deg,${C.accent},${C.blue})`:"#1b3353",
+              background:jsonText.trim()?`linear-gradient(135deg,${C.accent},${C.blue})`:C.b1,
               color:jsonText.trim()?"#fff":C.muted,cursor:jsonText.trim()?"pointer":"default",
               fontFamily:"inherit",fontSize:12,fontWeight:800,
             }}>미리보기 →</button>
@@ -2978,7 +3016,7 @@ function ReportModal({onClose, mode, tab}){
     await new Promise(r=>setTimeout(r,400));
     try{
       const el = document.getElementById("report-content");
-      const canvas = await window.html2canvas(el,{scale:2,useCORS:true,backgroundColor:"#07101f"});
+      const canvas = await window.html2canvas(el,{scale:2,useCORS:true,backgroundColor:C.bg});
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet([["충청영업팀 실적 레포트"]]);
       XLSX.utils.book_append_sheet(wb, ws, "레포트");
@@ -3065,7 +3103,7 @@ function ReportModal({onClose, mode, tab}){
         </div>
         <div style={{padding:"16px"}}>
 
-          <BtnRow icon="🖼" label="이미지 저장 (PNG)" badge="시각 동일" c="#7c83f5"
+          <BtnRow icon="🖼" label="이미지 저장 (PNG)" badge="시각 동일" c={C.accent}
             desc={"현재 화면 캡처 후 PNG로 저장"}
             onClick={downloadExcelImg}/>
           <BtnRow icon="📊" label="엑셀 (데이터)" badge="편집 가능" c={C.orange}
@@ -3090,7 +3128,7 @@ function App(){
   const [saveState, setSaveState] = useState("idle");
   const [hasUnsaved,setHasUnsaved]= useState(false);
   const [dbStatus,  setDbStatus]  = useState("연결중...");
-  const [dbReady,   setDbReady]   = useState(false);   // ← 추가: Firebase 응답 완료 여부
+  const [dbReady,   setDbReady]   = useState(false);
   const [showReport,setShowReport]= useState(false);
   const [showImport,setShowImport]= useState(false);
   const [showBackupMain,setShowBackupMain] = useState(false);
@@ -3098,11 +3136,27 @@ function App(){
     ()=>sessionStorage.getItem(TGT_UNLOCK_KEY)==="1"
   );
   const [showTgtPwModal,setShowTgtPwModal] = useState(false);
+  // ── 테마
+  const [theme, setTheme] = useState(_initTheme);
+  const [themeKey, setThemeKey] = useState(0);
+  const toggleTheme = useCallback(()=>{
+    const next = theme==='dark'?'light':'dark';
+    Object.assign(C, next==='light'?COLORS_LIGHT:COLORS_DARK);
+    Object.assign(KC, next==='light'?KC_LIGHT:KC_DARK);
+    localStorage.setItem(THEME_KEY, next);
+    document.body.style.background = C.bg;
+    document.body.style.color = C.text;
+    applyThemeCSS(next);
+    setTheme(next);
+    setThemeKey(k=>k+1);
+  },[theme]);
 
   const [globalZoom,setGlobalZoom] = useState(()=>{
     const saved=parseInt(localStorage.getItem(FONT_SIZE_KEY));
     return (saved>=50&&saved<=200)?saved:100;
   });
+  // 테마 초기 CSS 적용
+  useEffect(()=>{ applyThemeCSS(_initTheme); },[]);
   // 양방향 zoom (center 기준)
   useEffect(()=>{
     const el=document.getElementById('app-content');
@@ -3206,13 +3260,13 @@ function App(){
   const TABS=[{k:"dashboard",l:"대시보드",i:"◈"},{k:"analysis",l:"실적분석",i:"◉"},{k:"input",l:"실적입력",i:"◎"}];
 
   return (
-    <div style={{minHeight:"100vh",background:C.bg,color:C.text,
+    <div key={themeKey} style={{minHeight:"100vh",background:C.bg,color:C.text,
       fontFamily:"'Noto Sans KR','Apple SD Gothic Neo',sans-serif"}}>
 
       {/* 판매/매출 선택 + 헤더 — 상단 고정 */}
       <div style={{position:"sticky",top:0,zIndex:300,background:C.bg}}>
       {/* 판매/매출 선택 */}
-      <div style={{background:"#040c17",borderBottom:`1px solid ${C.b1}`,padding:"0 16px"}}>
+      <div style={{background:C.surf,borderBottom:`1px solid ${C.b1}`,padding:"0 16px"}}>
         <div style={{maxWidth:1360,margin:"0 auto",display:"flex",alignItems:"center",
           height:38,gap:8,flexWrap:"wrap"}}>
           {!isMobile&&<span style={{color:C.muted,fontSize:10,fontWeight:700}}>구분</span>}
@@ -3226,6 +3280,17 @@ function App(){
             </button>
           ))}
           <div style={{marginLeft:"auto",display:"flex",gap:8,alignItems:"center"}}>
+            {/* 테마 토글 */}
+            <button onClick={toggleTheme} title={theme==='dark'?"라이트 모드로 전환":"다크 모드로 전환"} style={{
+              padding:"4px 10px",borderRadius:6,cursor:"pointer",fontFamily:"inherit",
+              fontWeight:700,fontSize:12,border:`1px solid ${C.b1}`,
+              background:"transparent",color:C.muted2,transition:"all .15s",lineHeight:1.4,
+              display:"flex",alignItems:"center",gap:5}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=C.accent;e.currentTarget.style.color=C.accent;}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor=C.b1;e.currentTarget.style.color=C.muted2;}}>
+              {theme==='dark'?'☀️':'🌙'}
+              {!isMobile&&<span style={{fontSize:10}}>{theme==='dark'?'라이트':'다크'}</span>}
+            </button>
             <span style={{color:C.muted,fontSize:9}}>{APP_VER}</span>
             <span style={{fontSize:10,fontWeight:600,
               color:dbStatus.startsWith("✅")?C.green:dbStatus.startsWith("❌")?C.red:C.orange}}>
@@ -3296,24 +3361,24 @@ function App(){
             {isMobile?"⬇":"📦 다운로드"}
           </button>
           {/* 화면 확대/축소 */}
-          <div style={{display:"flex",alignItems:"center",gap:3,background:"rgba(255,255,255,.05)",
+          <div style={{display:"flex",alignItems:"center",gap:3,background:C.card2,
             borderRadius:7,padding:"3px 6px",border:`1px solid ${C.b1}`}}>
             <span style={{fontSize:12,color:C.muted2,flexShrink:0}}>🔍</span>
             <button onClick={()=>setGlobalZoom(z=>Math.max(50,z-10))} style={{
               padding:"2px 6px",borderRadius:4,border:`1px solid ${C.b1}`,
-              background:"rgba(255,255,255,.04)",color:C.muted2,
+              background:C.card2,color:C.muted2,
               cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>−</button>
             <select value={globalZoom} onChange={e=>setGlobalZoom(parseInt(e.target.value))}
               style={{background:"transparent",border:"none",color:C.text,fontSize:11,
                 fontWeight:700,cursor:"pointer",outline:"none",textAlign:"center",
                 fontFamily:"inherit",minWidth:46}}>
               {[50,60,70,80,90,100,110,120,130,140,150,160,170,180,190,200].map(v=>(
-                <option key={v} value={v} style={{background:"#0d1b2e",color:"#e8f4fd"}}>{v}%</option>
+                <option key={v} value={v} style={{background:C.card,color:C.text}}>{v}%</option>
               ))}
             </select>
             <button onClick={()=>setGlobalZoom(z=>Math.min(200,z+10))} style={{
               padding:"2px 6px",borderRadius:4,border:`1px solid ${C.b1}`,
-              background:"rgba(255,255,255,.04)",color:C.muted2,
+              background:C.card2,color:C.muted2,
               cursor:"pointer",fontSize:11,fontFamily:"inherit",fontWeight:700,lineHeight:1}}>+</button>
           </div>
 
@@ -3341,7 +3406,7 @@ function App(){
                 border:"3px solid rgba(56,182,245,.15)",
                 borderTopColor:"#38b6f5",
                 animation:"spin 0.9s linear infinite"}}/>
-              <span style={{color:"#3d5f7e",fontSize:12}}>데이터 불러오는 중...</span>
+              <span style={{color:C.muted,fontSize:12}}>데이터 불러오는 중...</span>
             </div>
           ) : (
             <>
