@@ -119,7 +119,7 @@ const KC_LIGHT = {CE:"#4f46e5",대외영업:"#0369a1",혼수:"#b45309",뉴홈:"#
   B2B:"#c2410c",SMB:"#d97706",농협:"#ca8a04",휴대폰:"#475569"};
 
 // 모듈 초기화 시 테마 즉시 적용 (렌더 전 flash 방지)
-const _initTheme=(()=>{try{return localStorage.getItem(THEME_KEY)||'dark';}catch{return 'dark';}})();
+const _initTheme=(()=>{try{return localStorage.getItem(THEME_KEY)||'light';}catch{return 'light';}})();
 let C = _initTheme==='light'?{...COLORS_LIGHT}:{...COLORS_DARK};
 let KC = _initTheme==='light'?{...KC_LIGHT}:{...KC_DARK};
 (()=>{try{document.body.style.background=C.bg;document.body.style.color=C.text;}catch{}})();

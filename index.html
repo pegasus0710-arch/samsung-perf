@@ -139,7 +139,8 @@
   <script>
     (function(){
       try{
-        if(localStorage.getItem('cst_theme_v1')==='light'){
+        const t = localStorage.getItem('cst_theme_v1') || 'light';
+        if(t === 'light'){
           document.documentElement.classList.add('theme-light');
           document.addEventListener('DOMContentLoaded',function(){
             document.body.classList.add('theme-light');

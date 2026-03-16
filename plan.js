@@ -62,7 +62,7 @@ const COLORS_LIGHT_P={
   판매:"#b45309",매출:"#0369a1",
   tooltip:"rgba(255,255,255,.95)",
 };
-const _initThemeP=(()=>{try{return localStorage.getItem(THEME_KEY)||'dark';}catch{return 'dark';}})();
+const _initThemeP=(()=>{try{return localStorage.getItem(THEME_KEY)||'light';}catch{return 'light';}})();
 let KC = _initThemeP==='light'?{...KC_LIGHT}:{...KC_DARK};
 let C = _initThemeP==='light'?{...COLORS_LIGHT_P}:{...COLORS_DARK_P};
 (()=>{try{document.body.style.background=C.bg;document.body.style.color=C.text;}catch{}})();
