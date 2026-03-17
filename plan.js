@@ -1278,11 +1278,110 @@ function RichEditor(_ref6) {
         color: "#000"
       }
     }, b.l);
-  })), /*#__PURE__*/React.createElement(Sep, null), [["◀", "justifyLeft", "왼쪽"], ["■", "justifyCenter", "가운데"], ["▶", "justifyRight", "오른쪽"]].map(function (_ref9) {
+  })), /*#__PURE__*/React.createElement(Sep, null), [["justifyLeft", "왼쪽 정렬", /*#__PURE__*/React.createElement("svg", {
+    width: "14",
+    height: "14",
+    viewBox: "0 0 14 14",
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "1",
+    y: "2",
+    width: "12",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "1",
+    y: "5.5",
+    width: "8",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "1",
+    y: "9",
+    width: "12",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "1",
+    y: "12.5",
+    width: "6",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }))], ["justifyCenter", "가운데 정렬", /*#__PURE__*/React.createElement("svg", {
+    width: "14",
+    height: "14",
+    viewBox: "0 0 14 14",
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "1",
+    y: "2",
+    width: "12",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "3",
+    y: "5.5",
+    width: "8",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "1",
+    y: "9",
+    width: "12",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "4",
+    y: "12.5",
+    width: "6",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }))], ["justifyRight", "오른쪽 정렬", /*#__PURE__*/React.createElement("svg", {
+    width: "14",
+    height: "14",
+    viewBox: "0 0 14 14",
+    fill: "none"
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: "1",
+    y: "2",
+    width: "12",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "5",
+    y: "5.5",
+    width: "8",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "1",
+    y: "9",
+    width: "12",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }), /*#__PURE__*/React.createElement("rect", {
+    x: "7",
+    y: "12.5",
+    width: "6",
+    height: "1.5",
+    rx: ".7",
+    fill: "currentColor"
+  }))]].map(function (_ref9) {
     var _ref0 = _slicedToArray(_ref9, 3),
-      l = _ref0[0],
-      c = _ref0[1],
-      t = _ref0[2];
+      c = _ref0[0],
+      t = _ref0[1],
+      icon = _ref0[2];
     return /*#__PURE__*/React.createElement("button", {
       key: c,
       onMouseDown: function onMouseDown(e) {
@@ -1291,22 +1390,223 @@ function RichEditor(_ref6) {
       },
       title: t,
       style: BtnS
-    }, l);
-  }), /*#__PURE__*/React.createElement(Sep, null), /*#__PURE__*/React.createElement("button", {
-    onMouseDown: function onMouseDown(e) {
-      e.preventDefault();
-      execCmd("insertUnorderedList");
-    },
-    style: BtnS,
-    title: "\uAE00\uBA38\uB9AC \uAE30\uD638"
-  }, "\u2022 \uBAA9\uB85D"), /*#__PURE__*/React.createElement("button", {
-    onMouseDown: function onMouseDown(e) {
-      e.preventDefault();
-      execCmd("insertOrderedList");
-    },
-    style: BtnS,
-    title: "\uBC88\uD638 \uBAA9\uB85D"
-  }, "1. \uBAA9\uB85D"), /*#__PURE__*/React.createElement(Sep, null), /*#__PURE__*/React.createElement("button", {
+    }, icon);
+  }), /*#__PURE__*/React.createElement(Sep, null), function () {
+    var ListPicker = React.memo(function () {
+      var _useState11 = useState(false),
+        _useState12 = _slicedToArray(_useState11, 2),
+        open = _useState12[0],
+        setOpen = _useState12[1];
+      var lists = [{
+        l: "• 글머리",
+        fn: function fn() {
+          return execCmd("insertUnorderedList");
+        }
+      }, {
+        l: "1. 번호",
+        fn: function fn() {
+          return execCmd("insertOrderedList");
+        }
+      }, {
+        l: "○ 원형",
+        fn: function fn() {
+          return execCmd("insertHTML", "<ul style='list-style-type:circle;padding-left:1.6em;margin:4px 0'><li>내용</li></ul>");
+        }
+      }, {
+        l: "▪ 사각형",
+        fn: function fn() {
+          return execCmd("insertHTML", "<ul style='list-style-type:square;padding-left:1.6em;margin:4px 0'><li>내용</li></ul>");
+        }
+      }, {
+        l: "① 원문자",
+        fn: function fn() {
+          return execCmd("insertHTML", "<ol style='list-style-type:decimal;padding-left:1.6em;margin:4px 0'><li>내용</li></ol>");
+        }
+      }, {
+        l: "ⓐ 알파벳",
+        fn: function fn() {
+          return execCmd("insertHTML", "<ol style='list-style-type:lower-alpha;padding-left:1.6em;margin:4px 0'><li>내용</li></ol>");
+        }
+      }, {
+        l: "ⅰ 로마자",
+        fn: function fn() {
+          return execCmd("insertHTML", "<ol style='list-style-type:lower-roman;padding-left:1.6em;margin:4px 0'><li>내용</li></ol>");
+        }
+      }, {
+        l: "→ 화살표",
+        fn: function fn() {
+          return execCmd("insertHTML", "<ul style='list-style:none;padding-left:1.4em;margin:4px 0'><li style='position:relative'><span style='position:absolute;left:-1.2em'>→</span>내용</li></ul>");
+        }
+      }, {
+        l: "✓ 체크",
+        fn: function fn() {
+          return execCmd("insertHTML", "<ul style='list-style:none;padding-left:1.4em;margin:4px 0'><li style='position:relative'><span style='position:absolute;left:-1.2em'>✓</span>내용</li></ul>");
+        }
+      }];
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          position: "relative",
+          display: "inline-block"
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onMouseDown: function onMouseDown(e) {
+          e.preventDefault();
+          setOpen(function (p) {
+            return !p;
+          });
+        },
+        style: _objectSpread({}, BtnS),
+        title: "\uBAA9\uB85D"
+      }, "\u2261 \uBAA9\uB85D\u25BE"), open && /*#__PURE__*/React.createElement("div", {
+        style: {
+          position: "absolute",
+          top: "100%",
+          left: 0,
+          zIndex: 200,
+          background: C.card,
+          border: "1px solid ".concat(C.b1),
+          borderRadius: 7,
+          padding: "4px 0",
+          marginTop: 3,
+          minWidth: 120,
+          boxShadow: "0 4px 16px rgba(0,0,0,.15)"
+        }
+      }, lists.map(function (item, i) {
+        return /*#__PURE__*/React.createElement("div", {
+          key: i,
+          style: {
+            padding: "6px 14px",
+            cursor: "pointer",
+            fontSize: 11,
+            color: C.text,
+            fontWeight: 600,
+            whiteSpace: "nowrap",
+            transition: "background .1s"
+          },
+          onMouseEnter: function onMouseEnter(e) {
+            return e.currentTarget.style.background = C.card2;
+          },
+          onMouseLeave: function onMouseLeave(e) {
+            return e.currentTarget.style.background = "";
+          },
+          onMouseDown: function onMouseDown(e) {
+            e.preventDefault();
+            item.fn();
+            setOpen(false);
+          }
+        }, item.l);
+      })));
+    });
+    return /*#__PURE__*/React.createElement(ListPicker, null);
+  }(), /*#__PURE__*/React.createElement(Sep, null), function () {
+    var SymbolPicker = React.memo(function () {
+      var _useState13 = useState(false),
+        _useState14 = _slicedToArray(_useState13, 2),
+        open = _useState14[0],
+        setOpen = _useState14[1];
+      var groups = [{
+        g: "화살표",
+        s: ["→", "←", "↑", "↓", "↔", "↕", "⇒", "⇐", "⇑", "⇓", "⇔", "▶", "◀", "▲", "▼"]
+      }, {
+        g: "기호",
+        s: ["●", "○", "■", "□", "◆", "◇", "★", "☆", "♦", "♣", "♠", "♥", "•", "‣", "⁃"]
+      }, {
+        g: "체크",
+        s: ["✓", "✔", "✗", "✘", "☑", "☒", "☐", "⊕", "⊖", "⊗", "⊘", "✅", "❌", "⚠", "ℹ"]
+      }, {
+        g: "숫자/문자",
+        s: ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "ⓐ", "ⓑ", "ⓒ", "ⓘ", "ⓜ"]
+      }, {
+        g: "기타",
+        s: ["※", "◎", "△", "▽", "◁", "▷", "…", "—", "–", "·", "°", "±", "×", "÷", "≈"]
+      }];
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          position: "relative",
+          display: "inline-block"
+        }
+      }, /*#__PURE__*/React.createElement("button", {
+        onMouseDown: function onMouseDown(e) {
+          e.preventDefault();
+          setOpen(function (p) {
+            return !p;
+          });
+        },
+        style: _objectSpread({}, BtnS),
+        title: "\uD2B9\uC218\uAE30\uD638"
+      }, "\u03A9 \uAE30\uD638\u25BE"), open && /*#__PURE__*/React.createElement("div", {
+        style: {
+          position: "absolute",
+          top: "100%",
+          left: 0,
+          zIndex: 200,
+          background: C.card,
+          border: "1px solid ".concat(C.b1),
+          borderRadius: 7,
+          padding: "8px",
+          marginTop: 3,
+          width: 240,
+          boxShadow: "0 4px 16px rgba(0,0,0,.15)"
+        }
+      }, groups.map(function (_ref1) {
+        var g = _ref1.g,
+          s = _ref1.s;
+        return /*#__PURE__*/React.createElement("div", {
+          key: g,
+          style: {
+            marginBottom: 6
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            color: C.muted,
+            fontSize: 9,
+            fontWeight: 700,
+            marginBottom: 4,
+            paddingBottom: 2,
+            borderBottom: "1px solid ".concat(C.b1)
+          }
+        }, g), /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 2
+          }
+        }, s.map(function (sym) {
+          return /*#__PURE__*/React.createElement("button", {
+            key: sym,
+            onMouseDown: function onMouseDown(e) {
+              e.preventDefault();
+              execCmd("insertText", sym);
+              setOpen(false);
+            },
+            style: {
+              width: 26,
+              height: 26,
+              border: "1px solid ".concat(C.b1),
+              borderRadius: 4,
+              background: C.bg,
+              cursor: "pointer",
+              fontSize: 13,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: C.text,
+              fontFamily: "inherit",
+              transition: "background .1s"
+            },
+            onMouseEnter: function onMouseEnter(e) {
+              return e.currentTarget.style.background = C.card2;
+            },
+            onMouseLeave: function onMouseLeave(e) {
+              return e.currentTarget.style.background = C.bg;
+            },
+            title: sym
+          }, sym);
+        })));
+      })));
+    });
+    return /*#__PURE__*/React.createElement(SymbolPicker, null);
+  }(), /*#__PURE__*/React.createElement(Sep, null), /*#__PURE__*/React.createElement("button", {
     onMouseDown: function onMouseDown(e) {
       e.preventDefault();
       execCmd("insertHTML", "<hr style='border:none;border-top:1px solid rgba(255,255,255,.25);margin:10px 0'><br>");
@@ -1563,20 +1863,20 @@ function RichEditor(_ref6) {
     }
   })));
 }
-function BackupModal(_ref1) {
-  var onClose = _ref1.onClose,
-    perfData = _ref1.perfData,
-    planTextData = _ref1.planTextData,
-    onImportJson = _ref1.onImportJson,
-    excelFn = _ref1.excelFn;
-  var _useState11 = useState("export"),
-    _useState12 = _slicedToArray(_useState11, 2),
-    tab = _useState12[0],
-    setTab = _useState12[1];
-  var _useState13 = useState(""),
-    _useState14 = _slicedToArray(_useState13, 2),
-    msg = _useState14[0],
-    setMsg = _useState14[1];
+function BackupModal(_ref10) {
+  var onClose = _ref10.onClose,
+    perfData = _ref10.perfData,
+    planTextData = _ref10.planTextData,
+    onImportJson = _ref10.onImportJson,
+    excelFn = _ref10.excelFn;
+  var _useState15 = useState("export"),
+    _useState16 = _slicedToArray(_useState15, 2),
+    tab = _useState16[0],
+    setTab = _useState16[1];
+  var _useState17 = useState(""),
+    _useState18 = _slicedToArray(_useState17, 2),
+    msg = _useState18[0],
+    setMsg = _useState18[1];
   var fileRef = useRef(null);
   var downloadJson = function downloadJson() {
     var blob = new Blob([JSON.stringify({
@@ -1592,7 +1892,7 @@ function BackupModal(_ref1) {
     setMsg("✅ JSON 다운로드 완료");
   };
   var downloadImage = /*#__PURE__*/function () {
-    var _ref10 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee() {
+    var _ref11 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee() {
       var el, canvas, a, _t;
       return _regenerator().w(function (_context) {
         while (1) switch (_context.p = _context.n) {
@@ -1633,11 +1933,11 @@ function BackupModal(_ref1) {
       }, _callee, null, [[1, 3]]);
     }));
     return function downloadImage() {
-      return _ref10.apply(this, arguments);
+      return _ref11.apply(this, arguments);
     };
   }();
   var handleJsonUpload = /*#__PURE__*/function () {
-    var _ref11 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2(e) {
+    var _ref12 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2(e) {
       var file, text, parsed, _t2;
       return _regenerator().w(function (_context2) {
         while (1) switch (_context2.p = _context2.n) {
@@ -1676,15 +1976,15 @@ function BackupModal(_ref1) {
       }, _callee2, null, [[1, 4]]);
     }));
     return function handleJsonUpload(_x) {
-      return _ref11.apply(this, arguments);
+      return _ref12.apply(this, arguments);
     };
   }();
-  var BtnRow = function BtnRow(_ref12) {
-    var icon = _ref12.icon,
-      label = _ref12.label,
-      desc = _ref12.desc,
-      onClick = _ref12.onClick,
-      c = _ref12.c;
+  var BtnRow = function BtnRow(_ref13) {
+    var icon = _ref13.icon,
+      label = _ref13.label,
+      desc = _ref13.desc,
+      onClick = _ref13.onClick,
+      c = _ref13.c;
     return /*#__PURE__*/React.createElement("button", {
       onClick: onClick,
       style: {
@@ -1778,10 +2078,10 @@ function BackupModal(_ref1) {
       display: "flex",
       borderBottom: "1px solid ".concat(C.b1)
     }
-  }, [["export", "내보내기"], ["import", "가져오기"]].map(function (_ref13) {
-    var _ref14 = _slicedToArray(_ref13, 2),
-      k = _ref14[0],
-      l = _ref14[1];
+  }, [["export", "내보내기"], ["import", "가져오기"]].map(function (_ref14) {
+    var _ref15 = _slicedToArray(_ref14, 2),
+      k = _ref15[0],
+      l = _ref15[1];
     return /*#__PURE__*/React.createElement("button", {
       key: k,
       onClick: function onClick() {
@@ -1881,11 +2181,11 @@ function BackupModal(_ref1) {
     }
   }, msg))));
 }
-function TabBtn(_ref15) {
-  var label = _ref15.label,
-    active = _ref15.active,
-    color = _ref15.color,
-    onClick = _ref15.onClick;
+function TabBtn(_ref16) {
+  var label = _ref16.label,
+    active = _ref16.active,
+    color = _ref16.color,
+    onClick = _ref16.onClick;
   return /*#__PURE__*/React.createElement("button", {
     onClick: onClick,
     style: {
@@ -1904,82 +2204,82 @@ function TabBtn(_ref15) {
 
 // ── 메인 앱
 function PlanApp() {
-  var _useState15 = useState(null),
-    _useState16 = _slicedToArray(_useState15, 2),
-    perfData = _useState16[0],
-    setPerfData = _useState16[1];
-  var _useState17 = useState({}),
-    _useState18 = _slicedToArray(_useState17, 2),
-    planTextData = _useState18[0],
-    setPlanTextData = _useState18[1]; // Firebase 저장 텍스트 계획
-  var _useState19 = useState({}),
+  var _useState19 = useState(null),
     _useState20 = _slicedToArray(_useState19, 2),
-    textDraft = _useState20[0],
-    setTextDraft = _useState20[1]; // 로컬 미저장 텍스트
-  var _useState21 = useState("대외영업"),
+    perfData = _useState20[0],
+    setPerfData = _useState20[1];
+  var _useState21 = useState({}),
     _useState22 = _slicedToArray(_useState21, 2),
-    part = _useState22[0],
-    setPart = _useState22[1];
-  var _useState23 = useState("매출"),
+    planTextData = _useState22[0],
+    setPlanTextData = _useState22[1]; // Firebase 저장 텍스트 계획
+  var _useState23 = useState({}),
     _useState24 = _slicedToArray(_useState23, 2),
-    mode = _useState24[0],
-    setMode = _useState24[1];
-  var _useState25 = useState("26"),
+    textDraft = _useState24[0],
+    setTextDraft = _useState24[1]; // 로컬 미저장 텍스트
+  var _useState25 = useState("대외영업"),
     _useState26 = _slicedToArray(_useState25, 2),
-    yr = _useState26[0],
-    setYr = _useState26[1];
-  var _useState27 = useState("실적"),
+    part = _useState26[0],
+    setPart = _useState26[1];
+  var _useState27 = useState("매출"),
     _useState28 = _slicedToArray(_useState27, 2),
-    chartTab = _useState28[0],
-    setChartTab = _useState28[1];
-  var _useState29 = useState("실적"),
+    mode = _useState28[0],
+    setMode = _useState28[1];
+  var _useState29 = useState("26"),
     _useState30 = _slicedToArray(_useState29, 2),
-    cumChartTab = _useState30[0],
-    setCumChartTab = _useState30[1];
-  var _useState31 = useState("idle"),
+    yr = _useState30[0],
+    setYr = _useState30[1];
+  var _useState31 = useState("실적"),
     _useState32 = _slicedToArray(_useState31, 2),
-    saveState = _useState32[0],
-    setSaveState = _useState32[1];
-  var _useState33 = useState(false),
+    chartTab = _useState32[0],
+    setChartTab = _useState32[1];
+  var _useState33 = useState("실적"),
     _useState34 = _slicedToArray(_useState33, 2),
-    tempSaved = _useState34[0],
-    setTempSaved = _useState34[1]; // 로컬 임시저장 완료 표시
-  var _useState35 = useState(false),
+    cumChartTab = _useState34[0],
+    setCumChartTab = _useState34[1];
+  var _useState35 = useState("idle"),
     _useState36 = _slicedToArray(_useState35, 2),
-    dbReady = _useState36[0],
-    setDbReady = _useState36[1];
-  var _useState37 = useState("🔄 연결중..."),
+    saveState = _useState36[0],
+    setSaveState = _useState36[1];
+  var _useState37 = useState(false),
     _useState38 = _slicedToArray(_useState37, 2),
-    dbStatus = _useState38[0],
-    setDbStatus = _useState38[1];
-  var _useState39 = useState("annual"),
+    tempSaved = _useState38[0],
+    setTempSaved = _useState38[1]; // 로컬 임시저장 완료 표시
+  var _useState39 = useState(false),
     _useState40 = _slicedToArray(_useState39, 2),
-    selMonth = _useState40[0],
-    setSelMonth = _useState40[1]; // 'annual' | 0~11
-  var _useState41 = useState(false),
+    dbReady = _useState40[0],
+    setDbReady = _useState40[1];
+  var _useState41 = useState("🔄 연결중..."),
     _useState42 = _slicedToArray(_useState41, 2),
-    isEditing = _useState42[0],
-    setIsEditing = _useState42[1]; // 수정 모드 잠금
-  var _useState43 = useState(0),
+    dbStatus = _useState42[0],
+    setDbStatus = _useState42[1];
+  var _useState43 = useState("annual"),
     _useState44 = _slicedToArray(_useState43, 2),
-    editorKey = _useState44[0],
-    setEditorKey = _useState44[1]; // 편집기 강제 remount용
-  var _useState45 = useState(function () {
+    selMonth = _useState44[0],
+    setSelMonth = _useState44[1]; // 'annual' | 0~11
+  var _useState45 = useState(false),
+    _useState46 = _slicedToArray(_useState45, 2),
+    isEditing = _useState46[0],
+    setIsEditing = _useState46[1]; // 수정 모드 잠금
+  var _useState47 = useState(0),
+    _useState48 = _slicedToArray(_useState47, 2),
+    editorKey = _useState48[0],
+    setEditorKey = _useState48[1]; // 편집기 강제 remount용
+  var _useState49 = useState(function () {
       var saved = parseInt(localStorage.getItem('cst_zoom_v2'));
       return saved >= 50 && saved <= 200 ? saved : 100;
     }),
-    _useState46 = _slicedToArray(_useState45, 2),
-    zoom = _useState46[0],
-    setZoom = _useState46[1];
-  // ── 테마
-  var _useState47 = useState(_initThemeP),
-    _useState48 = _slicedToArray(_useState47, 2),
-    theme = _useState48[0],
-    setTheme = _useState48[1];
-  var _useState49 = useState(0),
     _useState50 = _slicedToArray(_useState49, 2),
-    themeKey = _useState50[0],
-    setThemeKey = _useState50[1];
+    zoom = _useState50[0],
+    setZoom = _useState50[1];
+  // ── 테마
+  var _useState51 = useState(_initThemeP),
+    _useState52 = _slicedToArray(_useState51, 2),
+    theme = _useState52[0],
+    setTheme = _useState52[1];
+  var _useState53 = useState(0),
+    _useState54 = _slicedToArray(_useState53, 2),
+    themeKey = _useState54[0],
+    setThemeKey = _useState54[1];
   var toggleTheme = useCallback(function () {
     var next = theme === 'dark' ? 'light' : 'dark';
     Object.assign(C, next === 'light' ? COLORS_LIGHT_P : COLORS_DARK_P);
@@ -2015,10 +2315,10 @@ function PlanApp() {
     localStorage.setItem('cst_zoom_v2', String(safeZoom));
   }, [zoom]);
   // (yr==="26"?"25":yr==="25"?"24":"23"): yr 기반 자동 계산 (별도 state 불필요)
-  var _useState51 = useState(false),
-    _useState52 = _slicedToArray(_useState51, 2),
-    showBackup = _useState52[0],
-    setShowBackup = _useState52[1];
+  var _useState55 = useState(false),
+    _useState56 = _slicedToArray(_useState55, 2),
+    showBackup = _useState56[0],
+    setShowBackup = _useState56[1];
   var autoSaveTimer = useRef(null);
   var LS_PERF_CACHE = "cst_v13"; // app.js와 동일 캐시키
 
@@ -2048,7 +2348,7 @@ function PlanApp() {
     // Firebase 백그라운드 로드
     var retries = 2;
     var loadFirebase = /*#__PURE__*/function () {
-      var _ref16 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
+      var _ref17 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
         var snap, d, _savedText, draft, _t3;
         return _regenerator().w(function (_context3) {
           while (1) switch (_context3.p = _context3.n) {
@@ -2120,7 +2420,7 @@ function PlanApp() {
         }, _callee3, null, [[1, 3]]);
       }));
       return function loadFirebase() {
-        return _ref16.apply(this, arguments);
+        return _ref17.apply(this, arguments);
       };
     }();
     loadFirebase();
@@ -2162,7 +2462,7 @@ function PlanApp() {
 
   // Firebase 저장
   var handleSave = /*#__PURE__*/function () {
-    var _ref17 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4() {
+    var _ref18 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4() {
       var merged, _mergeDeep, _t4;
       return _regenerator().w(function (_context4) {
         while (1) switch (_context4.p = _context4.n) {
@@ -2214,7 +2514,7 @@ function PlanApp() {
       }, _callee4, null, [[1, 3]]);
     }));
     return function handleSave() {
-      return _ref17.apply(this, arguments);
+      return _ref18.apply(this, arguments);
     };
   }();
 
@@ -2465,7 +2765,7 @@ function PlanApp() {
 
   // 엑셀 다운로드 (원본 소수점 유지)
   var handleExcel = /*#__PURE__*/function () {
-    var _ref18 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5() {
+    var _ref19 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5() {
       var wb, fmt, addSheet, planRows, allPlanData, _t5;
       return _regenerator().w(function (_context5) {
         while (1) switch (_context5.p = _context5.n) {
@@ -2527,7 +2827,7 @@ function PlanApp() {
       }, _callee5, null, [[0, 2]]);
     }));
     return function handleExcel() {
-      return _ref18.apply(this, arguments);
+      return _ref19.apply(this, arguments);
     };
   }();
 
@@ -2720,7 +3020,7 @@ function PlanApp() {
       if (!dbStatus.includes("재시도↻")) return;
       var retries = 2;
       var retry = /*#__PURE__*/function () {
-        var _ref19 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
+        var _ref20 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
           var snap, d, _t6;
           return _regenerator().w(function (_context6) {
             while (1) switch (_context6.p = _context6.n) {
@@ -2780,7 +3080,7 @@ function PlanApp() {
           }, _callee6, null, [[1, 3]]);
         }));
         return function retry() {
-          return _ref19.apply(this, arguments);
+          return _ref20.apply(this, arguments);
         };
       }();
       retry();
@@ -3172,10 +3472,10 @@ function PlanApp() {
     lbl: "월평균",
     val: avgMonthly > 0 ? avgMonthly + "억" : "─",
     c: C.orange
-  }].map(function (_ref20) {
-    var lbl = _ref20.lbl,
-      val = _ref20.val,
-      c = _ref20.c;
+  }].map(function (_ref21) {
+    var lbl = _ref21.lbl,
+      val = _ref21.val,
+      c = _ref21.c;
     return /*#__PURE__*/React.createElement("div", {
       key: lbl,
       className: "kpi-card-stat"
@@ -3296,10 +3596,10 @@ function PlanApp() {
     lbl: "잔여",
     val: remT > 0 ? fmtN(remT) : "✓ 달성",
     c: remT > 0 ? C.blue : C.green
-  }].map(function (_ref21) {
-    var lbl = _ref21.lbl,
-      val = _ref21.val,
-      c = _ref21.c;
+  }].map(function (_ref22) {
+    var lbl = _ref22.lbl,
+      val = _ref22.val,
+      c = _ref22.c;
     return /*#__PURE__*/React.createElement("div", {
       key: lbl,
       className: "kpi-card-stat"
@@ -3428,10 +3728,10 @@ function PlanApp() {
     lbl: "차이",
     val: ytdP > 0 && ytdPrev > 0 ? (ytdP - ytdPrev >= 0 ? "+" : "") + Math.round(ytdP - ytdPrev) + "억" : "─",
     c: ytdP > 0 && ytdPrev > 0 ? ytdP - ytdPrev >= 0 ? C.green : C.red : C.muted
-  }].map(function (_ref22) {
-    var lbl = _ref22.lbl,
-      val = _ref22.val,
-      c = _ref22.c;
+  }].map(function (_ref23) {
+    var lbl = _ref23.lbl,
+      val = _ref23.val,
+      c = _ref23.c;
     return /*#__PURE__*/React.createElement("div", {
       key: lbl,
       className: "kpi-card-stat"
@@ -3547,10 +3847,10 @@ function PlanApp() {
     lbl: "변화",
     val: (ceSharePct - cePrevSharePct >= 0 ? "▲" : "▼") + Math.abs(ceSharePct - cePrevSharePct).toFixed(1) + "p",
     c: ceSharePct - cePrevSharePct >= 0 ? C.green : C.red
-  }].map(function (_ref23) {
-    var lbl = _ref23.lbl,
-      val = _ref23.val,
-      c = _ref23.c;
+  }].map(function (_ref24) {
+    var lbl = _ref24.lbl,
+      val = _ref24.val,
+      c = _ref24.c;
     return /*#__PURE__*/React.createElement("div", {
       key: lbl,
       className: "kpi-card-stat"
@@ -3678,10 +3978,10 @@ function PlanApp() {
     lbl: "전년비",
     val: ytdP > 0 && ytdPrev > 0 ? (ytdP / ytdPrev * 100).toFixed(1) + "%" : "─",
     c: ytdP > 0 && ytdPrev > 0 ? ytdP >= ytdPrev ? C.green : C.red : C.muted
-  }].map(function (_ref24) {
-    var lbl = _ref24.lbl,
-      val = _ref24.val,
-      c = _ref24.c;
+  }].map(function (_ref25) {
+    var lbl = _ref25.lbl,
+      val = _ref25.val,
+      c = _ref25.c;
     return /*#__PURE__*/React.createElement("div", {
       key: lbl,
       className: "kpi-card-stat"
@@ -3996,17 +4296,17 @@ function PlanApp() {
     isDiff: true,
     diffBase: mPrev,
     bg: theme === "light" ? "rgba(0,0,0,.015)" : C.card2
-  }].map(function (_ref25, ri) {
-    var key = _ref25.key,
-      data = _ref25.data,
-      c = _ref25.c,
-      sum = _ref25.sum,
-      useEmi = _ref25.useEmi,
-      isPct = _ref25.isPct,
-      isGrw = _ref25.isGrw,
-      isDiff = _ref25.isDiff,
-      diffBase = _ref25.diffBase,
-      bg = _ref25.bg;
+  }].map(function (_ref26, ri) {
+    var key = _ref26.key,
+      data = _ref26.data,
+      c = _ref26.c,
+      sum = _ref26.sum,
+      useEmi = _ref26.useEmi,
+      isPct = _ref26.isPct,
+      isGrw = _ref26.isGrw,
+      isDiff = _ref26.isDiff,
+      diffBase = _ref26.diffBase,
+      bg = _ref26.bg;
     return /*#__PURE__*/React.createElement("tr", {
       key: key,
       style: {
@@ -4305,16 +4605,16 @@ function PlanApp() {
     isDiff: true,
     diffBase: cumPrevArr,
     bg: theme === "light" ? "rgba(0,0,0,.015)" : C.card2
-  }].map(function (_ref26, ri) {
-    var key = _ref26.key,
-      data = _ref26.data,
-      c = _ref26.c,
-      sum = _ref26.sum,
-      isPct = _ref26.isPct,
-      isGrw = _ref26.isGrw,
-      isDiff = _ref26.isDiff,
-      diffBase = _ref26.diffBase,
-      bg = _ref26.bg;
+  }].map(function (_ref27, ri) {
+    var key = _ref27.key,
+      data = _ref27.data,
+      c = _ref27.c,
+      sum = _ref27.sum,
+      isPct = _ref27.isPct,
+      isGrw = _ref27.isGrw,
+      isDiff = _ref27.isDiff,
+      diffBase = _ref27.diffBase,
+      bg = _ref27.bg;
     return /*#__PURE__*/React.createElement("tr", {
       key: key,
       style: {
@@ -4545,17 +4845,17 @@ function PlanApp() {
         marginBottom: 12,
         flexWrap: "wrap"
       }
-    }, [c1, c2].map(function (_ref27) {
-      var m = _ref27.m,
-        mc = _ref27.mc,
-        selTgt_x = _ref27.selTgt_x,
-        selPerf_x = _ref27.selPerf_x,
-        grBase_x = _ref27.grBase_x,
-        selGr_x = _ref27.selGr_x,
-        selAr_x = _ref27.selAr_x,
-        selActGr_x = _ref27.selActGr_x,
-        hasPerf = _ref27.hasPerf,
-        emiLabel = _ref27.emiLabel;
+    }, [c1, c2].map(function (_ref28) {
+      var m = _ref28.m,
+        mc = _ref28.mc,
+        selTgt_x = _ref28.selTgt_x,
+        selPerf_x = _ref28.selPerf_x,
+        grBase_x = _ref28.grBase_x,
+        selGr_x = _ref28.selGr_x,
+        selAr_x = _ref28.selAr_x,
+        selActGr_x = _ref28.selActGr_x,
+        hasPerf = _ref28.hasPerf,
+        emiLabel = _ref28.emiLabel;
       return /*#__PURE__*/React.createElement("div", {
         key: m,
         style: {
@@ -4737,13 +5037,13 @@ function PlanApp() {
     }).map(function (r) {
       return r.otTgt;
     })).concat([1]));
-    var Panel = function Panel(_ref28) {
-      var mLabel = _ref28.mLabel,
-        mColor = _ref28.mColor,
-        getTgt = _ref28.getTgt,
-        getPrev = _ref28.getPrev,
-        daeTotal = _ref28.daeTotal,
-        maxVal = _ref28.maxVal;
+    var Panel = function Panel(_ref29) {
+      var mLabel = _ref29.mLabel,
+        mColor = _ref29.mColor,
+        getTgt = _ref29.getTgt,
+        getPrev = _ref29.getPrev,
+        daeTotal = _ref29.daeTotal,
+        maxVal = _ref29.maxVal;
       var totalTgt = rows.reduce(function (a, r) {
         return a + getTgt(r);
       }, 0);

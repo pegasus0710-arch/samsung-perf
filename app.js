@@ -1424,7 +1424,8 @@ function Dashboard(_ref7) {
     style: {
       display: "flex",
       gap: 12,
-      flexWrap: "wrap"
+      flexWrap: "wrap",
+      alignItems: "stretch"
     }
   }, [{
     k: "CE",
@@ -1448,7 +1449,6 @@ function Dashboard(_ref7) {
       ar = pct(v26, vt);
     var ceV = ytd(p26, "CE");
     var ceShare = showCeShare && ceV > 0 ? (v26 / ceV * 100).toFixed(1) : null;
-    // 월평균: 입력월 수 기준
     var mCount = emi + 1;
     var avg = mCount > 0 && v26 > 0 ? (v26 / mCount).toFixed(1) : null;
     return /*#__PURE__*/React.createElement("div", {
@@ -1458,10 +1458,12 @@ function Dashboard(_ref7) {
         border: "1px solid ".concat(color, "40"),
         borderRadius: 14,
         padding: "14px 18px",
-        minWidth: 220,
+        minWidth: isMobile ? "calc(50% - 6px)" : 220,
         flex: 1,
         borderTop: "3px solid ".concat(color),
-        boxShadow: "0 4px 20px rgba(0,0,0,.1)"
+        boxShadow: "0 4px 20px rgba(0,0,0,.1)",
+        display: "flex",
+        flexDirection: "column"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -1491,16 +1493,17 @@ function Dashboard(_ref7) {
         fontSize: 12,
         letterSpacing: "0.04em"
       }
-    }, label, " \uB204\uACC4")), ceShare && /*#__PURE__*/React.createElement("span", {
+    }, label, " \uB204\uACC4")), /*#__PURE__*/React.createElement("span", {
       style: {
         color: color,
         fontSize: 10,
         fontWeight: 700,
-        background: color + "18",
+        background: ceShare ? color + "18" : "transparent",
         borderRadius: 4,
-        padding: "2px 6px"
+        padding: "2px 6px",
+        visibility: ceShare ? "visible" : "hidden"
       }
-    }, "CE\uC758 ", ceShare, "%")), /*#__PURE__*/React.createElement("div", {
+    }, "CE\uC758 ", ceShare || "0", "%")), /*#__PURE__*/React.createElement("div", {
       style: {
         display: "flex",
         alignItems: "baseline",
@@ -1527,7 +1530,7 @@ function Dashboard(_ref7) {
         color: C.muted2,
         fontSize: 12
       }
-    }, "\uC5B5")), vt > 0 && /*#__PURE__*/React.createElement("div", {
+    }, "\uC5B5")), /*#__PURE__*/React.createElement("div", {
       style: {
         marginBottom: 8
       }
@@ -1542,7 +1545,7 @@ function Dashboard(_ref7) {
         color: C.muted,
         fontSize: 9
       }
-    }, "\uBAA9\uD45C ", Math.round(vt).toLocaleString(), "\uC5B5"), /*#__PURE__*/React.createElement("span", {
+    }, vt > 0 ? "\uBAA9\uD45C ".concat(Math.round(vt).toLocaleString(), "\uC5B5") : "목표 ─"), /*#__PURE__*/React.createElement("span", {
       style: {
         color: ar ? pctC(ar) : C.muted,
         fontSize: 10,
@@ -1558,7 +1561,7 @@ function Dashboard(_ref7) {
     }, /*#__PURE__*/React.createElement("div", {
       style: {
         height: "100%",
-        width: "".concat(Math.min(gNum(ar), 100), "%"),
+        width: "".concat(Math.min(gNum(ar) || 0, 100), "%"),
         background: "linear-gradient(90deg,".concat(color, ",").concat(color, "aa)"),
         borderRadius: 3,
         boxShadow: "0 0 8px ".concat(color, "60"),
@@ -1568,7 +1571,8 @@ function Dashboard(_ref7) {
       style: {
         display: "grid",
         gridTemplateColumns: "1fr 1fr 1fr",
-        gap: 6
+        gap: 6,
+        marginTop: "auto"
       }
     }, [{
       lbl: "전년실적",
@@ -1589,7 +1593,7 @@ function Dashboard(_ref7) {
       return /*#__PURE__*/React.createElement("div", {
         key: lbl,
         style: {
-          background: "rgba(0,0,0,.2)",
+          background: theme === "light" ? "rgba(0,0,0,.05)" : "rgba(0,0,0,.2)",
           borderRadius: 6,
           padding: "5px 6px",
           textAlign: "center"

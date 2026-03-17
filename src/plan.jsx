@@ -646,14 +646,119 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
         <Sep/>
 
         {/* 정렬 */}
-        {[["◀","justifyLeft","왼쪽"],["■","justifyCenter","가운데"],["▶","justifyRight","오른쪽"]].map(([l,c,t])=>(
-          <button key={c} onMouseDown={e=>{e.preventDefault();execCmd(c);}} title={t} style={BtnS}>{l}</button>
+        {[
+          ["justifyLeft",  "왼쪽 정렬",
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="1.5" rx=".7" fill="currentColor"/><rect x="1" y="5.5" width="8" height="1.5" rx=".7" fill="currentColor"/><rect x="1" y="9" width="12" height="1.5" rx=".7" fill="currentColor"/><rect x="1" y="12.5" width="6" height="1.5" rx=".7" fill="currentColor"/></svg>],
+          ["justifyCenter","가운데 정렬",
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="1.5" rx=".7" fill="currentColor"/><rect x="3" y="5.5" width="8" height="1.5" rx=".7" fill="currentColor"/><rect x="1" y="9" width="12" height="1.5" rx=".7" fill="currentColor"/><rect x="4" y="12.5" width="6" height="1.5" rx=".7" fill="currentColor"/></svg>],
+          ["justifyRight", "오른쪽 정렬",
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="1.5" rx=".7" fill="currentColor"/><rect x="5" y="5.5" width="8" height="1.5" rx=".7" fill="currentColor"/><rect x="1" y="9" width="12" height="1.5" rx=".7" fill="currentColor"/><rect x="7" y="12.5" width="6" height="1.5" rx=".7" fill="currentColor"/></svg>],
+        ].map(([c,t,icon])=>(
+          <button key={c} onMouseDown={e=>{e.preventDefault();execCmd(c);}} title={t} style={BtnS}>
+            {icon}
+          </button>
         ))}
         <Sep/>
 
-        {/* 목록 */}
-        <button onMouseDown={e=>{e.preventDefault();execCmd("insertUnorderedList");}} style={BtnS} title="글머리 기호">• 목록</button>
-        <button onMouseDown={e=>{e.preventDefault();execCmd("insertOrderedList");}} style={BtnS} title="번호 목록">1. 목록</button>
+        {/* 목록 — 통합 드롭다운 */}
+        {(()=>{
+          const ListPicker=React.memo(()=>{
+            const [open,setOpen]=useState(false);
+            const lists=[
+              {l:"• 글머리",    fn:()=>execCmd("insertUnorderedList")},
+              {l:"1. 번호",     fn:()=>execCmd("insertOrderedList")},
+              {l:"○ 원형",      fn:()=>execCmd("insertHTML","<ul style='list-style-type:circle;padding-left:1.6em;margin:4px 0'><li>내용</li></ul>")},
+              {l:"▪ 사각형",    fn:()=>execCmd("insertHTML","<ul style='list-style-type:square;padding-left:1.6em;margin:4px 0'><li>내용</li></ul>")},
+              {l:"① 원문자",    fn:()=>execCmd("insertHTML","<ol style='list-style-type:decimal;padding-left:1.6em;margin:4px 0'><li>내용</li></ol>")},
+              {l:"ⓐ 알파벳",   fn:()=>execCmd("insertHTML","<ol style='list-style-type:lower-alpha;padding-left:1.6em;margin:4px 0'><li>내용</li></ol>")},
+              {l:"ⅰ 로마자",   fn:()=>execCmd("insertHTML","<ol style='list-style-type:lower-roman;padding-left:1.6em;margin:4px 0'><li>내용</li></ol>")},
+              {l:"→ 화살표",    fn:()=>execCmd("insertHTML","<ul style='list-style:none;padding-left:1.4em;margin:4px 0'><li style='position:relative'><span style='position:absolute;left:-1.2em'>→</span>내용</li></ul>")},
+              {l:"✓ 체크",     fn:()=>execCmd("insertHTML","<ul style='list-style:none;padding-left:1.4em;margin:4px 0'><li style='position:relative'><span style='position:absolute;left:-1.2em'>✓</span>내용</li></ul>")},
+            ];
+            return(
+              <div style={{position:"relative",display:"inline-block"}}>
+                <button onMouseDown={e=>{e.preventDefault();setOpen(p=>!p);}}
+                  style={{...BtnS}} title="목록">≡ 목록▾</button>
+                {open&&(
+                  <div style={{position:"absolute",top:"100%",left:0,zIndex:200,
+                    background:C.card,border:`1px solid ${C.b1}`,borderRadius:7,
+                    padding:"4px 0",marginTop:3,minWidth:120,
+                    boxShadow:"0 4px 16px rgba(0,0,0,.15)"}}>
+                    {lists.map((item,i)=>(
+                      <div key={i}
+                        style={{padding:"6px 14px",cursor:"pointer",fontSize:11,
+                          color:C.text,fontWeight:600,whiteSpace:"nowrap",
+                          transition:"background .1s"}}
+                        onMouseEnter={e=>e.currentTarget.style.background=C.card2}
+                        onMouseLeave={e=>e.currentTarget.style.background=""}
+                        onMouseDown={e=>{e.preventDefault();item.fn();setOpen(false);}}>
+                        {item.l}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          });
+          return <ListPicker/>;
+        })()}
+        <Sep/>
+
+        {/* 특수기호 */}
+        {(()=>{
+          const SymbolPicker=React.memo(()=>{
+            const [open,setOpen]=useState(false);
+            const groups=[
+              {g:"화살표", s:["→","←","↑","↓","↔","↕","⇒","⇐","⇑","⇓","⇔","▶","◀","▲","▼"]},
+              {g:"기호",   s:["●","○","■","□","◆","◇","★","☆","♦","♣","♠","♥","•","‣","⁃"]},
+              {g:"체크",   s:["✓","✔","✗","✘","☑","☒","☐","⊕","⊖","⊗","⊘","✅","❌","⚠","ℹ"]},
+              {g:"숫자/문자", s:["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","ⓐ","ⓑ","ⓒ","ⓘ","ⓜ"]},
+              {g:"기타",   s:["※","◎","△","▽","◁","▷","…","—","–","·","°","±","×","÷","≈"]},
+            ];
+            return(
+              <div style={{position:"relative",display:"inline-block"}}>
+                <button onMouseDown={e=>{e.preventDefault();setOpen(p=>!p);}}
+                  style={{...BtnS}} title="특수기호">Ω 기호▾</button>
+                {open&&(
+                  <div style={{position:"absolute",top:"100%",left:0,zIndex:200,
+                    background:C.card,border:`1px solid ${C.b1}`,borderRadius:7,
+                    padding:"8px",marginTop:3,width:240,
+                    boxShadow:"0 4px 16px rgba(0,0,0,.15)"}}>
+                    {groups.map(({g,s})=>(
+                      <div key={g} style={{marginBottom:6}}>
+                        <div style={{color:C.muted,fontSize:9,fontWeight:700,marginBottom:4,
+                          paddingBottom:2,borderBottom:`1px solid ${C.b1}`}}>{g}</div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:2}}>
+                          {s.map(sym=>(
+                            <button key={sym}
+                              onMouseDown={e=>{
+                                e.preventDefault();
+                                execCmd("insertText",sym);
+                                setOpen(false);
+                              }}
+                              style={{
+                                width:26,height:26,border:`1px solid ${C.b1}`,
+                                borderRadius:4,background:C.bg,cursor:"pointer",
+                                fontSize:13,display:"flex",alignItems:"center",
+                                justifyContent:"center",color:C.text,
+                                fontFamily:"inherit",transition:"background .1s",
+                              }}
+                              onMouseEnter={e=>e.currentTarget.style.background=C.card2}
+                              onMouseLeave={e=>e.currentTarget.style.background=C.bg}
+                              title={sym}>
+                              {sym}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          });
+          return <SymbolPicker/>;
+        })()}
         <Sep/>
 
         {/* 구분선 */}

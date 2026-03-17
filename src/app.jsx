@@ -639,7 +639,7 @@ function Dashboard({data,mode,theme}){
             </div>
           </div>
           {/* 핵심 지표 2개 — 상세 확장형 */}
-          <div style={{display:"flex",gap:12,flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"stretch"}}>
             {[
               {k:"CE",      label:"CE",      color:KC.CE,   showCeShare:false},
               {k:"대외영업", label:"대외영업", color:KC.대외영업, showCeShare:true},
@@ -648,16 +648,18 @@ function Dashboard({data,mode,theme}){
               const gr=grw(v26,v25), ar=pct(v26,vt);
               const ceV=ytd(p26,"CE");
               const ceShare = showCeShare&&ceV>0 ? (v26/ceV*100).toFixed(1) : null;
-              // 월평균: 입력월 수 기준
               const mCount = emi+1;
               const avg = mCount>0&&v26>0 ? (v26/mCount).toFixed(1) : null;
               return (
                 <div key={k} style={{
                   background:C.card2,
                   border:`1px solid ${color}40`,
-                  borderRadius:14,padding:"14px 18px",minWidth:220,flex:1,
+                  borderRadius:14,padding:"14px 18px",
+                  minWidth:isMobile?"calc(50% - 6px)":220,
+                  flex:1,
                   borderTop:`3px solid ${color}`,
-                  boxShadow:`0 4px 20px rgba(0,0,0,.1)`
+                  boxShadow:`0 4px 20px rgba(0,0,0,.1)`,
+                  display:"flex",flexDirection:"column",
                 }}>
                   {/* 헤더 */}
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -668,12 +670,12 @@ function Dashboard({data,mode,theme}){
                         {label} 누계
                       </span>
                     </div>
-                    {ceShare&&(
-                      <span style={{color:color,fontSize:10,fontWeight:700,
-                        background:color+"18",borderRadius:4,padding:"2px 6px"}}>
-                        CE의 {ceShare}%
-                      </span>
-                    )}
+                    {/* ceShare 없으면 빈 공간 유지 → 높이 통일 */}
+                    <span style={{color:color,fontSize:10,fontWeight:700,
+                      background:ceShare?color+"18":"transparent",borderRadius:4,padding:"2px 6px",
+                      visibility:ceShare?"visible":"hidden"}}>
+                      CE의 {ceShare||"0"}%
+                    </span>
                   </div>
 
                   {/* 실적 대형 */}
@@ -685,32 +687,33 @@ function Dashboard({data,mode,theme}){
                     {v26>0&&<span style={{color:C.muted2,fontSize:12}}>억</span>}
                   </div>
 
-                  {/* 프로그레스 바 */}
-                  {vt>0&&(
-                    <div style={{marginBottom:8}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
-                        <span style={{color:C.muted,fontSize:9}}>목표 {Math.round(vt).toLocaleString()}억</span>
-                        <span style={{color:ar?pctC(ar):C.muted,fontSize:10,fontWeight:800}}>
-                          달성 {ar?Math.round(gNum(ar)):"─"}%
-                        </span>
-                      </div>
-                      <div style={{height:5,background:C.b1,borderRadius:3,overflow:"hidden"}}>
-                        <div style={{height:"100%",width:`${Math.min(gNum(ar),100)}%`,
-                          background:`linear-gradient(90deg,${color},${color}aa)`,
-                          borderRadius:3,boxShadow:`0 0 8px ${color}60`,transition:"width .6s"}}/>
-                      </div>
+                  {/* 프로그레스 바 — 항상 공간 차지 */}
+                  <div style={{marginBottom:8}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                      <span style={{color:C.muted,fontSize:9}}>
+                        {vt>0?`목표 ${Math.round(vt).toLocaleString()}억`:"목표 ─"}
+                      </span>
+                      <span style={{color:ar?pctC(ar):C.muted,fontSize:10,fontWeight:800}}>
+                        달성 {ar?Math.round(gNum(ar)):"─"}%
+                      </span>
                     </div>
-                  )}
+                    <div style={{height:5,background:C.b1,borderRadius:3,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${Math.min(gNum(ar)||0,100)}%`,
+                        background:`linear-gradient(90deg,${color},${color}aa)`,
+                        borderRadius:3,boxShadow:`0 0 8px ${color}60`,transition:"width .6s"}}/>
+                    </div>
+                  </div>
 
                   {/* 하단 3개 지표 */}
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:"auto"}}>
                     {[
                       {lbl:"전년실적", val:v25>0?Math.round(v25).toLocaleString()+"억":"─", c:C.muted2},
                       {lbl:"전년비",   val:gr?grwT(gr):"─", c:gr?grwC(gr):C.muted},
                       {lbl:"월평균",   val:avg?parseFloat(avg).toLocaleString()+"억":"─", c:C.orange},
                     ].map(({lbl,val,c})=>(
-                      <div key={lbl} style={{background:"rgba(0,0,0,.2)",borderRadius:6,padding:"5px 6px",
-                        textAlign:"center"}}>
+                      <div key={lbl} style={{
+                        background:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.2)",
+                        borderRadius:6,padding:"5px 6px",textAlign:"center"}}>
                         <div style={{color:C.muted,fontSize:8,marginBottom:2}}>{lbl}</div>
                         <div style={{color:c,fontSize:11,fontWeight:700,lineHeight:1}}>{val}</div>
                       </div>
