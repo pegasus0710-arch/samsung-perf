@@ -369,11 +369,11 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
   ];
   const HEADING_STYLES=[
     {l:"일반",       tag:"p",   s:""},
-    {l:"제목 1",     tag:"h2",  s:`font-size:26px;font-weight:900;margin:8px 0 4px;color:${C.text};border-bottom:2px solid rgba(56,182,245,.4);padding-bottom:4px`},
-    {l:"제목 2",     tag:"h3",  s:`font-size:20px;font-weight:800;margin:6px 0 4px;color:${C.text}`},
-    {l:"제목 3",     tag:"h4",  s:`font-size:16px;font-weight:700;margin:4px 0;color:${C.muted2}`},
-    {l:"강조 블록",  tag:"div", s:`border-left:3px solid #38b6f5;padding:6px 12px;margin:6px 0;background:rgba(56,182,245,.08);color:${C.text}`},
-    {l:"경고 블록",  tag:"div", s:`border-left:3px solid #f87171;padding:6px 12px;margin:6px 0;background:rgba(248,113,113,.08);color:${C.text}`},
+    {l:"제목 1",     tag:"h2",  s:`font-size:26px;font-weight:900;margin:8px 0 4px;color:${theme==="light"?"#1e293b":C.text};border-bottom:2px solid ${C.accent}60;padding-bottom:4px`},
+    {l:"제목 2",     tag:"h3",  s:`font-size:20px;font-weight:800;margin:6px 0 4px;color:${theme==="light"?"#1e293b":C.text}`},
+    {l:"제목 3",     tag:"h4",  s:`font-size:16px;font-weight:700;margin:4px 0;color:${theme==="light"?"#334155":C.muted2}`},
+    {l:"강조 블록",  tag:"div", s:`border-left:3px solid ${C.accent};padding:6px 12px;margin:6px 0;background:${C.accent}12;color:${theme==="light"?"#1e293b":C.text}`},
+    {l:"경고 블록",  tag:"div", s:`border-left:3px solid #f87171;padding:6px 12px;margin:6px 0;background:rgba(248,113,113,.08);color:${theme==="light"?"#1e293b":C.text}`},
   ];
   const COLORS=[
     {l:"기본",  v:""},{l:"빨강",v:"#ef4444"},{l:"주황",v:"#f97316"},
@@ -979,7 +979,7 @@ function PlanApp(){
   const mArArr=MONTHS.map((_,i)=>i<=emi&&mTgt[i]>0?(mPerf[i]/mTgt[i]*100):null);
   const mGrArr=MONTHS.map((_,i)=>i<=emi&&mPrev[i]>0?((mPerf[i]-mPrev[i])/mPrev[i]*100):null);
 
-  // ── yr 연도 기준 참고 데이터
+  // ── yr 연도 기준 참고 데이터 (선택 모드)
   const planPrevYrKey=yr==="26"?"25":yr==="25"?"24":null;
   const pD_pl=useMemo(()=>{const y=perfData&&perfData[yr];const m=y&&y[mode];return(m&&m.perf)||{};},[perfData,yr,mode]);
   const tD_pl=useMemo(()=>{const y=perfData&&perfData[yr];const m=y&&y[mode];return(m&&m.target)||{};},[perfData,yr,mode]);
@@ -991,6 +991,19 @@ function PlanApp(){
   const emi_pl  =useMemo(()=>{for(let i=11;i>=0;i--){const r=pD_pl[sk(i)];if(r&&Object.values(r).some(v=>gNum(v)>0))return i;}return -1;},[pD_pl]);
   const ytdP_pl =mPerf_pl.slice(0,Math.max(emi_pl+1,0)).reduce((a,b)=>a+b,0);
   const ytdPrev_pl=mPrev_pl.slice(0,Math.max(emi_pl+1,0)).reduce((a,b)=>a+b,0);
+
+  // ── 반대 모드(판매↔매출) 데이터 (동시 표시용)
+  const otherMode = mode==="매출"?"판매":"매출";
+  const pD_ot=useMemo(()=>{const y=perfData&&perfData[yr];const m=y&&y[otherMode];return(m&&m.perf)||{};},[perfData,yr,otherMode]);
+  const tD_ot=useMemo(()=>{const y=perfData&&perfData[yr];const m=y&&y[otherMode];return(m&&m.target)||{};},[perfData,yr,otherMode]);
+  const pD25_ot=useMemo(()=>{if(!planPrevYrKey||!perfData)return{};const y=perfData[planPrevYrKey];const m=y&&y[otherMode];return(m&&m.perf)||{};},[perfData,planPrevYrKey,otherMode]);
+  const mTgt_ot =useMemo(()=>MONTHS.map((_,i)=>gNum((fullRow(tD_ot[sk(i)])||{})[part])),[tD_ot,part]);
+  const mPerf_ot=useMemo(()=>MONTHS.map((_,i)=>gNum((fullRow(pD_ot[sk(i)])||{})[part])),[pD_ot,part]);
+  const mPrev_ot=useMemo(()=>MONTHS.map((_,i)=>gNum((fullRow(pD25_ot[sk(i)])||{})[part])),[pD25_ot,part]);
+  const annT_ot =mTgt_ot.reduce((a,b)=>a+b,0);
+  const emi_ot  =useMemo(()=>{for(let i=11;i>=0;i--){const r=pD_ot[sk(i)];if(r&&Object.values(r).some(v=>gNum(v)>0))return i;}return -1;},[pD_ot]);
+  const ytdP_ot =mPerf_ot.slice(0,Math.max(emi_ot+1,0)).reduce((a,b)=>a+b,0);
+  const ytdPrev_ot=mPrev_ot.slice(0,Math.max(emi_ot+1,0)).reduce((a,b)=>a+b,0);
 
   // 선택 월 정보 (yr 연도 기준)
   const annPrev_pl=mPrev_pl.reduce((a,b)=>a+b,0); // 전년 연간 합계
@@ -1763,88 +1776,139 @@ function PlanApp(){
             })}
           </div>
 
-                    {/* 참고 카드 — title+body 구조 */}
-          <div style={{display:"flex",gap:6,marginBottom:16,flexWrap:"wrap"}}>
-            {(()=>{
-              const cards=[
-                {label:selMonth==="annual"?"연간 목표":`${MONTHS[selMonth]} 목표`,val:fmtN(selTgt),c:C.orange,bg:C.orange+"12"},
-                {label:selMonth==="annual"?"전년 연간 실적":`${MONTHS[selMonth]} 전년 실적`,val:fmtN(selPrev),c:C.muted2,bg:theme==="light"?"rgba(0,0,0,.015)":C.card2},
-                {label:"성장 목표",
-                 val:selGrowthTarget?(gNum(selGrowthTarget)>=0?"▲":"▼")+Math.abs(gNum(selGrowthTarget)).toFixed(1)+"%":"─",
-                 c:selGrowthTarget?grwC(selGrowthTarget):C.muted,
-                 bg:selGrowthTarget?(gNum(selGrowthTarget)>=0?"rgba(34,197,94,.08)":"rgba(239,68,68,.08)"):C.card2},
-                ...(selMi!==null&&selPerf>0?[{
-                  label:`${MONTHS[selMi]} 실적`,
-                  val:fmtN(selPerf),
-                  sub:selAr?`달성 ${Math.round(gNum(selAr))}%`:selActualGr?(gNum(selActualGr)>=0?"▲":"▼")+Math.abs(gNum(selActualGr)).toFixed(1)+"%":null,
-                  c:color,bg:color+"10"}]:[]),
-              ];
-              return cards.map(({label,val,sub,c,bg})=>(
-                <div key={label} style={{
-                  background:C.card,borderRadius:8,overflow:"hidden",
-                  border:`1px solid ${c}30`,flex:1,minWidth:110}}>
-                  <div style={{background:bg||C.card2,padding:"5px 12px",
-                    color:c,fontSize:9,fontWeight:800,letterSpacing:".4px",textAlign:"center",
-                    borderBottom:`1px solid ${C.b1}`}}>{label}</div>
-                  <div style={{padding:"10px 12px",textAlign:"center",display:"flex",
-                    flexDirection:"column",alignItems:"center"}}>
-                    <div style={{color:c,fontSize:18,fontWeight:900,letterSpacing:"-.5px"}}>{val}</div>
-                    {sub&&<div style={{color:c,fontSize:11,fontWeight:700,marginTop:2,opacity:.8}}>{sub}</div>}
+          {/* ── 참고 카드: 판매/매출 동시 표시 (이미지2 KPI 스타일) */}
+          {(()=>{
+            // 모드별 헬퍼
+            const mkCard=(m, mTgt, mPerf, mPrev, annT, emi_x, ytdP_x, ytdPrev_x)=>{
+              const selTgt_x  = selMi!==null ? mTgt[selMi]  : annT;
+              const selPerf_x = selMi!==null ? mPerf[selMi] : ytdP_x;
+              const selPrev_x = selMi!==null ? mPrev[selMi] : (selMi===null ? mPrev.reduce((a,b)=>a+b,0) : 0);
+              const selGr_x   = selPrev_x>0&&selTgt_x>0?((selTgt_x-selPrev_x)/selPrev_x*100).toFixed(1):null;
+              const selAr_x   = selTgt_x>0&&selPerf_x>0?(selPerf_x/selTgt_x*100).toFixed(1):null;
+              const selActGr_x= selPrev_x>0&&selPerf_x>0?((selPerf_x-selPrev_x)/selPrev_x*100).toFixed(1):null;
+              const mc = m==="매출"?C.매출:C.판매;
+              const hasPerf = selMi!==null ? selPerf_x>0 : ytdP_x>0;
+              return {m,mc,selTgt_x,selPerf_x,selPrev_x,selGr_x,selAr_x,selActGr_x,hasPerf,selMi};
+            };
+            const c1=mkCard(mode,   mTgt_pl, mPerf_pl, mPrev_pl, annT_pl, emi_pl, ytdP_pl, ytdPrev_pl);
+            const c2=mkCard(otherMode,mTgt_ot,mPerf_ot,mPrev_ot,  annT_ot, emi_ot, ytdP_ot, ytdPrev_ot);
+            const cards=[c1,c2];
+            return(
+              <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+                {cards.map(({m,mc,selTgt_x,selPerf_x,selPrev_x,selGr_x,selAr_x,selActGr_x,hasPerf})=>(
+                  <div key={m} style={{flex:1,minWidth:220,background:C.card,borderRadius:12,
+                    border:`2px solid ${mc}30`,overflow:"hidden",
+                    boxShadow:theme==="light"?"0 2px 8px rgba(0,0,0,.06)":"none"}}>
+                    {/* 헤더 */}
+                    <div style={{background:mc+"14",padding:"6px 14px",
+                      borderBottom:`1px solid ${mc}25`,
+                      display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{width:8,height:8,borderRadius:2,background:mc}}/>
+                      <span style={{color:mc,fontSize:11,fontWeight:800}}>{m}</span>
+                      <span style={{color:C.muted,fontSize:10,marginLeft:2}}>
+                        {selMonth==="annual"?"연간":MONTHS[selMonth]}
+                      </span>
+                    </div>
+                    {/* 바디: 목표+전년+성장 / 실적+달성+성장 */}
+                    <div style={{display:"flex",padding:"10px 14px",gap:12,flexWrap:"wrap"}}>
+                      {/* 목표 블록 */}
+                      <div style={{flex:1,minWidth:80}}>
+                        <div style={{color:C.muted,fontSize:9,fontWeight:700,marginBottom:3}}>
+                          {selMonth==="annual"?"연간 목표":`${MONTHS[selMonth]} 목표`}
+                        </div>
+                        <div style={{color:C.orange,fontSize:20,fontWeight:900,letterSpacing:"-.5px",lineHeight:1}}>
+                          {selTgt_x>0?Math.round(selTgt_x).toLocaleString()+"억":"─"}
+                        </div>
+                        <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
+                          {selPrev_x>0&&<span style={{color:C.muted2,fontSize:10}}>
+                            전년 {Math.round(selPrev_x).toLocaleString()}억
+                          </span>}
+                          {selGr_x!==null&&(
+                            <span style={{color:grwC(selGr_x),fontSize:10,fontWeight:700}}>
+                              {gNum(selGr_x)>=0?"▲":"▼"}{Math.abs(gNum(selGr_x)).toFixed(1)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {/* 구분선 */}
+                      {hasPerf&&<div style={{width:1,background:C.b1,alignSelf:"stretch"}}/>}
+                      {/* 실적 블록 */}
+                      {hasPerf&&(
+                        <div style={{flex:1,minWidth:80}}>
+                          <div style={{color:C.muted,fontSize:9,fontWeight:700,marginBottom:3}}>
+                            {selMi!==null?`${MONTHS[selMi]} 실적`:`${MONTHS[emi_pl]?MONTHS[emi_pl]:""}누계`}
+                          </div>
+                          <div style={{color:mc,fontSize:20,fontWeight:900,letterSpacing:"-.5px",lineHeight:1}}>
+                            {Math.round(selPerf_x).toLocaleString()}억
+                          </div>
+                          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
+                            {selAr_x&&<span style={{
+                              background:C.accent+"18",color:C.accent,
+                              fontSize:9,fontWeight:700,padding:"1px 5px",borderRadius:4}}>
+                              달성 {Math.round(gNum(selAr_x))}%
+                            </span>}
+                            {selActGr_x&&<span style={{color:grwC(selActGr_x),fontSize:10,fontWeight:700}}>
+                              {gNum(selActGr_x)>=0?"▲":"▼"}{Math.abs(gNum(selActGr_x)).toFixed(1)}%
+                            </span>}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ));
-            })()}
-          </div>
+                ))}
+              </div>
+            );
+          })()}
 
-          {/* ── 대외영업 선택 시 하위 파트 목표 2단 표시 */}
+          {/* ── 대외영업 선택 시 하위 파트 목표 (KPI 카드 스타일 한 줄) */}
           {part==="대외영업"&&(()=>{
             const SUB_PARTS=[
-              {k:"혼수"},{k:"뉴홈",sub:true},{k:"입주",indent:true},{k:"이사",indent:true},
+              {k:"혼수"},{k:"뉴홈"},{k:"입주",indent:true},{k:"이사",indent:true},
               {k:"SAC"},{k:"거주중",indent:true},
-              {k:"B2B",sub:true},{k:"SMB",indent:true},{k:"농협",indent:true},{k:"휴대폰",indent:true},
+              {k:"B2B"},{k:"SMB",indent:true},{k:"농협",indent:true},{k:"휴대폰",indent:true},
             ];
             return(
-              <div style={{marginBottom:16,background:C.card2,borderRadius:10,
-                border:`1px solid ${C.b1}`,padding:"12px 14px"}}>
-                <div style={{color:KC["대외영업"],fontSize:11,fontWeight:800,marginBottom:10,
+              <div style={{marginBottom:12,background:C.card2,borderRadius:10,
+                border:`1px solid ${C.b1}`,padding:"10px 12px"}}>
+                <div style={{color:KC["대외영업"],fontSize:10,fontWeight:800,marginBottom:8,
                   display:"flex",alignItems:"center",gap:6}}>
-                  <span>📋 대외영업 하위 파트 목표</span>
+                  <span>📋 파트별 목표</span>
                   <span style={{color:C.muted,fontSize:9,fontWeight:400}}>
                     {selMonth==="annual"?"연간":MONTHS[selMonth]}
                   </span>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-                  {SUB_PARTS.map(({k,sub,indent})=>{
-                    const subTgt = selMi!==null
-                      ? gNum((fullRow(tD_pl[sk(selMi)])||{})[k])
-                      : MONTHS.reduce((a,_,i)=>a+gNum((fullRow(tD_pl[sk(i)])||{})[k]),0);
-                    const subPrev = selMi!==null
-                      ? gNum((fullRow(pD25_pl[sk(selMi)])||{})[k])
-                      : MONTHS.reduce((a,_,i)=>a+gNum((fullRow(pD25_pl[sk(i)])||{})[k]),0);
-                    const subGr = subPrev>0&&subTgt>0?((subTgt-subPrev)/subPrev*100).toFixed(1):null;
+                <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:2}}>
+                  {SUB_PARTS.map(({k,indent})=>{
+                    // 선택 모드(mode) 기준
+                    const subTgt  = selMi!==null?gNum((fullRow(tD_pl[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(tD_pl[sk(i)])||{})[k]),0);
+                    const subPerf = selMi!==null?gNum((fullRow(pD_pl[sk(selMi)])||{})[k]):MONTHS.slice(0,Math.max(emi_pl+1,0)).reduce((a,_,i)=>a+gNum((fullRow(pD_pl[sk(i)])||{})[k]),0);
+                    const subPrev = selMi!==null?gNum((fullRow(pD25_pl[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(pD25_pl[sk(i)])||{})[k]),0);
+                    const subGr   = subPrev>0&&subTgt>0?((subTgt-subPrev)/subPrev*100).toFixed(1):null;
+                    const subAr   = subTgt>0&&subPerf>0?(subPerf/subTgt*100).toFixed(1):null;
                     const kc = KC[k]||C.accent;
                     return(
                       <div key={k} style={{
-                        display:"flex",alignItems:"center",justifyContent:"space-between",
-                        padding:"6px 10px",borderRadius:7,
-                        background:C.card,
-                        border:`1px solid ${kc}30`,
-                        paddingLeft:indent?20:10,
+                        flexShrink:0,background:C.card,borderRadius:8,
+                        border:`1px solid ${kc}35`,
+                        borderTop:`2px solid ${kc}`,
+                        padding:"7px 10px",minWidth:80,
+                        opacity:indent?.9:1,
                       }}>
-                        <div style={{display:"flex",alignItems:"center",gap:5}}>
-                          {indent&&<span style={{color:C.b2,fontSize:10}}>└</span>}
-                          <div style={{width:7,height:7,borderRadius:2,background:kc,flexShrink:0}}/>
-                          <span style={{color:sub?kc:C.muted2,fontSize:11,fontWeight:sub?700:600}}>{k}</span>
+                        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}>
+                          {indent&&<span style={{color:C.muted,fontSize:8}}>└</span>}
+                          <div style={{width:6,height:6,borderRadius:1,background:kc,flexShrink:0}}/>
+                          <span style={{color:kc,fontSize:10,fontWeight:800}}>{k}</span>
                         </div>
-                        <div style={{display:"flex",alignItems:"center",gap:6}}>
-                          <span style={{color:subTgt>0?kc:C.muted,fontSize:12,fontWeight:800}}>
-                            {subTgt>0?Math.round(subTgt).toLocaleString()+"억":"─"}
-                          </span>
-                          {subGr!==null&&(
-                            <span style={{color:grwC(subGr),fontSize:9,fontWeight:700}}>
-                              {gNum(subGr)>0?"▲":"▼"}{Math.abs(gNum(subGr)).toFixed(1)}%
-                            </span>
-                          )}
+                        <div style={{color:subTgt>0?C.text:C.muted,fontSize:13,fontWeight:900,lineHeight:1}}>
+                          {subTgt>0?Math.round(subTgt).toLocaleString()+"억":"─"}
+                        </div>
+                        <div style={{display:"flex",gap:4,marginTop:3,flexWrap:"wrap"}}>
+                          {subGr!==null&&<span style={{color:grwC(subGr),fontSize:9,fontWeight:700}}>
+                            {gNum(subGr)>=0?"▲":"▼"}{Math.abs(gNum(subGr)).toFixed(1)}%
+                          </span>}
+                          {subAr&&<span style={{color:C.accent,fontSize:9,fontWeight:700}}>
+                            {Math.round(gNum(subAr))}%달성
+                          </span>}
                         </div>
                       </div>
                     );
