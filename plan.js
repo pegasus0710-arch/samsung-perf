@@ -538,8 +538,8 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
           <option value="4x5">4×5</option>
         </select>
         <Sep/>
-        {/* 초기화 */}
-        <button onMouseDown={e=>{e.preventDefault();execCmd("removeFormat");}} style={{...BtnS,color:"#f87171"}} title="서식 제거">초기화</button>
+        {/* 수식초기화 */}
+        <button onMouseDown={e=>{e.preventDefault();execCmd("removeFormat");}} style={{...BtnS,color:C.red}} title="서식 제거">수식초기화</button>
       </div>
 
       {/* ── 편집 영역 */}
@@ -555,7 +555,7 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
         data-placeholder={placeholder}
         style={{
           minHeight,padding:"14px 16px",
-          color:C.text,fontSize:14,lineHeight:1.6,
+          color:C.text,fontSize:14,lineHeight:1.7,
           outline:"none",background:C.bg,
           wordBreak:"break-word",
         }}
@@ -566,6 +566,27 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
           color:${C.muted};
           font-style:italic;pointer-events:none;
           display:block;white-space:pre-line;
+        }
+        [contenteditable] ul,
+        [contenteditable] ol {
+          padding-left:1.6em;
+          margin:4px 0;
+        }
+        [contenteditable] ul li,
+        [contenteditable] ol li {
+          margin-bottom:3px;
+          padding-left:2px;
+          color:${C.text};
+        }
+        [contenteditable] p,
+        [contenteditable] div,
+        [contenteditable] span:not([style]) {
+          color:${C.text};
+        }
+        [contenteditable] h2,
+        [contenteditable] h3,
+        [contenteditable] h4 {
+          color:${C.text};
         }
       `}</style>
     </div>
@@ -1772,7 +1793,7 @@ function PlanApp(){
                   border:`1px solid ${c}30`,flex:1,minWidth:110}}>
                   <div style={{background:bg||C.card2,padding:"5px 12px",
                     color:c,fontSize:9,fontWeight:800,letterSpacing:".4px",textAlign:"center",
-                    borderBottom:"1px solid rgba(255,255,255,.06)"}}>{label}</div>
+                    borderBottom:`1px solid ${C.b1}`}}>{label}</div>
                   <div style={{padding:"10px 12px",textAlign:"center",display:"flex",
                     flexDirection:"column",alignItems:"center"}}>
                     <div style={{color:c,fontSize:18,fontWeight:900,letterSpacing:"-.5px"}}>{val}</div>
@@ -1783,6 +1804,64 @@ function PlanApp(){
             })()}
           </div>
 
+          {/* ── 대외영업 선택 시 하위 파트 목표 2단 표시 */}
+          {part==="대외영업"&&(()=>{
+            const SUB_PARTS=[
+              {k:"혼수"},{k:"뉴홈",sub:true},{k:"입주",indent:true},{k:"이사",indent:true},
+              {k:"SAC"},{k:"거주중",indent:true},
+              {k:"B2B",sub:true},{k:"SMB",indent:true},{k:"농협",indent:true},{k:"휴대폰",indent:true},
+            ];
+            return(
+              <div style={{marginBottom:16,background:C.card2,borderRadius:10,
+                border:`1px solid ${C.b1}`,padding:"12px 14px"}}>
+                <div style={{color:KC["대외영업"],fontSize:11,fontWeight:800,marginBottom:10,
+                  display:"flex",alignItems:"center",gap:6}}>
+                  <span>📋 대외영업 하위 파트 목표</span>
+                  <span style={{color:C.muted,fontSize:9,fontWeight:400}}>
+                    {selMonth==="annual"?"연간":MONTHS[selMonth]}
+                  </span>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                  {SUB_PARTS.map(({k,sub,indent})=>{
+                    const subTgt = selMi!==null
+                      ? gNum((fullRow(tD_pl[sk(selMi)])||{})[k])
+                      : MONTHS.reduce((a,_,i)=>a+gNum((fullRow(tD_pl[sk(i)])||{})[k]),0);
+                    const subPrev = selMi!==null
+                      ? gNum((fullRow(pD25_pl[sk(selMi)])||{})[k])
+                      : MONTHS.reduce((a,_,i)=>a+gNum((fullRow(pD25_pl[sk(i)])||{})[k]),0);
+                    const subGr = subPrev>0&&subTgt>0?((subTgt-subPrev)/subPrev*100).toFixed(1):null;
+                    const kc = KC[k]||C.accent;
+                    return(
+                      <div key={k} style={{
+                        display:"flex",alignItems:"center",justifyContent:"space-between",
+                        padding:"6px 10px",borderRadius:7,
+                        background:C.card,
+                        border:`1px solid ${kc}30`,
+                        paddingLeft:indent?20:10,
+                      }}>
+                        <div style={{display:"flex",alignItems:"center",gap:5}}>
+                          {indent&&<span style={{color:C.b2,fontSize:10}}>└</span>}
+                          <div style={{width:7,height:7,borderRadius:2,background:kc,flexShrink:0}}/>
+                          <span style={{color:sub?kc:C.muted2,fontSize:11,fontWeight:sub?700:600}}>{k}</span>
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:6}}>
+                          <span style={{color:subTgt>0?kc:C.muted,fontSize:12,fontWeight:800}}>
+                            {subTgt>0?Math.round(subTgt).toLocaleString()+"억":"─"}
+                          </span>
+                          {subGr!==null&&(
+                            <span style={{color:grwC(subGr),fontSize:9,fontWeight:700}}>
+                              {gNum(subGr)>0?"▲":"▼"}{Math.abs(gNum(subGr)).toFixed(1)}%
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* ── 달성 계획 에디터 */}
           <div style={{marginBottom:16}}>
             <div style={{color:C.accent,fontSize:11,fontWeight:700,marginBottom:8,
@@ -1792,6 +1871,31 @@ function PlanApp(){
                   ({yr}년 · {mode} · {part})
                 </span>
               </span>
+              {/* 상단 버튼 */}
+              <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                {isEditing?(
+                  <>
+                    <button onClick={()=>{setTextDraft({});setTempSaved(false);setIsEditing(false);setEditorKey(k=>k+1);}} style={{
+                      padding:"5px 14px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:11,
+                      fontFamily:"inherit",border:`1px solid ${C.muted}`,background:"transparent",color:C.muted}}>
+                      취소
+                    </button>
+                    <button onClick={handleSave} disabled={!hasDraft||saveState==="saving"} style={{
+                      padding:"5px 16px",borderRadius:7,fontWeight:700,fontSize:11,fontFamily:"inherit",
+                      border:"none",cursor:hasDraft?"pointer":"default",
+                      background:hasDraft?C.accent:C.b1,
+                      color:hasDraft?"#fff":C.muted,opacity:saveState==="saving"?.6:1}}>
+                      {saveState==="saving"?"저장 중...":"💾 저장"}
+                    </button>
+                  </>
+                ):(
+                  <button onClick={()=>{setIsEditing(true);setEditorKey(k=>k+1);}} style={{
+                    padding:"5px 16px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:11,
+                    fontFamily:"inherit",border:`1px solid ${C.accent}`,background:C.accent+"22",color:C.accent}}>
+                    ✏️ 수정
+                  </button>
+                )}
+              </div>
             </div>
             <RichEditor
               key={`plan-${editorKey}-${yr}-${mode}-${part}-${selMonth}`}
