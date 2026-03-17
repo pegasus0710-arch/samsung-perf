@@ -183,18 +183,14 @@
   <div id="db-loading">
     <div class="spinner"></div>
     <span id="loading-msg" style="color:#3d5f7e; font-size:13px; font-family:'Noto Sans KR',sans-serif;">
-      불러오는 중...
+      앱 로딩 중...
     </span>
   </div>
 
-  <!-- ── 앱 컨테이너 (인증 후 표시) ── -->
-  <div id="root" style="display:none;"></div>
+  <!-- ── 앱 컨테이너: 항상 표시, pw-gate가 오버레이로 덮음 ── -->
+  <div id="root"></div>
 
   <script>
-    // ──────────────────────────────────────────────
-    //  ★ 현재 비밀번호: mx2025!
-    //  변경하려면 위 주석 안내를 따르세요.
-    // ──────────────────────────────────────────────
     const PW_HASH    = "7964106471ddb947a30a14c1f9a74a3fed4a7d6029f0047291138292c23a4c99";
     const SESSION_KEY = "cst_auth_v1";
 
@@ -211,26 +207,8 @@
       const hash = await sha256(input);
       if (hash === PW_HASH) {
         sessionStorage.setItem(SESSION_KEY, "1");
-        document.getElementById("pw-gate").style.display    = "none";
-        document.getElementById("db-loading").style.display = "flex";
-        let waited = 0;
-        const msgs = [
-          [0,    "앱 로딩 중..."],
-          [4000, "데이터 연결 중..."],
-          [10000,"연결이 지연되고 있습니다..."],
-        ];
-        const msgEl = document.getElementById("loading-msg");
-        const waitReact = setInterval(() => {
-          waited += 100;
-          for (let i = msgs.length - 1; i >= 0; i--) {
-            if (waited >= msgs[i][0]) { msgEl.textContent = msgs[i][1]; break; }
-          }
-          if (window.__appReady || waited >= 15000) {
-            clearInterval(waitReact);
-            document.getElementById("db-loading").style.display = "none";
-            document.getElementById("root").style.display = "block";
-          }
-        }, 100);
+        document.getElementById("pw-gate").style.display = "none";
+        // db-loading은 React 내부 dbReady state가 관리
       } else {
         errEl.textContent = "비밀번호가 올바르지 않습니다.";
         boxEl.classList.remove("shake");
@@ -242,35 +220,31 @@
     }
 
     (function() {
-      if (sessionStorage.getItem(SESSION_KEY) === "1") {
-        document.getElementById("pw-gate").style.display    = "none";
-        document.getElementById("db-loading").style.display = "flex";
-        let waited = 0;
-        const msgs = [
-          [0,    "앱 로딩 중..."],
-          [4000, "데이터 연결 중..."],
-          [10000,"연결이 지연되고 있습니다..."],
-        ];
-        const msgEl = document.getElementById("loading-msg");
-        const waitReact = setInterval(() => {
-          waited += 100;
-          for (let i = msgs.length - 1; i >= 0; i--) {
-            if (waited >= msgs[i][0]) { msgEl.textContent = msgs[i][1]; break; }
-          }
-          if (window.__appReady || waited >= 15000) {
-            clearInterval(waitReact);
-            document.getElementById("db-loading").style.display = "none";
-            document.getElementById("root").style.display = "block";
-          }
-        }, 100);
-      } else {
-        window.addEventListener("load", () => document.getElementById("pw-input").focus());
+      // 인증 여부와 무관하게 db-loading은 React가 로드되면 자동으로 숨겨짐
+      if (!(sessionStorage.getItem(SESSION_KEY) === "1")) {
+        // 미인증: pw-gate 표시 (이미 기본 display:flex)
+        window.addEventListener("load", () => {
+          const el = document.getElementById("pw-input");
+          if(el) el.focus();
+        });
       }
+      // db-loading은 __appReady 감지 후 숨기기 (앱이 실제 렌더링될 때)
+      const t = setInterval(() => {
+        if (window.__appReady) {
+          clearInterval(t);
+          document.getElementById("db-loading").style.display = "none";
+        }
+      }, 100);
+      // 최대 30초 후 강제 숨김
+      setTimeout(() => {
+        clearInterval(t);
+        document.getElementById("db-loading").style.display = "none";
+      }, 30000);
     })();
   </script>
 
   <!-- ── 앱 로직 (기능·실적 로직 수정 시 이 파일만 교체) ── -->
-  <script type="text/babel" src="app.js?v=3.0"></script>
+  <script type="text/babel" src="app.js?v=3.1"></script>
 
   <!-- ── Service Worker 등록 ── -->
   <script>

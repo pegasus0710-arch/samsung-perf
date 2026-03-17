@@ -3195,28 +3195,18 @@ function App(){
   const DOC = () => window.db.collection("perf").doc("main");
 
   useEffect(()=>{
-    // ── React 마운트 즉시 앱 표시 신호 (Firebase와 무관)
-    // localStorage 캐시 있으면 즉시, 없어도 500ms 후 화면 오픈
-    const showTimer = setTimeout(()=>{
-      setDbReady(true);
-      window.__appReady = true;
-    }, 500);
-
-    // localStorage 캐시 즉시 로드
+    // localStorage 캐시 즉시 로드 → dbReady=true로 화면 표시
     try{
       const loc = localStorage.getItem("cst_v13");
       if(loc){
         const cached = migrate(JSON.parse(loc));
         setData(cached);
         setDbStatus("💾 캐시로드");
-        // 캐시 있으면 즉시 표시
-        clearTimeout(showTimer);
         setDbReady(true);
-        window.__appReady = true;
       }
     }catch(e){ console.warn("캐시 로드 오류:", e); }
 
-    // Firebase 백그라운드 로드 (화면 표시와 무관)
+    // Firebase 백그라운드 로드
     let retries = 2;
     const loadFirebase = async () => {
       while(retries >= 0){
@@ -3232,25 +3222,24 @@ function App(){
             setDbStatus(gNum(ce24)>0 ? "✅ 로드완료" : "✅ 연결됨");
             setData(loaded);
             setDbReady(true);
-            window.__appReady = true;
             localStorage.setItem("cst_v13", JSON.stringify(loaded));
           } else {
             setDbStatus("⚠ 문서없음");
+            setDbReady(true);
           }
-          return; // 성공
+          return;
         }catch(e){
           retries--;
           if(retries < 0){
             setDbStatus(e.message==="timeout" ? "⚠ 연결지연" : "❌ "+e.message.slice(0,20));
+            setDbReady(true); // 실패해도 화면은 표시
           } else {
             await new Promise(r=>setTimeout(r, 1500));
           }
         }
       }
     };
-
     loadFirebase();
-    return () => clearTimeout(showTimer);
   },[]);
 
   const handleSetData=useCallback(upd=>{
@@ -3508,3 +3497,7 @@ function App(){
 
 const root=ReactDOM.createRoot(document.getElementById("root"));
 root.render(<App/>);
+
+// ── Babel 트랜스파일 + ReactDOM 초기화 완료 신호
+// useEffect보다 먼저 실행됨 — index.html 폴링이 즉시 감지
+window.__appReady = true;
