@@ -114,6 +114,16 @@ function fullRow(r){
 }
 
 // ── SVG 라인 차트 (범례 포함, y축 가변형)
+function useIsMobile(){
+  const [m,setM]=useState(window.innerWidth<768);
+  useEffect(()=>{
+    const h=()=>setM(window.innerWidth<768);
+    window.addEventListener("resize",h);
+    return()=>window.removeEventListener("resize",h);
+  },[]);
+  return m;
+}
+
 function MiniChart({series,labels,h=240,pctMode=false,grMode=false}){
   const [tip,setTip]=useState(null);
   const W=560,PT=22,PL=46,PR=16,PB=40;
@@ -356,8 +366,9 @@ function ToolbarSep(){
   return <div style={{width:1,height:18,background:C.b2,margin:"0 3px",flexShrink:0}}/>;
 }
 
-function ListPicker({BtnS, execCmd}){
+function ListPicker({BtnS, execCmd, colors}){
   const [open,setOpen]=useState(false);
+  const cc=colors||{card:"#0f2035",b1:"#1b3353",card2:"#132843",text:"#cce4f7"};
   const lists=[
     {l:"• 글머리",  fn:()=>execCmd("insertUnorderedList")},
     {l:"1. 번호",   fn:()=>execCmd("insertOrderedList")},
@@ -1138,6 +1149,7 @@ function TabBtn({label,active,color,onClick}){
 
 // ── 메인 앱
 function PlanApp(){
+  const isMobile = useIsMobile();
   const [perfData,setPerfData]=useState(null);
   const [planTextData,setPlanTextData]=useState({});  // Firebase 저장 텍스트 계획
   const [textDraft,setTextDraft]=useState({});         // 로컬 미저장 텍스트

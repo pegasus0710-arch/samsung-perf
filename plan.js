@@ -277,6 +277,22 @@ function fullRow(r) {
 }
 
 // ── SVG 라인 차트 (범례 포함, y축 가변형)
+function useIsMobile() {
+  var _useState = useState(window.innerWidth < 768),
+    _useState2 = _slicedToArray(_useState, 2),
+    m = _useState2[0],
+    setM = _useState2[1];
+  useEffect(function () {
+    var h = function h() {
+      return setM(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", h);
+    return function () {
+      return window.removeEventListener("resize", h);
+    };
+  }, []);
+  return m;
+}
 function MiniChart(_ref) {
   var series = _ref.series,
     labels = _ref.labels,
@@ -286,10 +302,10 @@ function MiniChart(_ref) {
     pctMode = _ref$pctMode === void 0 ? false : _ref$pctMode,
     _ref$grMode = _ref.grMode,
     grMode = _ref$grMode === void 0 ? false : _ref$grMode;
-  var _useState = useState(null),
-    _useState2 = _slicedToArray(_useState, 2),
-    tip = _useState2[0],
-    setTip = _useState2[1];
+  var _useState3 = useState(null),
+    _useState4 = _slicedToArray(_useState3, 2),
+    tip = _useState4[0],
+    setTip = _useState4[1];
   var W = 560,
     PT = 22,
     PL = 46,
@@ -626,22 +642,22 @@ function AutoTextarea(_ref4) {
 function TablePicker(_ref5) {
   var onInsert = _ref5.onInsert,
     BtnS = _ref5.BtnS;
-  var _useState3 = useState(false),
-    _useState4 = _slicedToArray(_useState3, 2),
-    showPicker = _useState4[0],
-    setShowPicker = _useState4[1];
-  var _useState5 = useState(0),
+  var _useState5 = useState(false),
     _useState6 = _slicedToArray(_useState5, 2),
-    hoverR = _useState6[0],
-    setHoverR = _useState6[1];
+    showPicker = _useState6[0],
+    setShowPicker = _useState6[1];
   var _useState7 = useState(0),
     _useState8 = _slicedToArray(_useState7, 2),
-    hoverC = _useState8[0],
-    setHoverC = _useState8[1];
-  var _useState9 = useState('row'),
+    hoverR = _useState8[0],
+    setHoverR = _useState8[1];
+  var _useState9 = useState(0),
     _useState0 = _slicedToArray(_useState9, 2),
-    headerType = _useState0[0],
-    setHeaderType = _useState0[1];
+    hoverC = _useState0[0],
+    setHoverC = _useState0[1];
+  var _useState1 = useState('row'),
+    _useState10 = _slicedToArray(_useState1, 2),
+    headerType = _useState10[0],
+    setHeaderType = _useState10[1];
   var MAX_R = 8,
     MAX_C = 8;
   var headerOpts = [{
@@ -834,11 +850,18 @@ function ToolbarSep() {
 }
 function ListPicker(_ref6) {
   var BtnS = _ref6.BtnS,
-    execCmd = _ref6.execCmd;
-  var _useState1 = useState(false),
-    _useState10 = _slicedToArray(_useState1, 2),
-    open = _useState10[0],
-    setOpen = _useState10[1];
+    execCmd = _ref6.execCmd,
+    colors = _ref6.colors;
+  var _useState11 = useState(false),
+    _useState12 = _slicedToArray(_useState11, 2),
+    open = _useState12[0],
+    setOpen = _useState12[1];
+  var cc = colors || {
+    card: "#0f2035",
+    b1: "#1b3353",
+    card2: "#132843",
+    text: "#cce4f7"
+  };
   var lists = [{
     l: "• 글머리",
     fn: function fn() {
@@ -941,10 +964,10 @@ function ListPicker(_ref6) {
 function SymbolPicker(_ref7) {
   var BtnS = _ref7.BtnS,
     execCmd = _ref7.execCmd;
-  var _useState11 = useState(false),
-    _useState12 = _slicedToArray(_useState11, 2),
-    open = _useState12[0],
-    setOpen = _useState12[1];
+  var _useState13 = useState(false),
+    _useState14 = _slicedToArray(_useState13, 2),
+    open = _useState14[0],
+    setOpen = _useState14[1];
   var groups = [{
     g: "화살표",
     s: ["→", "←", "↑", "↓", "↔", "↕", "⇒", "⇐", "⇑", "⇓", "⇔", "▶", "◀", "▲", "▼"]
@@ -1358,10 +1381,10 @@ function RichEditor(_ref9) {
       }
     }), /*#__PURE__*/React.createElement("style", null, "\n          .rich-view ul, .rich-view ol { padding-left:1.6em; margin:4px 0; }\n          .rich-view ul li, .rich-view ol li { margin-bottom:3px; padding-left:2px; color:".concat(C.text, "; }\n          .rich-view p, .rich-view div, .rich-view span:not([style]) { color:").concat(C.text, "; }\n          .rich-view h2, .rich-view h3, .rich-view h4 { color:").concat(C.text, "; }\n          .rich-view table { border-collapse:collapse; width:100%; margin:8px 0; }\n          .rich-view td, .rich-view th { border:1px solid ").concat(C.b2, "; padding:6px 10px; font-size:13px; color:").concat(C.text, "; }\n          .rich-view th { background:").concat(C.accent, "18; font-weight:700; }\n        ")));
   }
-  var _useState13 = useState(minHeight),
-    _useState14 = _slicedToArray(_useState13, 2),
-    editorH = _useState14[0],
-    setEditorH = _useState14[1];
+  var _useState15 = useState(minHeight),
+    _useState16 = _slicedToArray(_useState15, 2),
+    editorH = _useState16[0],
+    setEditorH = _useState16[1];
   return /*#__PURE__*/React.createElement("div", {
     style: _objectSpread({
       borderRadius: 8,
@@ -1873,14 +1896,14 @@ function BackupModal(_ref12) {
     planTextData = _ref12.planTextData,
     onImportJson = _ref12.onImportJson,
     excelFn = _ref12.excelFn;
-  var _useState15 = useState("export"),
-    _useState16 = _slicedToArray(_useState15, 2),
-    tab = _useState16[0],
-    setTab = _useState16[1];
-  var _useState17 = useState(""),
+  var _useState17 = useState("export"),
     _useState18 = _slicedToArray(_useState17, 2),
-    msg = _useState18[0],
-    setMsg = _useState18[1];
+    tab = _useState18[0],
+    setTab = _useState18[1];
+  var _useState19 = useState(""),
+    _useState20 = _slicedToArray(_useState19, 2),
+    msg = _useState20[0],
+    setMsg = _useState20[1];
   var fileRef = useRef(null);
   var downloadJson = function downloadJson() {
     var blob = new Blob([JSON.stringify({
@@ -2208,82 +2231,83 @@ function TabBtn(_ref18) {
 
 // ── 메인 앱
 function PlanApp() {
-  var _useState19 = useState(null),
-    _useState20 = _slicedToArray(_useState19, 2),
-    perfData = _useState20[0],
-    setPerfData = _useState20[1];
-  var _useState21 = useState({}),
+  var isMobile = useIsMobile();
+  var _useState21 = useState(null),
     _useState22 = _slicedToArray(_useState21, 2),
-    planTextData = _useState22[0],
-    setPlanTextData = _useState22[1]; // Firebase 저장 텍스트 계획
+    perfData = _useState22[0],
+    setPerfData = _useState22[1];
   var _useState23 = useState({}),
     _useState24 = _slicedToArray(_useState23, 2),
-    textDraft = _useState24[0],
-    setTextDraft = _useState24[1]; // 로컬 미저장 텍스트
-  var _useState25 = useState("대외영업"),
+    planTextData = _useState24[0],
+    setPlanTextData = _useState24[1]; // Firebase 저장 텍스트 계획
+  var _useState25 = useState({}),
     _useState26 = _slicedToArray(_useState25, 2),
-    part = _useState26[0],
-    setPart = _useState26[1];
-  var _useState27 = useState("매출"),
+    textDraft = _useState26[0],
+    setTextDraft = _useState26[1]; // 로컬 미저장 텍스트
+  var _useState27 = useState("대외영업"),
     _useState28 = _slicedToArray(_useState27, 2),
-    mode = _useState28[0],
-    setMode = _useState28[1];
-  var _useState29 = useState("26"),
+    part = _useState28[0],
+    setPart = _useState28[1];
+  var _useState29 = useState("매출"),
     _useState30 = _slicedToArray(_useState29, 2),
-    yr = _useState30[0],
-    setYr = _useState30[1];
-  var _useState31 = useState("실적"),
+    mode = _useState30[0],
+    setMode = _useState30[1];
+  var _useState31 = useState("26"),
     _useState32 = _slicedToArray(_useState31, 2),
-    chartTab = _useState32[0],
-    setChartTab = _useState32[1];
+    yr = _useState32[0],
+    setYr = _useState32[1];
   var _useState33 = useState("실적"),
     _useState34 = _slicedToArray(_useState33, 2),
-    cumChartTab = _useState34[0],
-    setCumChartTab = _useState34[1];
-  var _useState35 = useState("idle"),
+    chartTab = _useState34[0],
+    setChartTab = _useState34[1];
+  var _useState35 = useState("실적"),
     _useState36 = _slicedToArray(_useState35, 2),
-    saveState = _useState36[0],
-    setSaveState = _useState36[1];
-  var _useState37 = useState(false),
+    cumChartTab = _useState36[0],
+    setCumChartTab = _useState36[1];
+  var _useState37 = useState("idle"),
     _useState38 = _slicedToArray(_useState37, 2),
-    tempSaved = _useState38[0],
-    setTempSaved = _useState38[1]; // 로컬 임시저장 완료 표시
+    saveState = _useState38[0],
+    setSaveState = _useState38[1];
   var _useState39 = useState(false),
     _useState40 = _slicedToArray(_useState39, 2),
-    dbReady = _useState40[0],
-    setDbReady = _useState40[1];
-  var _useState41 = useState("🔄 연결중..."),
+    tempSaved = _useState40[0],
+    setTempSaved = _useState40[1]; // 로컬 임시저장 완료 표시
+  var _useState41 = useState(false),
     _useState42 = _slicedToArray(_useState41, 2),
-    dbStatus = _useState42[0],
-    setDbStatus = _useState42[1];
-  var _useState43 = useState("annual"),
+    dbReady = _useState42[0],
+    setDbReady = _useState42[1];
+  var _useState43 = useState("🔄 연결중..."),
     _useState44 = _slicedToArray(_useState43, 2),
-    selMonth = _useState44[0],
-    setSelMonth = _useState44[1]; // 'annual' | 0~11
-  var _useState45 = useState(false),
+    dbStatus = _useState44[0],
+    setDbStatus = _useState44[1];
+  var _useState45 = useState("annual"),
     _useState46 = _slicedToArray(_useState45, 2),
-    isEditing = _useState46[0],
-    setIsEditing = _useState46[1]; // 수정 모드 잠금
-  var _useState47 = useState(0),
+    selMonth = _useState46[0],
+    setSelMonth = _useState46[1]; // 'annual' | 0~11
+  var _useState47 = useState(false),
     _useState48 = _slicedToArray(_useState47, 2),
-    editorKey = _useState48[0],
-    setEditorKey = _useState48[1]; // 편집기 강제 remount용
-  var _useState49 = useState(function () {
+    isEditing = _useState48[0],
+    setIsEditing = _useState48[1]; // 수정 모드 잠금
+  var _useState49 = useState(0),
+    _useState50 = _slicedToArray(_useState49, 2),
+    editorKey = _useState50[0],
+    setEditorKey = _useState50[1]; // 편집기 강제 remount용
+  var _useState51 = useState(function () {
       var saved = parseInt(localStorage.getItem('cst_zoom_v2'));
       return saved >= 50 && saved <= 200 ? saved : 100;
     }),
-    _useState50 = _slicedToArray(_useState49, 2),
-    zoom = _useState50[0],
-    setZoom = _useState50[1];
-  // ── 테마
-  var _useState51 = useState(_initThemeP),
     _useState52 = _slicedToArray(_useState51, 2),
-    theme = _useState52[0],
-    setTheme = _useState52[1];
-  var _useState53 = useState(0),
+    zoom = _useState52[0],
+    setZoom = _useState52[1];
+  // ── 테마
+  var _useState53 = useState(_initThemeP),
     _useState54 = _slicedToArray(_useState53, 2),
-    themeKey = _useState54[0],
-    setThemeKey = _useState54[1];
+    theme = _useState54[0],
+    setTheme = _useState54[1];
+  var _useState55 = useState(0),
+    _useState56 = _slicedToArray(_useState55, 2),
+    themeKey = _useState56[0],
+    setThemeKey = _useState56[1];
   var toggleTheme = useCallback(function () {
     var next = theme === 'dark' ? 'light' : 'dark';
     Object.assign(C, next === 'light' ? COLORS_LIGHT_P : COLORS_DARK_P);
@@ -2319,10 +2343,10 @@ function PlanApp() {
     localStorage.setItem('cst_zoom_v2', String(safeZoom));
   }, [zoom]);
   // (yr==="26"?"25":yr==="25"?"24":"23"): yr 기반 자동 계산 (별도 state 불필요)
-  var _useState55 = useState(false),
-    _useState56 = _slicedToArray(_useState55, 2),
-    showBackup = _useState56[0],
-    setShowBackup = _useState56[1];
+  var _useState57 = useState(false),
+    _useState58 = _slicedToArray(_useState57, 2),
+    showBackup = _useState58[0],
+    setShowBackup = _useState58[1];
   var autoSaveTimer = useRef(null);
   var LS_PERF_CACHE = "cst_v13"; // app.js와 동일 캐시키
 
