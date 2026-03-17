@@ -103,7 +103,7 @@
 <script>
   const PW_HASH  = "7964106471ddb947a30a14c1f9a74a3fed4a7d6029f0047291138292c23a4c99";
   const AUTH_KEY = "cst_auth_v1";
-  const SESSION_MAX = 8 * 60 * 60 * 1000; // 8시간
+  const SESSION_MAX = 8 * 60 * 60 * 1000;
 
   function isValidSession() {
     try {
@@ -111,30 +111,37 @@
       if (!raw) return false;
       const { token, ts } = JSON.parse(raw);
       if (token !== "cst_ok" + PW_HASH.slice(0,8)) return false;
-      if (Date.now() - ts > SESSION_MAX) {
-        sessionStorage.removeItem(AUTH_KEY);
-        return false;
-      }
+      if (Date.now() - ts > SESSION_MAX) { sessionStorage.removeItem(AUTH_KEY); return false; }
       return true;
     } catch { return false; }
   }
 
   function setSession() {
     sessionStorage.setItem(AUTH_KEY, JSON.stringify({
-      token: "cst_ok" + PW_HASH.slice(0,8),
-      ts: Date.now()
+      token: "cst_ok" + PW_HASH.slice(0,8), ts: Date.now()
     }));
   }
 
-  // 인증된 경우 pw-gate 즉시 숨김
-  if (isValidSession()) {
-    document.getElementById("pw-gate").style.display = "none";
-  } else {
-    sessionStorage.removeItem(AUTH_KEY);
-    window.addEventListener("load", () => {
-      const el = document.getElementById("pw-input");
-      if (el) el.focus();
-    });
+  function showLoading() {
+    document.getElementById("pw-box").innerHTML = [
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0">',
+      '<div style="width:36px;height:36px;border-radius:50%;border:3px solid rgba(124,131,245,.25);',
+      'border-top-color:#7c83f5;animation:spin .8s linear infinite"></div>',
+      '<div style="color:#7c83f5;font-size:14px;font-weight:700">앱 로딩 중...</div>',
+      '<div style="color:#6a9ab8;font-size:11px">잠시만 기다려 주세요</div>',
+      '</div>'
+    ].join('');
+    var t = setInterval(function() {
+      var root = document.getElementById("root");
+      if (root && root.children.length > 0) {
+        clearInterval(t);
+        document.getElementById("pw-gate").style.display = "none";
+      }
+    }, 200);
+    setTimeout(function() {
+      clearInterval(t);
+      document.getElementById("pw-gate").style.display = "none";
+    }, 30000);
   }
 
   async function sha256(str){
@@ -150,12 +157,22 @@
     const hash=await sha256(input);
     if(hash===PW_HASH){
       setSession();
-      document.getElementById("pw-gate").style.display="none";
+      showLoading();
     } else {
       errEl.textContent="비밀번호가 올바르지 않습니다.";
       boxEl.classList.remove("shake");void boxEl.offsetWidth;boxEl.classList.add("shake");
       document.getElementById("pw-input").value="";
     }
+  }
+
+  if (isValidSession()) {
+    showLoading();
+  } else {
+    sessionStorage.removeItem(AUTH_KEY);
+    window.addEventListener("load", function() {
+      var el = document.getElementById("pw-input");
+      if (el) el.focus();
+    });
   }
 </script>
 

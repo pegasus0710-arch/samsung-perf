@@ -169,40 +169,46 @@
   <script>
     const PW_HASH    = "7964106471ddb947a30a14c1f9a74a3fed4a7d6029f0047291138292c23a4c99";
     const SESSION_KEY = "cst_auth_v1";
-    const SESSION_MAX = 8 * 60 * 60 * 1000; // 8시간 세션 유효
+    const SESSION_MAX = 8 * 60 * 60 * 1000; // 8시간
 
-    // 세션 토큰 검증 (단순 "1" 이 아닌 타임스탬프 포함 토큰)
     function isValidSession() {
       try {
         const raw = sessionStorage.getItem(SESSION_KEY);
         if (!raw) return false;
         const { token, ts } = JSON.parse(raw);
         if (token !== "cst_ok" + PW_HASH.slice(0,8)) return false;
-        if (Date.now() - ts > SESSION_MAX) {
-          sessionStorage.removeItem(SESSION_KEY);
-          return false;
-        }
+        if (Date.now() - ts > SESSION_MAX) { sessionStorage.removeItem(SESSION_KEY); return false; }
         return true;
       } catch { return false; }
     }
 
     function setSession() {
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-        token: "cst_ok" + PW_HASH.slice(0,8),
-        ts: Date.now()
+        token: "cst_ok" + PW_HASH.slice(0,8), ts: Date.now()
       }));
     }
 
-    // 인증된 경우 pw-gate 즉시 숨김
-    if (isValidSession()) {
-      document.getElementById("pw-gate").style.display = "none";
-    } else {
-      // 혹시 잘못된 값 남아있으면 제거
-      sessionStorage.removeItem(SESSION_KEY);
-      window.addEventListener("load", () => {
-        const el = document.getElementById("pw-input");
-        if (el) el.focus();
-      });
+    // pw-gate를 로딩 스피너로 전환 후 React 마운트 감지해서 숨김
+    function showLoading() {
+      document.getElementById("pw-box").innerHTML = [
+        '<div style="display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0">',
+        '<div style="width:36px;height:36px;border-radius:50%;border:3px solid rgba(129,140,248,.25);',
+        'border-top-color:#818cf8;animation:spin .8s linear infinite"></div>',
+        '<div style="color:#818cf8;font-size:14px;font-weight:700">앱 로딩 중...</div>',
+        '<div style="color:#6b8fa8;font-size:11px">잠시만 기다려 주세요</div>',
+        '</div>'
+      ].join('');
+      var t = setInterval(function() {
+        var root = document.getElementById("root");
+        if (root && root.children.length > 0) {
+          clearInterval(t);
+          document.getElementById("pw-gate").style.display = "none";
+        }
+      }, 200);
+      setTimeout(function() {
+        clearInterval(t);
+        document.getElementById("pw-gate").style.display = "none";
+      }, 30000);
     }
 
     async function sha256(str) {
@@ -218,7 +224,7 @@
       const hash = await sha256(input);
       if (hash === PW_HASH) {
         setSession();
-        document.getElementById("pw-gate").style.display = "none";
+        showLoading();
       } else {
         errEl.textContent = "비밀번호가 올바르지 않습니다.";
         boxEl.classList.remove("shake");
@@ -227,6 +233,17 @@
         document.getElementById("pw-input").value = "";
         document.getElementById("pw-input").focus();
       }
+    }
+
+    // 페이지 로드 시 인증 상태 확인
+    if (isValidSession()) {
+      showLoading();
+    } else {
+      sessionStorage.removeItem(SESSION_KEY);
+      window.addEventListener("load", function() {
+        var el = document.getElementById("pw-input");
+        if (el) el.focus();
+      });
     }
   </script>
 
