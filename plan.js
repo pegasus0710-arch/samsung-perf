@@ -533,25 +533,76 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
         }} style={BtnS} title="강조 박스">□ 박스</button>
         <Sep/>
 
-        {/* 표 삽입 */}
-        <select style={{...SelS,maxWidth:60}}
-          defaultValue=""
-          onChange={e=>{
-            const v=e.target.value;
-            if(v){
-              const [r,c]=v.split("x").map(Number);
-              insertTable(r,c);
-            }
-            e.target.value="";
-          }}>
-          <option value="">표▾</option>
-          <option value="2x2">2×2</option>
-          <option value="2x3">2×3</option>
-          <option value="3x3">3×3</option>
-          <option value="3x4">3×4</option>
-          <option value="4x4">4×4</option>
-          <option value="4x5">4×5</option>
-        </select>
+        {/* 표 삽입 — 그리드 피커 */}
+        {(()=>{
+          const [showPicker, setShowPicker] = React.useState(false);
+          const [hoverR, setHoverR] = React.useState(0);
+          const [hoverC, setHoverC] = React.useState(0);
+          const MAX_R=8, MAX_C=8;
+          return(
+            <div style={{position:"relative",display:"inline-block"}}>
+              <button
+                onMouseDown={e=>{e.preventDefault();setShowPicker(p=>!p);}}
+                style={{...BtnS}}
+                title="표 삽입">
+                ⊞ 표
+              </button>
+              {showPicker&&(
+                <div style={{
+                  position:"absolute",top:"100%",left:0,zIndex:200,
+                  background:C.card,border:`1px solid ${C.b1}`,
+                  borderRadius:8,padding:8,marginTop:4,
+                  boxShadow:"0 4px 16px rgba(0,0,0,.15)",
+                }}>
+                  <div style={{color:C.muted,fontSize:9,marginBottom:6,textAlign:"center",fontWeight:600}}>
+                    {hoverR>0&&hoverC>0?`${hoverR}행 × ${hoverC}열`:"표 크기 선택"}
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:`repeat(${MAX_C},18px)`,gap:2}}>
+                    {Array.from({length:MAX_R},(_,ri)=>
+                      Array.from({length:MAX_C},(_,ci)=>(
+                        <div key={`${ri}-${ci}`}
+                          style={{
+                            width:18,height:18,borderRadius:2,cursor:"pointer",
+                            background:(ri<hoverR&&ci<hoverC)?C.accent+"60":C.b1,
+                            border:`1px solid ${ri<hoverR&&ci<hoverC?C.accent:C.b2}`,
+                            transition:"background .1s",
+                          }}
+                          onMouseEnter={()=>{setHoverR(ri+1);setHoverC(ci+1);}}
+                          onMouseDown={e=>{
+                            e.preventDefault();
+                            insertTable(ri+1,ci+1);
+                            setShowPicker(false);
+                            setHoverR(0);setHoverC(0);
+                          }}
+                        />
+                      ))
+                    )}
+                  </div>
+                  <div style={{marginTop:6,borderTop:`1px solid ${C.b1}`,paddingTop:6,
+                    display:"flex",alignItems:"center",gap:4}}>
+                    <span style={{color:C.muted,fontSize:9}}>직접입력:</span>
+                    <input type="number" min={1} max={20} defaultValue={3}
+                      id="tbl-r" style={{width:32,background:C.bg,border:`1px solid ${C.b1}`,
+                        borderRadius:3,padding:"1px 4px",color:C.text,fontSize:10,textAlign:"center"}}/>
+                    <span style={{color:C.muted,fontSize:9}}>×</span>
+                    <input type="number" min={1} max={20} defaultValue={3}
+                      id="tbl-c" style={{width:32,background:C.bg,border:`1px solid ${C.b1}`,
+                        borderRadius:3,padding:"1px 4px",color:C.text,fontSize:10,textAlign:"center"}}/>
+                    <button
+                      onMouseDown={e=>{
+                        e.preventDefault();
+                        const r=parseInt(document.getElementById("tbl-r").value)||3;
+                        const c=parseInt(document.getElementById("tbl-c").value)||3;
+                        insertTable(Math.min(r,20),Math.min(c,20));
+                        setShowPicker(false);
+                      }}
+                      style={{...BtnS,padding:"1px 7px",fontSize:10}}>삽입</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
         <Sep/>
         {/* 서식초기화 */}
         <button onMouseDown={e=>{e.preventDefault();execCmd("removeFormat");}} style={{...BtnS,color:C.red}} title="서식 제거">서식초기화</button>
