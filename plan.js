@@ -809,19 +809,19 @@ function PlanApp(){
 
   // Firebase 로드
   useEffect(()=>{
-    // localStorage 캐시 즉시 표시
+    // 캐시 즉시 로드
     try{
       const loc = localStorage.getItem(LS_PERF_CACHE);
       if(loc){
         const cached = JSON.parse(loc);
-        if(cached){
-          setPerfData(cached);
-          setDbReady(true);
-        }
+        if(cached) setPerfData(cached);
       }
       const savedText = localStorage.getItem(LS_TEXT);
       if(savedText) setTextDraft(JSON.parse(savedText));
     }catch{}
+
+    // 캐시 유무와 무관하게 즉시 화면 표시
+    setDbReady(true);
 
     // Firebase 백그라운드 로드
     let retries = 2;
@@ -840,13 +840,11 @@ function PlanApp(){
             }
             if(d.planTextData) setPlanTextData(d.planTextData);
           }
-          setDbReady(true);
           return;
         }catch(e){
           retries--;
           if(retries < 0){
             console.error("Firebase 로드 오류:", e.message);
-            setDbReady(true); // 실패해도 화면 표시
           } else {
             await new Promise(r=>setTimeout(r, 1500));
           }

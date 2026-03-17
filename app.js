@@ -3195,16 +3195,18 @@ function App(){
   const DOC = () => window.db.collection("perf").doc("main");
 
   useEffect(()=>{
-    // localStorage 캐시 즉시 로드 → dbReady=true로 화면 표시
+    // 캐시 즉시 로드
     try{
       const loc = localStorage.getItem("cst_v13");
       if(loc){
         const cached = migrate(JSON.parse(loc));
         setData(cached);
         setDbStatus("💾 캐시로드");
-        setDbReady(true);
       }
     }catch(e){ console.warn("캐시 로드 오류:", e); }
+
+    // 캐시 유무와 무관하게 즉시 화면 표시
+    setDbReady(true);
 
     // Firebase 백그라운드 로드
     let retries = 2;
@@ -3221,18 +3223,15 @@ function App(){
             const ce24 = loaded?.["24"]?.["매출"]?.perf?.["0"]?.CE;
             setDbStatus(gNum(ce24)>0 ? "✅ 로드완료" : "✅ 연결됨");
             setData(loaded);
-            setDbReady(true);
             localStorage.setItem("cst_v13", JSON.stringify(loaded));
           } else {
             setDbStatus("⚠ 문서없음");
-            setDbReady(true);
           }
           return;
         }catch(e){
           retries--;
           if(retries < 0){
             setDbStatus(e.message==="timeout" ? "⚠ 연결지연" : "❌ "+e.message.slice(0,20));
-            setDbReady(true); // 실패해도 화면은 표시
           } else {
             await new Promise(r=>setTimeout(r, 1500));
           }
