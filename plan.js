@@ -326,6 +326,11 @@ function TablePicker({onInsert, BtnS}){
   );
 }
 
+// ── 툴바 구분선 (외부 컴포넌트)
+function ToolbarSep(){
+  return <div style={{width:1,height:18,background:C.b2,margin:"0 3px",flexShrink:0}}/>;
+}
+
 function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fontSize=14,style={},theme="light"}){
   const ref=useRef(null);
 
@@ -495,7 +500,7 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
     color:C.muted2,fontSize:11,borderRadius:4,padding:"3px 6px",
     cursor:"pointer",fontFamily:"inherit",
   };
-  const Sep=()=><div style={{width:1,height:18,background:C.b2,margin:"0 3px",flexShrink:0}}/>;
+  const Sep=ToolbarSep;
 
   // 일반텍스트 → HTML 변환 (구버전 데이터 호환) - readOnly용
   const toHTMLStatic=(v)=>{
