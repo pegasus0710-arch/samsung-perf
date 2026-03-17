@@ -2596,33 +2596,35 @@ function PlanApp() {
       display: "flex",
       alignItems: "center",
       gap: 2,
-      padding: "6px 16px"
+      padding: "6px 12px",
+      overflow: "hidden"
     }
   }, /*#__PURE__*/React.createElement("a", {
     href: "index.html",
     style: {
       display: "flex",
       alignItems: "center",
-      gap: 8,
+      gap: 6,
       textDecoration: "none",
       color: C.text,
-      marginRight: 8,
+      marginRight: 4,
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      width: 28,
-      height: 28,
-      borderRadius: 8,
+      width: 26,
+      height: 26,
+      borderRadius: 7,
       background: C.accent,
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontWeight: 900,
-      fontSize: 14,
-      color: "#fff"
+      fontSize: 13,
+      color: "#fff",
+      flexShrink: 0
     }
-  }, "C"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, "C"), !isMobile && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 900,
       fontSize: 12,
@@ -2637,38 +2639,38 @@ function PlanApp() {
   }, "\uAD00\uB9AC\uC2DC\uC2A4\uD15C \xB7 ", mode))), /*#__PURE__*/React.createElement("nav", {
     style: {
       display: "flex",
-      gap: 2
+      gap: 1,
+      flexShrink: 0
     }
   }, [{
     href: "index.html",
     l: "대시보드",
-    i: "◈"
+    s: "홈"
   }, {
-    href: "index.html#analysis",
+    href: "index.html",
     l: "실적분석",
-    i: "◉"
+    s: "분석"
   }, {
-    href: "index.html#input",
+    href: "index.html",
     l: "실적입력",
-    i: "◎"
+    s: "입력"
   }].map(function (t) {
     return /*#__PURE__*/React.createElement("a", {
-      key: t.href,
+      key: t.l,
       href: t.href,
       style: {
-        padding: "5px 12px",
+        padding: isMobile ? "6px 8px" : "5px 12px",
         borderRadius: 7,
         border: "none",
         cursor: "pointer",
         background: "transparent",
         color: C.muted,
         fontWeight: 500,
-        fontSize: 12,
+        fontSize: isMobile ? 11 : 12,
         fontFamily: "inherit",
         textDecoration: "none",
         display: "flex",
         alignItems: "center",
-        gap: 4,
         borderBottom: "2px solid transparent",
         whiteSpace: "nowrap",
         transition: "color .15s"
@@ -2679,34 +2681,34 @@ function PlanApp() {
       onMouseLeave: function onMouseLeave(e) {
         return e.currentTarget.style.color = C.muted;
       }
-    }, t.i, " ", t.l);
+    }, isMobile ? t.s : t.l);
   }), /*#__PURE__*/React.createElement("a", {
     href: "plan.html",
     style: {
-      padding: "5px 12px",
+      padding: isMobile ? "6px 8px" : "5px 12px",
       borderRadius: 7,
       border: "none",
       cursor: "pointer",
       background: C.accent + "22",
       color: C.accent,
       fontWeight: 800,
-      fontSize: 12,
+      fontSize: isMobile ? 11 : 12,
       fontFamily: "inherit",
       textDecoration: "none",
       display: "flex",
       alignItems: "center",
-      gap: 4,
       borderBottom: "2px solid ".concat(C.accent),
       whiteSpace: "nowrap"
     }
-  }, "\uD83D\uDCCB \uB2EC\uC131\uACC4\uD68D")), /*#__PURE__*/React.createElement("div", {
+  }, isMobile ? "계획" : "📋 달성계획")), /*#__PURE__*/React.createElement("div", {
     style: {
       marginLeft: "auto",
       display: "flex",
       alignItems: "center",
-      gap: 6
+      gap: isMobile ? 4 : 6,
+      flexShrink: 0
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, !isMobile && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 10,
       fontWeight: 600,
@@ -2719,7 +2721,7 @@ function PlanApp() {
       var retries = 2;
       var retry = /*#__PURE__*/function () {
         var _ref19 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
-          var snap, d, savedText, draft, _t6;
+          var snap, d, _t6;
           return _regenerator().w(function (_context6) {
             while (1) switch (_context6.p = _context6.n) {
               case 0:
@@ -2746,16 +2748,6 @@ function PlanApp() {
                   if (d.planTextData) {
                     setPlanTextData(d.planTextData);
                     localStorage.setItem("cst_plan_text_cache_v1", JSON.stringify(d.planTextData));
-                    savedText = localStorage.getItem(LS_TEXT);
-                    if (savedText) {
-                      try {
-                        draft = JSON.parse(savedText);
-                        if (JSON.stringify(draft) === JSON.stringify(d.planTextData)) {
-                          localStorage.removeItem(LS_TEXT);
-                          setTextDraft({});
-                        }
-                      } catch (_unused7) {}
-                    }
                   }
                   setDbStatus("✅ 로드완료");
                 } else {
@@ -2774,7 +2766,7 @@ function PlanApp() {
                 _context6.n = 5;
                 break;
               case 4:
-                setDbStatus("\u26A0 \uC624\uB958 (".concat(2 - retries, "\uD68C) \u2014 \uC7AC\uC2DC\uB3C4 \uC911..."));
+                setDbStatus("\u26A0 \uC624\uB958 (".concat(2 - retries, "\uD68C)"));
                 _context6.n = 5;
                 return new Promise(function (r) {
                   return setTimeout(r, 2000);
@@ -2795,9 +2787,8 @@ function PlanApp() {
     }
   }, dbStatus), /*#__PURE__*/React.createElement("button", {
     onClick: toggleTheme,
-    title: theme === 'dark' ? "라이트 모드로 전환" : "다크 모드로 전환",
     style: {
-      padding: "4px 10px",
+      padding: isMobile ? "5px 8px" : "4px 10px",
       borderRadius: 6,
       cursor: "pointer",
       fontFamily: "inherit",
@@ -2809,7 +2800,8 @@ function PlanApp() {
       transition: "all .15s",
       display: "flex",
       alignItems: "center",
-      gap: 5
+      gap: 4,
+      flexShrink: 0
     },
     onMouseEnter: function onMouseEnter(e) {
       e.currentTarget.style.borderColor = C.accent;
@@ -2819,11 +2811,11 @@ function PlanApp() {
       e.currentTarget.style.borderColor = C.b1;
       e.currentTarget.style.opacity = "1";
     }
-  }, theme === 'light' ? '☀️' : '🌙', /*#__PURE__*/React.createElement("span", {
+  }, theme === 'light' ? '☀️' : '🌙', !isMobile && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 10
     }
-  }, theme === 'light' ? '라이트' : '다크')), /*#__PURE__*/React.createElement("div", {
+  }, theme === 'light' ? '라이트' : '다크')), !isMobile && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -2904,19 +2896,20 @@ function PlanApp() {
       return setShowBackup(true);
     },
     style: {
-      padding: "5px 12px",
+      padding: isMobile ? "5px 8px" : "4px 12px",
       borderRadius: 7,
       cursor: "pointer",
       fontWeight: 700,
-      fontSize: 11,
+      fontSize: isMobile ? 13 : 11,
       fontFamily: "inherit",
       border: "1px solid ".concat(C.teal, "40"),
       background: C.teal + "10",
       color: C.teal,
       display: "flex",
       alignItems: "center",
-      gap: 5,
-      transition: "all .15s"
+      gap: 4,
+      transition: "all .15s",
+      flexShrink: 0
     },
     onMouseEnter: function onMouseEnter(e) {
       e.currentTarget.style.background = C.teal + "22";
@@ -2926,20 +2919,22 @@ function PlanApp() {
       e.currentTarget.style.background = C.teal + "10";
       e.currentTarget.style.borderColor = C.teal + "40";
     }
-  }, "\uD83D\uDCE6 \uB2E4\uC6B4\uB85C\uB4DC"))), /*#__PURE__*/React.createElement("div", {
+  }, isMobile ? "⬇" : "📦 다운로드"))), /*#__PURE__*/React.createElement("div", {
     style: {
       maxWidth: 1360,
       margin: "0 auto",
       display: "flex",
       alignItems: "center",
-      gap: 8,
-      padding: "4px 16px 6px",
-      borderTop: "1px solid ".concat(C.b1, "22")
+      gap: isMobile ? 4 : 8,
+      padding: "4px 12px 6px",
+      borderTop: "1px solid ".concat(C.b1, "22"),
+      overflowX: "auto"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 3
+      gap: 3,
+      flexShrink: 0
     }
   }, MODES.map(function (m) {
     return /*#__PURE__*/React.createElement("button", {
@@ -2948,7 +2943,7 @@ function PlanApp() {
         return setMode(m);
       },
       style: {
-        padding: "3px 10px",
+        padding: "3px 8px",
         borderRadius: 5,
         cursor: "pointer",
         fontWeight: 700,
@@ -2956,7 +2951,8 @@ function PlanApp() {
         fontFamily: "inherit",
         border: "1px solid ".concat(mode === m ? m === "판매" ? C.판매 : C.매출 : C.b1),
         background: mode === m ? (m === "판매" ? C.판매 : C.매출) + "22" : "transparent",
-        color: mode === m ? m === "판매" ? C.판매 : C.매출 : C.muted
+        color: mode === m ? m === "판매" ? C.판매 : C.매출 : C.muted,
+        whiteSpace: "nowrap"
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
@@ -2974,7 +2970,8 @@ function PlanApp() {
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      gap: 3
+      gap: 3,
+      flexShrink: 0
     }
   }, YRS.map(function (y) {
     return /*#__PURE__*/React.createElement("button", {
@@ -2983,7 +2980,7 @@ function PlanApp() {
         return setYr(y);
       },
       style: {
-        padding: "3px 9px",
+        padding: "3px 7px",
         borderRadius: 5,
         cursor: "pointer",
         fontWeight: 700,
@@ -2991,7 +2988,8 @@ function PlanApp() {
         fontFamily: "inherit",
         border: "1px solid ".concat(yr === y ? C.blue : C.b1),
         background: yr === y ? C.blue + "22" : "transparent",
-        color: yr === y ? C.blue : C.muted
+        color: yr === y ? C.blue : C.muted,
+        whiteSpace: "nowrap"
       }
     }, y, "\uB144");
   })), /*#__PURE__*/React.createElement("div", {
@@ -3016,7 +3014,7 @@ function PlanApp() {
         return setPart(k);
       },
       style: {
-        padding: "3px 9px",
+        padding: "3px 8px",
         borderRadius: 5,
         cursor: "pointer",
         fontWeight: 700,
@@ -3030,7 +3028,14 @@ function PlanApp() {
         color: part === k ? KC[k] || C.accent : C.muted
       }
     }, k);
-  })))), /*#__PURE__*/React.createElement("div", {
+  })), isMobile && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 14,
+      flexShrink: 0,
+      cursor: dbStatus.includes("재시도↻") ? "pointer" : "default",
+      color: dbStatus.startsWith("✅") ? C.green : dbStatus.startsWith("❌") || dbStatus.includes("실패") ? C.red : dbStatus.startsWith("🔄") ? C.accent : C.orange
+    }
+  }, dbStatus.startsWith("✅") ? "✅" : dbStatus.startsWith("❌") ? "❌" : dbStatus.startsWith("⚠") ? "⚠" : "🔄"))), /*#__PURE__*/React.createElement("div", {
     id: "plan-zoom-wrapper",
     style: {
       position: "relative",

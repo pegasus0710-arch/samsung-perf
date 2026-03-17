@@ -1,305 +1,35 @@
 "use strict";
 
-function _typeof(o) {
-  "@babel/helpers - typeof";
-
-  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-    return typeof o;
-  } : function (o) {
-    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-  }, _typeof(o);
-}
-function _regenerator() {
-  /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */var e,
-    t,
-    r = "function" == typeof Symbol ? Symbol : {},
-    n = r.iterator || "@@iterator",
-    o = r.toStringTag || "@@toStringTag";
-  function i(r, n, o, i) {
-    var c = n && n.prototype instanceof Generator ? n : Generator,
-      u = Object.create(c.prototype);
-    return _regeneratorDefine2(u, "_invoke", function (r, n, o) {
-      var i,
-        c,
-        u,
-        f = 0,
-        p = o || [],
-        y = !1,
-        G = {
-          p: 0,
-          n: 0,
-          v: e,
-          a: d,
-          f: d.bind(e, 4),
-          d: function d(t, r) {
-            return i = t, c = 0, u = e, G.n = r, a;
-          }
-        };
-      function d(r, n) {
-        for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) {
-          var o,
-            i = p[t],
-            d = G.p,
-            l = i[2];
-          r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0));
-        }
-        if (o || r > 1) return a;
-        throw y = !0, n;
-      }
-      return function (o, p, l) {
-        if (f > 1) throw TypeError("Generator is already running");
-        for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) {
-          i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u);
-          try {
-            if (f = 2, i) {
-              if (c || (o = "next"), t = i[o]) {
-                if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object");
-                if (!t.done) return t;
-                u = t.value, c < 2 && (c = 0);
-              } else 1 === c && (t = i["return"]) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1);
-              i = e;
-            } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break;
-          } catch (t) {
-            i = e, c = 1, u = t;
-          } finally {
-            f = 1;
-          }
-        }
-        return {
-          value: t,
-          done: y
-        };
-      };
-    }(r, o, i), !0), u;
-  }
-  var a = {};
-  function Generator() {}
-  function GeneratorFunction() {}
-  function GeneratorFunctionPrototype() {}
-  t = Object.getPrototypeOf;
-  var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () {
-      return this;
-    }), t),
-    u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c);
-  function f(e) {
-    return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e;
-  }
-  return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () {
-    return this;
-  }), _regeneratorDefine2(u, "toString", function () {
-    return "[object Generator]";
-  }), (_regenerator = function _regenerator() {
-    return {
-      w: i,
-      m: f
-    };
-  })();
-}
-function _regeneratorDefine2(e, r, n, t) {
-  var i = Object.defineProperty;
-  try {
-    i({}, "", {});
-  } catch (e) {
-    i = 0;
-  }
-  _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) {
-    function o(r, n) {
-      _regeneratorDefine2(e, r, function (e) {
-        return this._invoke(r, n, e);
-      });
-    }
-    r ? i ? i(e, r, {
-      value: n,
-      enumerable: !t,
-      configurable: !t,
-      writable: !t
-    }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2));
-  }, _regeneratorDefine2(e, r, n, t);
-}
-function asyncGeneratorStep(n, t, e, r, o, a, c) {
-  try {
-    var i = n[a](c),
-      u = i.value;
-  } catch (n) {
-    return void e(n);
-  }
-  i.done ? t(u) : Promise.resolve(u).then(r, o);
-}
-function _asyncToGenerator(n) {
-  return function () {
-    var t = this,
-      e = arguments;
-    return new Promise(function (r, o) {
-      var a = n.apply(t, e);
-      function _next(n) {
-        asyncGeneratorStep(a, r, o, _next, _throw, "next", n);
-      }
-      function _throw(n) {
-        asyncGeneratorStep(a, r, o, _next, _throw, "throw", n);
-      }
-      _next(void 0);
-    });
-  };
-}
-function _classCallCheck(a, n) {
-  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
-}
-function _defineProperties(e, r) {
-  for (var t = 0; t < r.length; t++) {
-    var o = r[t];
-    o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o);
-  }
-}
-function _createClass(e, r, t) {
-  return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
-    writable: !1
-  }), e;
-}
-function _callSuper(t, o, e) {
-  return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e));
-}
-function _possibleConstructorReturn(t, e) {
-  if (e && ("object" == _typeof(e) || "function" == typeof e)) return e;
-  if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
-  return _assertThisInitialized(t);
-}
-function _assertThisInitialized(e) {
-  if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  return e;
-}
-function _isNativeReflectConstruct() {
-  try {
-    var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
-  } catch (t) {}
-  return (_isNativeReflectConstruct = function _isNativeReflectConstruct() {
-    return !!t;
-  })();
-}
-function _getPrototypeOf(t) {
-  return _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) {
-    return t.__proto__ || Object.getPrototypeOf(t);
-  }, _getPrototypeOf(t);
-}
-function _inherits(t, e) {
-  if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function");
-  t.prototype = Object.create(e && e.prototype, {
-    constructor: {
-      value: t,
-      writable: !0,
-      configurable: !0
-    }
-  }), Object.defineProperty(t, "prototype", {
-    writable: !1
-  }), e && _setPrototypeOf(t, e);
-}
-function _setPrototypeOf(t, e) {
-  return _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) {
-    return t.__proto__ = e, t;
-  }, _setPrototypeOf(t, e);
-}
-function _toConsumableArray(r) {
-  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
-}
-function _nonIterableSpread() {
-  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-function _iterableToArray(r) {
-  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-}
-function _arrayWithoutHoles(r) {
-  if (Array.isArray(r)) return _arrayLikeToArray(r);
-}
-function _slicedToArray(r, e) {
-  return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest();
-}
-function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-function _unsupportedIterableToArray(r, a) {
-  if (r) {
-    if ("string" == typeof r) return _arrayLikeToArray(r, a);
-    var t = {}.toString.call(r).slice(8, -1);
-    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
-  }
-}
-function _arrayLikeToArray(r, a) {
-  (null == a || a > r.length) && (a = r.length);
-  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-  return n;
-}
-function _iterableToArrayLimit(r, l) {
-  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-  if (null != t) {
-    var e,
-      n,
-      i,
-      u,
-      a = [],
-      f = !0,
-      o = !1;
-    try {
-      if (i = (t = t.call(r)).next, 0 === l) {
-        if (Object(t) !== t) return;
-        f = !1;
-      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
-    } catch (r) {
-      o = !0, n = r;
-    } finally {
-      try {
-        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
-      } finally {
-        if (o) throw n;
-      }
-    }
-    return a;
-  }
-}
-function _arrayWithHoles(r) {
-  if (Array.isArray(r)) return r;
-}
-function ownKeys(e, r) {
-  var t = Object.keys(e);
-  if (Object.getOwnPropertySymbols) {
-    var o = Object.getOwnPropertySymbols(e);
-    r && (o = o.filter(function (r) {
-      return Object.getOwnPropertyDescriptor(e, r).enumerable;
-    })), t.push.apply(t, o);
-  }
-  return t;
-}
-function _objectSpread(e) {
-  for (var r = 1; r < arguments.length; r++) {
-    var t = null != arguments[r] ? arguments[r] : {};
-    r % 2 ? ownKeys(Object(t), !0).forEach(function (r) {
-      _defineProperty(e, r, t[r]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) {
-      Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r));
-    });
-  }
-  return e;
-}
-function _defineProperty(e, r, t) {
-  return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
-    value: t,
-    enumerable: !0,
-    configurable: !0,
-    writable: !0
-  }) : e[r] = t, e;
-}
-function _toPropertyKey(t) {
-  var i = _toPrimitive(t, "string");
-  return "symbol" == _typeof(i) ? i : i + "";
-}
-function _toPrimitive(t, r) {
-  if ("object" != _typeof(t) || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r || "default");
-    if ("object" != _typeof(i)) return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return ("string" === r ? String : Number)(t);
-}
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i.return) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _possibleConstructorReturn(t, e) { if (e && ("object" == _typeof(e) || "function" == typeof e)) return e; if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined"); return _assertThisInitialized(t); }
+function _assertThisInitialized(e) { if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); return e; }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
+function _getPrototypeOf(t) { return _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) { return t.__proto__ || Object.getPrototypeOf(t); }, _getPrototypeOf(t); }
+function _inherits(t, e) { if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function"); t.prototype = Object.create(e && e.prototype, { constructor: { value: t, writable: !0, configurable: !0 } }), Object.defineProperty(t, "prototype", { writable: !1 }), e && _setPrototypeOf(t, e); }
+function _setPrototypeOf(t, e) { return _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) { return t.__proto__ = e, t; }, _setPrototypeOf(t, e); }
+function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
+function _arrayWithoutHoles(r) { if (Array.isArray(r)) return _arrayLikeToArray(r); }
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /* ═══════════════════════════════════════════════
    충청영업팀 실적관리 v13
    ─────────────────────────────────────────────
@@ -7449,31 +7179,33 @@ function App() {
       display: "flex",
       alignItems: "center",
       gap: 2,
-      padding: "6px 16px"
+      padding: "6px 12px",
+      overflow: "hidden"
     }
   }, /*#__PURE__*/React.createElement("a", {
     href: "index.html",
     style: {
       display: "flex",
       alignItems: "center",
-      gap: 8,
+      gap: 6,
       textDecoration: "none",
       color: C.text,
-      marginRight: 8,
+      marginRight: 4,
       flexShrink: 0
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      width: 28,
-      height: 28,
-      borderRadius: 8,
+      width: 26,
+      height: 26,
+      borderRadius: 7,
       background: "linear-gradient(135deg,".concat(mColor, ",").concat(C.accent, ")"),
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       fontWeight: 900,
-      fontSize: 14,
-      color: "#fff"
+      fontSize: 13,
+      color: "#fff",
+      flexShrink: 0
     }
   }, "C"), !isMobile && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7490,7 +7222,8 @@ function App() {
   }, "\uAD00\uB9AC\uC2DC\uC2A4\uD15C \xB7 ", mode))), /*#__PURE__*/React.createElement("nav", {
     style: {
       display: "flex",
-      gap: 2
+      gap: 1,
+      flexShrink: 0
     }
   }, TABS.map(function (t) {
     return /*#__PURE__*/React.createElement("button", {
@@ -7499,36 +7232,35 @@ function App() {
         return setTab(t.k);
       },
       style: {
-        padding: isMobile ? "5px 8px" : "5px 12px",
+        padding: isMobile ? "6px 8px" : "5px 12px",
         borderRadius: 7,
         border: "none",
         cursor: "pointer",
         background: tab === t.k ? mColor + "22" : "transparent",
         color: tab === t.k ? mColor : C.muted,
         fontWeight: tab === t.k ? 800 : 500,
-        fontSize: isMobile ? 10 : 12,
+        fontSize: isMobile ? 11 : 12,
         fontFamily: "inherit",
         whiteSpace: "nowrap",
         borderBottom: tab === t.k ? "2px solid ".concat(mColor) : "2px solid transparent",
         transition: "color .15s"
       }
-    }, isMobile ? t.l : "".concat(t.i, " ").concat(t.l));
+    }, isMobile ? t.k === "dashboard" ? "홈" : t.k === "analysis" ? "분석" : "입력" : "".concat(t.i, " ").concat(t.l));
   }), /*#__PURE__*/React.createElement("a", {
     href: "plan.html",
     style: {
-      padding: isMobile ? "5px 8px" : "5px 12px",
+      padding: isMobile ? "6px 8px" : "5px 12px",
       borderRadius: 7,
       border: "none",
       cursor: "pointer",
       background: "transparent",
       color: C.muted,
       fontWeight: 500,
-      fontSize: isMobile ? 10 : 12,
+      fontSize: isMobile ? 11 : 12,
       fontFamily: "inherit",
       textDecoration: "none",
       display: "flex",
       alignItems: "center",
-      gap: 4,
       borderBottom: "2px solid transparent",
       whiteSpace: "nowrap",
       transition: "color .15s"
@@ -7539,14 +7271,15 @@ function App() {
     onMouseLeave: function onMouseLeave(e) {
       e.currentTarget.style.color = C.muted;
     }
-  }, isMobile ? "달성" : "📋 달성계획")), /*#__PURE__*/React.createElement("div", {
+  }, isMobile ? "계획" : "📋 달성계획")), /*#__PURE__*/React.createElement("div", {
     style: {
       marginLeft: "auto",
       display: "flex",
       alignItems: "center",
-      gap: 8
+      gap: isMobile ? 4 : 8,
+      flexShrink: 0
     }
-  }, /*#__PURE__*/React.createElement("span", {
+  }, !isMobile && /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 10,
       fontWeight: 600,
@@ -7624,7 +7357,7 @@ function App() {
   }, dbStatus), /*#__PURE__*/React.createElement("button", {
     onClick: toggleTheme,
     style: {
-      padding: "4px 10px",
+      padding: isMobile ? "5px 8px" : "4px 10px",
       borderRadius: 6,
       cursor: "pointer",
       fontFamily: "inherit",
@@ -7636,7 +7369,8 @@ function App() {
       transition: "all .15s",
       display: "flex",
       alignItems: "center",
-      gap: 5
+      gap: 4,
+      flexShrink: 0
     },
     onMouseEnter: function onMouseEnter(e) {
       e.currentTarget.style.borderColor = C.accent;
@@ -7650,12 +7384,12 @@ function App() {
     style: {
       fontSize: 10
     }
-  }, theme === 'light' ? '라이트' : '다크')), /*#__PURE__*/React.createElement("span", {
+  }, theme === 'light' ? '라이트' : '다크')), !isMobile && /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.muted,
       fontSize: 9
     }
-  }, APP_VER), /*#__PURE__*/React.createElement("div", {
+  }, APP_VER), !isMobile && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       alignItems: "center",
@@ -7737,19 +7471,20 @@ function App() {
       return setShowBackupMain(true);
     },
     style: {
-      padding: "4px 12px",
+      padding: isMobile ? "5px 8px" : "4px 12px",
       borderRadius: 7,
       border: "1px solid ".concat(C.teal, "40"),
       background: C.teal + "10",
       color: C.teal,
       fontWeight: 700,
-      fontSize: 11,
+      fontSize: isMobile ? 13 : 11,
       cursor: "pointer",
       fontFamily: "inherit",
       display: "flex",
       alignItems: "center",
-      gap: 5,
-      transition: "all .15s"
+      gap: 4,
+      transition: "all .15s",
+      flexShrink: 0
     },
     onMouseEnter: function onMouseEnter(e) {
       e.currentTarget.style.background = C.teal + "22";
@@ -7763,7 +7498,7 @@ function App() {
     style: {
       background: C.surf,
       borderTop: "1px solid ".concat(C.b1, "22"),
-      padding: "0 16px"
+      padding: "0 12px"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7772,8 +7507,7 @@ function App() {
       display: "flex",
       alignItems: "center",
       height: 38,
-      gap: 8,
-      flexWrap: "wrap"
+      gap: 8
     }
   }, !isMobile && /*#__PURE__*/React.createElement("span", {
     style: {
@@ -7808,7 +7542,80 @@ function App() {
       alignItems: "center",
       gap: 6
     }
-  }, hasUnsaved && saveState === "idle" && /*#__PURE__*/React.createElement("span", {
+  }, isMobile && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 10,
+      fontWeight: 600,
+      color: dbStatus.startsWith("✅") ? C.green : dbStatus.startsWith("❌") || dbStatus.includes("실패") ? C.red : dbStatus.startsWith("🔄") ? C.accent : C.orange,
+      cursor: dbStatus.includes("재시도↻") ? "pointer" : "default"
+    },
+    onClick: function onClick() {
+      if (dbStatus.includes("재시도↻")) {
+        setDbStatus("🔄 연결중...");
+        var retries = 2;
+        var retry = /*#__PURE__*/function () {
+          var _ref57 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1() {
+            var snap, _loaded$3, raw, loaded, ce24, _t0;
+            return _regenerator().w(function (_context1) {
+              while (1) switch (_context1.p = _context1.n) {
+                case 0:
+                  if (!(retries >= 0)) {
+                    _context1.n = 6;
+                    break;
+                  }
+                  _context1.p = 1;
+                  _context1.n = 2;
+                  return Promise.race([DOC().get(), new Promise(function (_, rej) {
+                    return setTimeout(function () {
+                      return rej(new Error("timeout"));
+                    }, 12000);
+                  })]);
+                case 2:
+                  snap = _context1.v;
+                  if (snap.exists) {
+                    raw = snap.data().perfData;
+                    loaded = migrate(raw);
+                    ce24 = loaded === null || loaded === void 0 || (_loaded$3 = loaded["24"]) === null || _loaded$3 === void 0 || (_loaded$3 = _loaded$3["매출"]) === null || _loaded$3 === void 0 || (_loaded$3 = _loaded$3.perf) === null || _loaded$3 === void 0 || (_loaded$3 = _loaded$3["0"]) === null || _loaded$3 === void 0 ? void 0 : _loaded$3.CE;
+                    setDbStatus(gNum(ce24) > 0 ? "✅ 로드완료" : "✅ 연결됨");
+                    setData(loaded);
+                    localStorage.setItem("cst_v13", JSON.stringify(loaded));
+                  } else {
+                    setDbStatus("⚠ 문서없음");
+                  }
+                  return _context1.a(2);
+                case 3:
+                  _context1.p = 3;
+                  _t0 = _context1.v;
+                  retries--;
+                  if (!(retries < 0)) {
+                    _context1.n = 4;
+                    break;
+                  }
+                  setDbStatus(_t0.message === "timeout" ? "⚠ 연결지연 — 재시도↻" : "❌ 로드실패 — 재시도↻");
+                  _context1.n = 5;
+                  break;
+                case 4:
+                  setDbStatus("\u26A0 \uC624\uB958");
+                  _context1.n = 5;
+                  return new Promise(function (r) {
+                    return setTimeout(r, 2000);
+                  });
+                case 5:
+                  _context1.n = 0;
+                  break;
+                case 6:
+                  return _context1.a(2);
+              }
+            }, _callee1, null, [[1, 3]]);
+          }));
+          return function retry() {
+            return _ref57.apply(this, arguments);
+          };
+        }();
+        retry();
+      }
+    }
+  }, dbStatus.startsWith("✅") ? "✅" : dbStatus.startsWith("❌") ? "❌" : dbStatus.startsWith("⚠") ? "⚠" : "🔄"), hasUnsaved && saveState === "idle" && /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.orange,
       fontSize: 10,
@@ -7918,11 +7725,11 @@ function App() {
       fontWeight: 700,
       flexShrink: 0
     }
-  }, "\uC0B0\uCD9C\uAE30\uC900"), [["대외영업", "혼수+입주+이사+SMB+농협+거주중+휴대폰", C.blue], ["뉴홈", "입주+이사", C.green], ["B2B", "SMB+농협+휴대폰", C.orange], ["CE비중", "각항목÷CE", C.accent], ["달성률", "실적÷목표×100", C.teal]].map(function (_ref57) {
-    var _ref58 = _slicedToArray(_ref57, 3),
-      k = _ref58[0],
-      v = _ref58[1],
-      c = _ref58[2];
+  }, "\uC0B0\uCD9C\uAE30\uC900"), [["대외영업", "혼수+입주+이사+SMB+농협+거주중+휴대폰", C.blue], ["뉴홈", "입주+이사", C.green], ["B2B", "SMB+농협+휴대폰", C.orange], ["CE비중", "각항목÷CE", C.accent], ["달성률", "실적÷목표×100", C.teal]].map(function (_ref58) {
+    var _ref59 = _slicedToArray(_ref58, 3),
+      k = _ref59[0],
+      v = _ref59[1],
+      c = _ref59[2];
     return /*#__PURE__*/React.createElement("span", {
       key: k,
       style: {
