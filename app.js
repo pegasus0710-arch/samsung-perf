@@ -290,6 +290,8 @@ function DonutChart({pct:p, color, size=72, stroke=8, label, sub}){
 /* ── 부드러운 SVG 라인 차트 (그리드+라벨 포함) ── */
 function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grMode=false, zeroOffset=0}){
   const [tooltip, setTooltip] = useState(null);
+  const svgRef = React.useRef(null);   // ← Hook은 조기 return 전에 선언
+
   const W=600, H=h, PL=36, PR=10, PT=12, PB=20;
   const iW=W-PL-PR, iH=H-PT-PB;
   const allV = series.flatMap(s=>s.data.map(gNum)).filter(v=>v>0);
@@ -316,7 +318,6 @@ function RichLineChart({series, labels, h=160, showAvg=false, pctMode=false, grM
   }));
 
   // 마우스 위치로 가장 가까운 X 인덱스
-  const svgRef = React.useRef(null);
   const handleMouseMove = e => {
     if(!svgRef.current) return;
     const rect = svgRef.current.getBoundingClientRect();
