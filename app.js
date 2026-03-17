@@ -8,6 +8,22 @@
    ═══════════════════════════════════════════════ */
 const { useState, useEffect, useCallback, useMemo, useRef } = React;
 const APP_VER = "v3.2";
+
+// XLSX 지연 로드 (다운로드 클릭 시 최초 1회만 로드)
+const XLSX_CDN = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+let _xlsxLoading = null;
+const loadXLSX = () => {
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  if(_xlsxLoading) return _xlsxLoading;
+  _xlsxLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = XLSX_CDN;
+    s.onload = () => resolve(window.XLSX);
+    s.onerror = () => reject(new Error("XLSX 로드 실패"));
+    document.head.appendChild(s);
+  });
+  return _xlsxLoading;
+};
 // 목표 입력 잠금 비번 (SHA-256) — 기본값: ce2025!
 const TGT_PW_HASH  = "b1c9a90560020cd8f64c5a8a2c30bd2b6ce28dcff2b9e535f9da3c2d14061b68";
 const TGT_UNLOCK_KEY = "cst_tgt_unlock_v1"; // 목표+실적 통합 잠금
@@ -1521,7 +1537,9 @@ function BackupMainModal({onClose, data, mode}){
     setMsg("✅ JSON 백업 완료");
   };
 
-  const downloadExcel=()=>{
+  const downloadExcel=async()=>{
+    setMsg("⏳ XLSX 로드 중...");
+    try{ await loadXLSX(); }catch{ setMsg("❌ XLSX 로드 실패"); return; }
     const wb=XLSX.utils.book_new();
     const YRS=["24","25","26"];
     const MONTHS=["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
@@ -3032,8 +3050,9 @@ function ReportModal({onClose, mode, tab}){
     }catch(e){ alert("캡처 오류: "+e.message); }
   };
 
-  const downloadExcelData = () => {
+  const downloadExcelData = async() => {
     try{
+      await loadXLSX();
       const reportData = window.__reportData || {};
       const wb = XLSX.utils.book_new();
       const months = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];

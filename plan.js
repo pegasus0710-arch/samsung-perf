@@ -26,6 +26,22 @@ class ErrorBoundary extends React.Component {
 
 // ── 상수
 const MONTHS=["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
+
+// XLSX 지연 로드
+const XLSX_CDN = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+let _xlsxLoading = null;
+const loadXLSX = () => {
+  if(window.XLSX) return Promise.resolve(window.XLSX);
+  if(_xlsxLoading) return _xlsxLoading;
+  _xlsxLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = XLSX_CDN;
+    s.onload = () => resolve(window.XLSX);
+    s.onerror = () => reject(new Error("XLSX 로드 실패"));
+    document.head.appendChild(s);
+  });
+  return _xlsxLoading;
+};
 const PARTS=["대외영업","혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
 const MODES=["판매","매출"];
 const YRS=["26","25","24"];
@@ -1110,7 +1126,8 @@ function PlanApp(){
   const currentText=getText(yr,mode,part,selMonth==="annual"?"annual":String(selMonth));
 
   // 엑셀 다운로드 (원본 소수점 유지)
-  const handleExcel=()=>{
+  const handleExcel=async()=>{
+    try{ await loadXLSX(); }catch{ alert("XLSX 로드 실패. 다시 시도해주세요."); return; }
     const wb=XLSX.utils.book_new();
     const fmt=v=>typeof v==="number"?parseFloat(v.toFixed(4)):v; // 소수점 4자리까지 원본 유지
     const addSheet=(name,rows)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),name);
