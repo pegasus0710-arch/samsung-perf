@@ -3341,8 +3341,8 @@ function App(){
               fontSize:12,fontWeight:900,color:"#fff",boxShadow:`0 0 8px ${mColor}50`}}>C</div>
             {!isMobile&&(
               <div>
-                <div style={{color:C.text,fontWeight:900,fontSize:12}}>Chungcheong Sales</div>
-                <div style={{color:mColor,fontSize:9,fontWeight:700}}>충청영업팀 · {mode}</div>
+                <div style={{color:C.text,fontWeight:900,fontSize:12}}>관리시스템</div>
+                <div style={{color:mColor,fontSize:9,fontWeight:700}}>관리시스템 · {mode}</div>
               </div>
             )}
           </div>

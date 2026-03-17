@@ -1,24 +1,14 @@
 {
-  "name": "충청영업팀 실적관리",
-  "short_name": "충청실적",
-  "description": "충청영업팀 실적관리 시스템",
+  "name": "관리시스템",
+  "short_name": "관리시스템",
+  "description": "관리시스템",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#060e1c",
   "theme_color": "#818cf8",
   "orientation": "any",
   "icons": [
-    {
-      "src": "icon_192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icon_180.png",
-      "sizes": "180x180",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    {"src": "icon_192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon_180.png", "sizes": "180x180", "type": "image/png"}
   ]
 }

@@ -1090,8 +1090,8 @@ function PlanApp(){
           <a href="index.html" style={{display:"flex",alignItems:"center",gap:8,textDecoration:"none",color:C.text,marginRight:8,flexShrink:0}}>
             <div style={{width:28,height:28,borderRadius:8,background:C.accent,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:14,color:"#fff"}}>C</div>
             <div>
-              <div style={{fontWeight:900,fontSize:12,color:C.text}}>충청영업팀</div>
-              <div style={{color:mode==="매출"?C.매출:C.판매,fontSize:9,fontWeight:700}}>충청영업팀 · {mode}</div>
+              <div style={{fontWeight:900,fontSize:12,color:C.text}}>관리시스템</div>
+              <div style={{color:mode==="매출"?C.매출:C.판매,fontSize:9,fontWeight:700}}>관리시스템 · {mode}</div>
             </div>
           </a>
           {/* 탭 메뉴 */}
