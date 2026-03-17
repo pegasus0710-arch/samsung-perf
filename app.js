@@ -3207,6 +3207,7 @@ function App(){
     const loadFirebase = async () => {
       while(retries >= 0){
         try{
+          setDbStatus(retries < 2 ? `🔄 재시도 중... (${2-retries}/2)` : "🔄 연결중...");
           const snap = await Promise.race([
             DOC().get(),
             new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")), 12000))
@@ -3225,9 +3226,11 @@ function App(){
         }catch(e){
           retries--;
           if(retries < 0){
-            setDbStatus(e.message==="timeout" ? "⚠ 연결지연" : "❌ "+e.message.slice(0,20));
+            const isTimeout = e.message==="timeout";
+            setDbStatus(isTimeout ? "⚠ 연결지연 — 재시도↻" : "❌ 로드실패 — 재시도↻");
           } else {
-            await new Promise(r=>setTimeout(r, 1500));
+            setDbStatus(`⚠ 오류 (${2-retries}회) — 재시도 중...`);
+            await new Promise(r=>setTimeout(r, 2000));
           }
         }
       }
@@ -3313,7 +3316,48 @@ function App(){
             </button>
             <span style={{color:C.muted,fontSize:9}}>{APP_VER}</span>
             <span style={{fontSize:10,fontWeight:600,
-              color:dbStatus.startsWith("✅")?C.green:dbStatus.startsWith("❌")?C.red:C.orange}}>
+              color:dbStatus.startsWith("✅")?C.green
+                   :dbStatus.startsWith("❌")||dbStatus.includes("실패")?C.red
+                   :dbStatus.startsWith("🔄")?C.accent
+                   :C.orange,
+              cursor:(dbStatus.includes("재시도↻"))?"pointer":"default",
+              textDecoration:(dbStatus.includes("재시도↻"))?"underline":"none",
+            }}
+            onClick={()=>{
+              if(dbStatus.includes("재시도↻")){
+                setDbStatus("🔄 연결중...");
+                let retries=2;
+                const retry=async()=>{
+                  while(retries>=0){
+                    try{
+                      setDbStatus(retries<2?`🔄 재시도 중... (${2-retries}/2)`:"🔄 연결중...");
+                      const snap=await Promise.race([
+                        DOC().get(),
+                        new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),12000))
+                      ]);
+                      if(snap.exists){
+                        const raw=snap.data().perfData;
+                        const loaded=migrate(raw);
+                        const ce24=loaded?.["24"]?.["매출"]?.perf?.["0"]?.CE;
+                        setDbStatus(gNum(ce24)>0?"✅ 로드완료":"✅ 연결됨");
+                        setData(loaded);
+                        localStorage.setItem("cst_v13",JSON.stringify(loaded));
+                      } else { setDbStatus("⚠ 문서없음"); }
+                      return;
+                    }catch(e){
+                      retries--;
+                      if(retries<0){
+                        setDbStatus(e.message==="timeout"?"⚠ 연결지연 — 재시도↻":"❌ 로드실패 — 재시도↻");
+                      } else {
+                        setDbStatus(`⚠ 오류 (${2-retries}회) — 재시도 중...`);
+                        await new Promise(r=>setTimeout(r,2000));
+                      }
+                    }
+                  }
+                };
+                retry();
+              }
+            }}>
               {dbStatus}
             </span>
             {hasUnsaved&&saveState==="idle"&&
