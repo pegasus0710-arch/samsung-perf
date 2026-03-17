@@ -306,10 +306,22 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
     const sel=window.getSelection();
     if(!sel||sel.rangeCount===0) return;
     const range=sel.getRangeAt(0);
+    // 빈값 = 해당 스타일 제거: 선택 영역 내 모든 span의 해당 속성 제거
+    if(cssVal===""){
+      if(!range.collapsed){
+        const frag=range.cloneContents();
+        const spans=frag.querySelectorAll('span');
+        spans.forEach(s=>{ s.style[cssProp]=""; if(!s.getAttribute('style')) s.removeAttribute('style'); });
+        // DOM에 반영
+        const allSpans=el.querySelectorAll('span');
+        allSpans.forEach(s=>{ s.style[cssProp]=""; if(s.getAttribute('style')==="") s.removeAttribute('style'); });
+        emit();
+      }
+      return;
+    }
     const makeSpan=()=>{
       const span=document.createElement('span');
       span.style[cssProp]=cssVal;
-      // fontSize 변경 시 line-height도 함께 설정 → 줄 높이가 글씨에 비례
       if(cssProp==='fontSize') span.style.lineHeight='1.4';
       return span;
     };
@@ -469,12 +481,14 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
           defaultValue=""
           onChange={e=>{
             const v=e.target.value;
-            if(v) applyStyle("color",v);
+            if(v==="__none__") applyStyle("color","");  // 글자색 제거
+            else if(v) applyStyle("color",v);
             e.target.value="";
           }}>
           <option value="">글자색▾</option>
+          <option value="__none__" style={{color:C.muted}}>── 없음</option>
           {COLORS.filter(c=>c.v).map(c=>(
-            <option key={c.v} value={c.v} style={{background:c.v,color:"#000"}}>{c.l}</option>
+            <option key={c.v} value={c.v} style={{background:c.v,color:c.v==="#ffffff"||c.v==="#facc15"||c.v==="#bbf7d0"?"#000":"#000"}}>{c.l}</option>
           ))}
         </select>
 
@@ -483,10 +497,12 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
           defaultValue=""
           onChange={e=>{
             const v=e.target.value;
-            if(v) applyStyle("backgroundColor",v);
+            if(v==="__none__") applyStyle("backgroundColor","");  // 배경색 제거
+            else if(v) applyStyle("backgroundColor",v);
             e.target.value="";
           }}>
           <option value="">배경색▾</option>
+          <option value="__none__" style={{color:C.muted}}>── 없음</option>
           {BG_COLORS.filter(b=>b.v).map(b=>(
             <option key={b.v} value={b.v} style={{background:b.v,color:"#000"}}>{b.l}</option>
           ))}
@@ -537,8 +553,8 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
           <option value="4x5">4×5</option>
         </select>
         <Sep/>
-        {/* 수식초기화 */}
-        <button onMouseDown={e=>{e.preventDefault();execCmd("removeFormat");}} style={{...BtnS,color:C.red}} title="서식 제거">수식초기화</button>
+        {/* 서식초기화 */}
+        <button onMouseDown={e=>{e.preventDefault();execCmd("removeFormat");}} style={{...BtnS,color:C.red}} title="서식 제거">서식초기화</button>
       </div>
 
       {/* ── 편집 영역 */}
@@ -1857,122 +1873,136 @@ function PlanApp(){
             );
           })()}
 
-          {/* ── 대외영업 선택 시 하위 파트 목표 (판매/매출 동시, 양쪽 정렬) */}
+          {/* ── 대외영업 선택 시 좌/우 분리 바차트 */}
           {part==="대외영업"&&(()=>{
-            const SUB_PARTS=[
-              {k:"혼수"},{k:"뉴홈"},{k:"입주",indent:true},{k:"이사",indent:true},
-              {k:"SAC"},{k:"거주중",indent:true},
-              {k:"B2B"},{k:"SMB",indent:true},{k:"농협",indent:true},{k:"휴대폰",indent:true},
-            ];
-            return(
-              <div style={{marginBottom:12,background:C.card2,borderRadius:10,
-                border:`1px solid ${C.b1}`,padding:"10px 12px"}}>
-                <div style={{color:KC["대외영업"],fontSize:10,fontWeight:800,marginBottom:8,
-                  display:"flex",alignItems:"center",gap:6}}>
-                  <span>📋 파트별 목표</span>
-                  <span style={{color:C.muted,fontSize:9,fontWeight:400}}>
-                    {selMonth==="annual"?"연간":MONTHS[selMonth]}
-                  </span>
+            const FIXED_PARTS=["혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협","휴대폰"];
+            const BAR_PARTS=["혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협"];
+            const periodLabel=selMonth==="annual"?"연간":MONTHS[selMonth];
+            const mc_mode  = mode==="매출"?C.매출:C.판매;
+            const mc_other = otherMode==="매출"?C.매출:C.판매;
+
+            // 각 파트 데이터 계산
+            const rows=FIXED_PARTS.map(k=>({
+              k,
+              plTgt :selMi!==null?gNum((fullRow(tD_pl[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(tD_pl[sk(i)])||{})[k]),0),
+              plPrev:selMi!==null?gNum((fullRow(pD25_pl[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(pD25_pl[sk(i)])||{})[k]),0),
+              otTgt :selMi!==null?gNum((fullRow(tD_ot[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(tD_ot[sk(i)])||{})[k]),0),
+              otPrev:selMi!==null?gNum((fullRow(pD25_ot[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(pD25_ot[sk(i)])||{})[k]),0),
+            }));
+
+            const daeTotalPl=BAR_PARTS.reduce((a,k)=>{const r=rows.find(x=>x.k===k);return a+(r?r.plTgt:0);},0);
+            const daeTotalOt=BAR_PARTS.reduce((a,k)=>{const r=rows.find(x=>x.k===k);return a+(r?r.otTgt:0);},0);
+            const maxPl=Math.max(...rows.filter(r=>r.k!=="휴대폰").map(r=>r.plTgt),1);
+            const maxOt=Math.max(...rows.filter(r=>r.k!=="휴대폰").map(r=>r.otTgt),1);
+
+            const Panel=({mLabel,mColor,getTgt,getPrev,daeTotal,maxVal})=>{
+              const totalTgt =rows.reduce((a,r)=>a+getTgt(r),0);
+              const totalPrev=rows.reduce((a,r)=>a+getPrev(r),0);
+              const totalGr  =totalPrev>0&&totalTgt>0?((totalTgt-totalPrev)/totalPrev*100).toFixed(1):null;
+              return(
+                <div style={{flex:1,minWidth:0,background:C.card,borderRadius:12,
+                  border:`2px solid ${mColor}30`,overflow:"hidden",
+                  boxShadow:theme==="light"?"0 2px 8px rgba(0,0,0,.07)":"none"}}>
+                  <div style={{background:mColor+"14",borderBottom:`1px solid ${mColor}25`,
+                    padding:"7px 12px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{width:8,height:8,borderRadius:2,background:mColor}}/>
+                      <span style={{color:mColor,fontSize:12,fontWeight:800}}>{mLabel}</span>
+                      <span style={{color:C.muted,fontSize:10}}>{periodLabel}</span>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{color:C.text,fontSize:13,fontWeight:900}}>
+                        {totalTgt>0?Math.round(totalTgt).toLocaleString()+"억":"─"}
+                      </span>
+                      {totalGr!==null&&(
+                        <span style={{color:grwC(totalGr),fontSize:11,fontWeight:700}}>
+                          ({gNum(totalGr)>=0?"▲":"▼"}{Math.abs(gNum(totalGr)).toFixed(1)}%)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{padding:"8px 12px",display:"flex",flexDirection:"column",gap:4}}>
+                    {rows.map(r=>{
+                      const tgt  = getTgt(r);
+                      const prev = getPrev(r);
+                      const gr   = prev>0&&tgt>0?((tgt-prev)/prev*100).toFixed(1):null;
+                      const isHp = r.k==="휴대폰";
+                      const share= !isHp&&daeTotal>0&&tgt>0?(tgt/daeTotal*100):null;
+                      const barW = !isHp&&maxVal>0&&tgt>0?Math.min(tgt/maxVal*100,100):0;
+                      const kc   = KC[r.k]||C.accent;
+                      return(
+                        <div key={r.k} style={{position:"relative"}}
+                          onMouseEnter={e=>{const el=e.currentTarget.querySelector(".btip");if(el)el.style.display="block";}}
+                          onMouseLeave={e=>{const el=e.currentTarget.querySelector(".btip");if(el)el.style.display="none";}}>
+                          <div style={{display:"flex",alignItems:"center",gap:6}}>
+                            <div style={{width:42,flexShrink:0,display:"flex",alignItems:"center",gap:3}}>
+                              <div style={{width:5,height:5,borderRadius:1,background:kc,flexShrink:0}}/>
+                              <span style={{color:C.muted2,fontSize:10,fontWeight:700}}>{r.k}</span>
+                            </div>
+                            <div style={{flex:1,position:"relative"}}>
+                              {isHp?(
+                                <div style={{height:20,display:"flex",alignItems:"center"}}>
+                                  <div style={{flex:1,borderBottom:`1px dashed ${C.b2}`}}/>
+                                </div>
+                              ):(
+                                <div style={{height:20,background:C.b1+"50",borderRadius:3,overflow:"hidden",position:"relative"}}>
+                                  <div style={{position:"absolute",left:0,top:0,bottom:0,
+                                    width:`${barW}%`,
+                                    background:`linear-gradient(90deg,${kc}bb,${kc})`,
+                                    borderRadius:3,transition:"width .5s ease"}}/>
+                                  {share!==null&&barW>16&&(
+                                    <span style={{position:"absolute",
+                                      right:`${Math.max(100-barW+1,2)}%`,top:"50%",
+                                      transform:"translateY(-50%)",
+                                      color:"#fff",fontSize:8,fontWeight:700,
+                                      textShadow:"0 1px 2px rgba(0,0,0,.5)",
+                                      paddingRight:3,whiteSpace:"nowrap"}}>
+                                      {share.toFixed(0)}%
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div style={{width:96,flexShrink:0,textAlign:"right"}}>
+                              <span style={{color:tgt>0?C.text:C.muted,fontSize:12,fontWeight:900}}>
+                                {tgt>0?Math.round(tgt).toLocaleString()+"억":"─"}
+                              </span>
+                              {gr!==null&&(
+                                <span style={{color:grwC(gr),fontSize:9,fontWeight:700,marginLeft:3}}>
+                                  ({gNum(gr)>=0?"▲":"▼"}{Math.abs(gNum(gr)).toFixed(1)}%)
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="btip" style={{display:"none",position:"absolute",
+                            left:"40%",top:"100%",zIndex:20,
+                            background:C.tooltip,border:`1px solid ${C.b1}`,
+                            borderRadius:6,padding:"6px 10px",fontSize:10,
+                            color:C.text,whiteSpace:"nowrap",marginTop:2}}>
+                            <div style={{fontWeight:800,color:kc,marginBottom:3}}>{r.k}</div>
+                            <div>목표: <b>{tgt>0?Math.round(tgt).toLocaleString()+"억":"─"}</b></div>
+                            <div>전년 실적: <b>{prev>0?Math.round(prev).toLocaleString()+"억":"─"}</b></div>
+                            {gr!==null&&<div style={{color:grwC(gr),fontWeight:700}}>전년비 {gNum(gr)>=0?"▲":"▼"}{Math.abs(gNum(gr)).toFixed(1)}%</div>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                {/* 양쪽 정렬, 카드 균등 분배 */}
-                <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"space-between"}}>
-                  {SUB_PARTS.map(({k,indent})=>{
-                    // 매출/선택모드 기준
-                    const plTgt  = selMi!==null?gNum((fullRow(tD_pl[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(tD_pl[sk(i)])||{})[k]),0);
-                    const plPrev = selMi!==null?gNum((fullRow(pD25_pl[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(pD25_pl[sk(i)])||{})[k]),0);
-                    const plGr   = plPrev>0&&plTgt>0?((plTgt-plPrev)/plPrev*100).toFixed(1):null;
-                    // 반대 모드 기준
-                    const otTgt  = selMi!==null?gNum((fullRow(tD_ot[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(tD_ot[sk(i)])||{})[k]),0);
-                    const otPrev = selMi!==null?gNum((fullRow(pD25_ot[sk(selMi)])||{})[k]):MONTHS.reduce((a,_,i)=>a+gNum((fullRow(pD25_ot[sk(i)])||{})[k]),0);
-                    const otGr   = otPrev>0&&otTgt>0?((otTgt-otPrev)/otPrev*100).toFixed(1):null;
-                    const kc = KC[k]||C.accent;
-                    const mc1 = mode==="매출"?C.매출:C.판매;
-                    const mc2 = otherMode==="매출"?C.매출:C.판매;
-                    // 대외영업 전체 목표 합계 (비중 계산용, 휴대폰 제외)
-                    const daePartsForShare=["혼수","뉴홈","입주","이사","SAC","거주중","B2B","SMB","농협"];
-                    const daeTotalPl = daePartsForShare.reduce((a,pk)=>a+(selMi!==null?gNum((fullRow(tD_pl[sk(selMi)])||{})[pk]):MONTHS.reduce((s,_,i)=>s+gNum((fullRow(tD_pl[sk(i)])||{})[pk]),0)),0);
-                    const daeTotalOt = daePartsForShare.reduce((a,pk)=>a+(selMi!==null?gNum((fullRow(tD_ot[sk(selMi)])||{})[pk]):MONTHS.reduce((s,_,i)=>s+gNum((fullRow(tD_ot[sk(i)])||{})[pk]),0)),0);
-                    const plShare = k!=="휴대폰"&&daeTotalPl>0&&plTgt>0?(plTgt/daeTotalPl*100):null;
-                    const otShare = k!=="휴대폰"&&daeTotalOt>0&&otTgt>0?(otTgt/daeTotalOt*100):null;
-                    return(
-                      <div key={k} style={{
-                        flex:"1 1 calc(10% - 6px)",minWidth:100,maxWidth:160,
-                        background:C.card,borderRadius:8,
-                        border:`1px solid ${kc}35`,
-                        borderTop:`2px solid ${kc}`,
-                        padding:"7px 10px",
-                      }}>
-                        {/* 파트명 */}
-                        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:6}}>
-                          {indent&&<span style={{color:C.muted,fontSize:8}}>└</span>}
-                          <div style={{width:6,height:6,borderRadius:1,background:kc,flexShrink:0}}/>
-                          <span style={{color:kc,fontSize:10,fontWeight:800}}>{k}</span>
-                        </div>
-                        {/* 매출 행 */}
-                        <div style={{marginBottom:4}}>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-                            <span style={{color:mc1,fontSize:8,fontWeight:700}}>{mode}</span>
-                            <span style={{color:plTgt>0?C.text:C.muted,fontSize:12,fontWeight:900}}>
-                              {plTgt>0?Math.round(plTgt).toLocaleString()+"억":"─"}
-                            </span>
-                          </div>
-                          <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                            <span style={{color:C.muted,fontSize:8}}>
-                              전년 {plPrev>0?Math.round(plPrev).toLocaleString()+"억":"─"}
-                            </span>
-                            {plGr!==null&&<span style={{color:grwC(plGr),fontSize:8,fontWeight:700}}>
-                              {gNum(plGr)>=0?"▲":"▼"}{Math.abs(gNum(plGr)).toFixed(1)}%
-                            </span>}
-                          </div>
-                          {/* 비중 바 (휴대폰 제외) */}
-                          {plShare!==null&&(
-                            <div style={{marginTop:4}}>
-                              <div style={{height:4,background:C.b1,borderRadius:2,overflow:"hidden"}}>
-                                <div style={{height:"100%",width:`${Math.min(plShare,100)}%`,
-                                  background:`linear-gradient(90deg,${mc1}99,${mc1})`,
-                                  borderRadius:2,transition:"width .5s"}}/>
-                              </div>
-                              <div style={{color:mc1,fontSize:7,fontWeight:700,marginTop:1,textAlign:"right"}}>
-                                {plShare.toFixed(1)}%
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                        {/* 구분선 */}
-                        <div style={{height:1,background:C.b1,marginBottom:4}}/>
-                        {/* 판매 행 */}
-                        <div>
-                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-                            <span style={{color:mc2,fontSize:8,fontWeight:700}}>{otherMode}</span>
-                            <span style={{color:otTgt>0?C.text:C.muted,fontSize:12,fontWeight:900}}>
-                              {otTgt>0?Math.round(otTgt).toLocaleString()+"억":"─"}
-                            </span>
-                          </div>
-                          <div style={{display:"flex",justifyContent:"space-between",marginTop:2}}>
-                            <span style={{color:C.muted,fontSize:8}}>
-                              전년 {otPrev>0?Math.round(otPrev).toLocaleString()+"억":"─"}
-                            </span>
-                            {otGr!==null&&<span style={{color:grwC(otGr),fontSize:8,fontWeight:700}}>
-                              {gNum(otGr)>=0?"▲":"▼"}{Math.abs(gNum(otGr)).toFixed(1)}%
-                            </span>}
-                          </div>
-                          {/* 비중 바 (휴대폰 제외) */}
-                          {otShare!==null&&(
-                            <div style={{marginTop:4}}>
-                              <div style={{height:4,background:C.b1,borderRadius:2,overflow:"hidden"}}>
-                                <div style={{height:"100%",width:`${Math.min(otShare,100)}%`,
-                                  background:`linear-gradient(90deg,${mc2}99,${mc2})`,
-                                  borderRadius:2,transition:"width .5s"}}/>
-                              </div>
-                              <div style={{color:mc2,fontSize:7,fontWeight:700,marginTop:1,textAlign:"right"}}>
-                                {otShare.toFixed(1)}%
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+              );
+            };
+
+            return(
+              <div style={{marginBottom:12,borderRadius:10,border:`1px solid ${C.b1}`,
+                padding:"10px 12px",background:C.card2}}>
+                <div style={{color:KC["대외영업"],fontSize:10,fontWeight:800,marginBottom:10,
+                  display:"flex",alignItems:"center",gap:6}}>
+                  <span>📊 파트별 목표</span>
+                  <span style={{color:C.muted,fontSize:9,fontWeight:400}}>{periodLabel}</span>
+                </div>
+                <div style={{display:"flex",gap:10}}>
+                  <Panel mLabel={mode}      mColor={mc_mode}  getTgt={r=>r.plTgt} getPrev={r=>r.plPrev} daeTotal={daeTotalPl} maxVal={maxPl}/>
+                  <Panel mLabel={otherMode} mColor={mc_other} getTgt={r=>r.otTgt} getPrev={r=>r.otPrev} daeTotal={daeTotalOt} maxVal={maxOt}/>
                 </div>
               </div>
             );
