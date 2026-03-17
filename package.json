@@ -1,0 +1,28 @@
+{
+  "name": "chungcheong-perf",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "build": "babel src/app.jsx -o app.js && babel src/plan.jsx -o plan.js",
+  "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pegasus0710-arch/Chungcheong-perf.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/pegasus0710-arch/Chungcheong-perf/issues"
+  },
+  "homepage": "https://github.com/pegasus0710-arch/Chungcheong-perf#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.28.6",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
+    "@babel/preset-react": "^7.28.5"
+  }
+}
