@@ -784,28 +784,61 @@ function PlanApp(){
   // (yr==="26"?"25":yr==="25"?"24":"23"): yr 기반 자동 계산 (별도 state 불필요)
   const [showBackup,setShowBackup]=useState(false);
   const autoSaveTimer=useRef(null);
+  const LS_PERF_CACHE = "cst_v13"; // app.js와 동일 캐시키
 
   // Firebase 로드
   useEffect(()=>{
+    let cancelled = false;
     (async()=>{
+      // 1단계: localStorage 캐시 즉시 표시
       try{
-        const snap=await window.db.collection("perf").doc("main").get();
-        if(snap.exists){
-          const d=snap.data();
-          if(d.perfData) setPerfData(d.perfData);
-          if(d.planTextData) setPlanTextData(d.planTextData);
+        const loc = localStorage.getItem(LS_PERF_CACHE);
+        if(loc){
+          const cached = JSON.parse(loc);
+          if(!cancelled && cached){
+            setPerfData(cached);
+            // 캐시 있으면 즉시 화면 표시
+            setDbReady(true);
+          }
         }
-      }catch(e){console.error("Firebase 로드 오류:",e);}
-      finally{setDbReady(true);}
-    })();
-  },[]);
+        // planText 임시저장도 복원
+        const savedText = localStorage.getItem(LS_TEXT);
+        if(savedText && !cancelled) setTextDraft(JSON.parse(savedText));
+      }catch{}
 
-  // localStorage 텍스트 복원
-  useEffect(()=>{
-    try{
-      const saved=localStorage.getItem(LS_TEXT);
-      if(saved) setTextDraft(JSON.parse(saved));
-    }catch{}
+      // 2단계: Firebase 실제 로드 (타임아웃 + 재시도)
+      const fetchWithTimeout = (promise, ms) =>
+        Promise.race([promise, new Promise((_,r)=>setTimeout(()=>r(new Error("timeout")), ms))]);
+
+      let retries = 2;
+      while(retries >= 0){
+        try{
+          const snap = await fetchWithTimeout(
+            window.db.collection("perf").doc("main").get(), 12000
+          );
+          if(cancelled) return;
+          if(snap.exists){
+            const d = snap.data();
+            if(d.perfData){
+              setPerfData(d.perfData);
+              localStorage.setItem(LS_PERF_CACHE, JSON.stringify(d.perfData));
+            }
+            if(d.planTextData) setPlanTextData(d.planTextData);
+          }
+          break;
+        }catch(e){
+          retries--;
+          if(retries < 0){
+            console.error("Firebase 로드 오류:", e.message);
+          } else {
+            await new Promise(r=>setTimeout(r, 1500));
+          }
+        }
+      }
+
+      if(!cancelled) setDbReady(true);
+    })();
+    return () => { cancelled = true; };
   },[]);
 
   // 텍스트 draft 3초 자동저장 (임시저장 표시)
@@ -1850,3 +1883,5 @@ function PlanApp(){
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<ErrorBoundary><PlanApp/></ErrorBoundary>);
+// Babel 트랜스파일 + React 초기화 완료 신호 (캐시 있으면 즉시, 없으면 Firebase 완료 후)
+window.__planReady = true;
