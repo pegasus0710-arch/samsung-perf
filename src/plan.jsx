@@ -1395,10 +1395,11 @@ function PlanApp(){
   const daeSharePct=daeYtd>0&&part!=="대외영업"&&part!=="CE"&&ytdP>0?ytdP/daeYtd*100:null;
 
   // 누계
-  let cumP=0,cumT=0,cumPrev=0;
-  const cumPerf   =MONTHS.map((_,i)=>{if(i>emi)return null;cumP+=mPerf[i];return cumP;});
-  const cumTgt    =MONTHS.map((_,i)=>{cumT+=mTgt[i];return cumT;});
-  const cumPrevArr=MONTHS.map((_,i)=>{if(i>emi)return null;cumPrev+=mPrev[i];return cumPrev;});
+  let cumP=0,cumT=0,cumPrev=0,cumPrevFull=0;
+  const cumPerf      =MONTHS.map((_,i)=>{if(i>emi)return null;cumP+=mPerf[i];return cumP;});
+  const cumTgt       =MONTHS.map((_,i)=>{cumT+=mTgt[i];return cumT;});
+  const cumPrevArr   =MONTHS.map((_,i)=>{if(i>emi)return null;cumPrev+=mPrev[i];return cumPrev;}); // 성장률 계산용 (emi까지)
+  const cumPrevFull12=MONTHS.map((_,i)=>{cumPrevFull+=mPrev[i];return cumPrevFull;}); // 표 표시용 (12개월 전체)
   const cumAr     =MONTHS.map((_,i)=>{if(i>emi||!cumTgt[i])return null;return(cumPerf[i]||0)/cumTgt[i]*100;});
   const cumGr     =MONTHS.map((_,i)=>{if(i>emi||!cumPrevArr[i])return null;return((cumPerf[i]||0)-cumPrevArr[i])/cumPrevArr[i]*100;});
 
@@ -2035,7 +2036,7 @@ function PlanApp(){
                   {key:"실적",    data:mPerf,   c:color,    sum:ytdP,    useEmi:true, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
                   {key:"달성률",  data:mArArr,  c:C.teal,   sum:ytdAr,   isPct:true,  bg:"rgba(45,212,136,.09)"},
                   {key:"성장률",  data:mGrArr,  c:C.green,  sum:ytdGr,   isPct:true,  isGrw:true, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
-                  {key:"전년",    data:mPrev,   c:C.muted2, sum:ytdPrev, useEmi:true, bg:theme==="light"?"rgba(0,0,0,.02)":"rgba(255,255,255,.05)"},
+                  {key:"전년",    data:mPrev,   c:C.muted2, sum:ytdPrev, bg:theme==="light"?"rgba(0,0,0,.02)":"rgba(255,255,255,.05)"},
                   {key:"목표차질",data:mPerf,   c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:mTgt, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
                   {key:"전년차질",data:mPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:mPrev, bg:theme==="light"?"rgba(0,0,0,.015)":C.card2},
                 ].map(({key,data,c,sum,useEmi,isPct,isGrw,isDiff,diffBase,bg},ri)=>(
@@ -2103,7 +2104,7 @@ function PlanApp(){
           {/* 차트 */}
           <div style={{marginBottom:10}}>
             {cumChartTab==="실적"&&<MiniChart labels={MONTHS} h={200} series={[
-              {data:cumPrevArr,color:"#a78bfa",op:.7,label:"전년누계"},
+              {data:cumPrevFull12,color:"#a78bfa",op:.7,dash:true,label:"전년누계"},
               {data:cumTgt,color:C.orange,dash:true,op:.8,label:"누계목표"},
               {data:cumPerf,color,bold:true,fill:true,showLabels:true,label:"누계실적"},
             ]}/>}
@@ -2137,9 +2138,9 @@ function PlanApp(){
                   {key:"실적",    data:cumPerf,   c:color,    sum:ytdP,         bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
                   {key:"달성률",  data:cumAr,     c:C.teal,   sum:ytdAr,   isPct:true,  bg:"rgba(45,212,136,.09)"},
                   {key:"성장률",  data:cumGr,     c:C.green,  sum:ytdGr,   isPct:true, isGrw:true, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
-                  {key:"전년",    data:cumPrevArr,c:C.muted2, sum:ytdPrev,      bg:theme==="light"?"rgba(0,0,0,.02)":"rgba(255,255,255,.05)"},
+                  {key:"전년",    data:cumPrevFull12,c:C.muted2, sum:ytdPrev,      bg:theme==="light"?"rgba(0,0,0,.02)":"rgba(255,255,255,.05)"},
                   {key:"목표차질",data:cumPerf,   c:null,     sum:ytdP-ytdT, isDiff:true, diffBase:cumTgt, bg:theme==="light"?"rgba(0,0,0,.05)":"rgba(0,0,0,.18)"},
-                  {key:"전년차질",data:cumPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:cumPrevArr, bg:theme==="light"?"rgba(0,0,0,.015)":C.card2},
+                  {key:"전년차질",data:cumPerf,   c:null,     sum:ytdP-ytdPrev, isDiff:true, diffBase:cumPrevFull12, bg:theme==="light"?"rgba(0,0,0,.015)":C.card2},
                 ].map(({key,data,c,sum,isPct,isGrw,isDiff,diffBase,bg},ri)=>(
                   <tr key={key} style={{
                     borderBottom:`1px solid ${ri%2===0?(theme==="light"?"rgba(0,0,0,.08)":"rgba(255,255,255,.09)"):(theme==="light"?"rgba(0,0,0,.14)":"rgba(0,0,0,.25)")}`,

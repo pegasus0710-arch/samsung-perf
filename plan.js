@@ -2644,7 +2644,8 @@ function PlanApp() {
   // 누계
   var cumP = 0,
     cumT = 0,
-    cumPrev = 0;
+    cumPrev = 0,
+    cumPrevFull = 0;
   var cumPerf = MONTHS.map(function (_, i) {
     if (i > emi) return null;
     cumP += mPerf[i];
@@ -2658,7 +2659,11 @@ function PlanApp() {
     if (i > emi) return null;
     cumPrev += mPrev[i];
     return cumPrev;
-  });
+  }); // 성장률 계산용 (emi까지)
+  var cumPrevFull12 = MONTHS.map(function (_, i) {
+    cumPrevFull += mPrev[i];
+    return cumPrevFull;
+  }); // 표 표시용 (12개월 전체)
   var cumAr = MONTHS.map(function (_, i) {
     if (i > emi || !cumTgt[i]) return null;
     return (cumPerf[i] || 0) / cumTgt[i] * 100;
@@ -4310,7 +4315,6 @@ function PlanApp() {
     data: mPrev,
     c: C.muted2,
     sum: ytdPrev,
-    useEmi: true,
     bg: theme === "light" ? "rgba(0,0,0,.02)" : "rgba(255,255,255,.05)"
   }, {
     key: "목표차질",
@@ -4488,9 +4492,10 @@ function PlanApp() {
     labels: MONTHS,
     h: 200,
     series: [{
-      data: cumPrevArr,
+      data: cumPrevFull12,
       color: "#a78bfa",
       op: .7,
+      dash: true,
       label: "전년누계"
     }, {
       data: cumTgt,
@@ -4617,7 +4622,7 @@ function PlanApp() {
     bg: theme === "light" ? "rgba(0,0,0,.05)" : "rgba(0,0,0,.18)"
   }, {
     key: "전년",
-    data: cumPrevArr,
+    data: cumPrevFull12,
     c: C.muted2,
     sum: ytdPrev,
     bg: theme === "light" ? "rgba(0,0,0,.02)" : "rgba(255,255,255,.05)"
@@ -4635,7 +4640,7 @@ function PlanApp() {
     c: null,
     sum: ytdP - ytdPrev,
     isDiff: true,
-    diffBase: cumPrevArr,
+    diffBase: cumPrevFull12,
     bg: theme === "light" ? "rgba(0,0,0,.015)" : C.card2
   }].map(function (_ref29, ri) {
     var key = _ref29.key,
