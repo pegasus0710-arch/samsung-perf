@@ -1538,9 +1538,9 @@ function PlanApp(){
           {/* 탭 메뉴 */}
           <nav style={{display:"flex",gap:1,flexShrink:0}}>
             {[
-              {href:"index.html",l:"대시보드",s:"홈"},
-              {href:"index.html",l:"실적분석",s:"분석"},
-              {href:"index.html",l:"실적입력",s:"입력"},
+              {href:"index.html#dashboard", l:"대시보드", s:"홈"},
+              {href:"index.html#analysis",  l:"실적분석", s:"분석"},
+              {href:"index.html#input",     l:"실적입력", s:"입력"},
             ].map(t=>(
               <a key={t.l} href={t.href} style={{
                 padding:isMobile?"6px 8px":"5px 12px",borderRadius:7,border:"none",cursor:"pointer",

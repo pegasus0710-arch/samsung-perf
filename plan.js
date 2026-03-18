@@ -2984,15 +2984,15 @@ function PlanApp() {
       flexShrink: 0
     }
   }, [{
-    href: "index.html",
+    href: "index.html#dashboard",
     l: "대시보드",
     s: "홈"
   }, {
-    href: "index.html",
+    href: "index.html#analysis",
     l: "실적분석",
     s: "분석"
   }, {
-    href: "index.html",
+    href: "index.html#input",
     l: "실적입력",
     s: "입력"
   }].map(function (t) {

@@ -5251,6 +5251,9 @@ function Analysis(_ref39) {
   var ytdPrev = mPrev ? mPrev.slice(0, emi + 1).reduce(function (a, b) {
     return a + b;
   }, 0) : 0;
+  var annPrevA = mPrev ? mPrev.reduce(function (a, b) {
+    return a + b;
+  }, 0) : 0; // 전년 연간합계
 
   // 월별 달성률 / 성장률
   var mAr = MONTHS.map(function (_, i) {
@@ -5302,6 +5305,23 @@ function Analysis(_ref39) {
   var avgPerf = ytdP > 0 && emi >= 0 ? Math.round(ytdP / (emi + 1)) : 0;
   var ytdAr = ytdT > 0 ? pct(ytdP, ytdT) : null;
   var ytdGr = ytdPrev > 0 ? grw(ytdP, ytdPrev) : null;
+  var remT = Math.max(annT - ytdP, 0);
+  var remMonths = Math.max(11 - emi, 0);
+  var needPM = remMonths > 0 && remT > 0 ? Math.ceil(remT / remMonths) : 0;
+  // CE 비중 누계
+  var ceYtdV = selKey !== "CE" ? MONTHS.slice(0, emi + 1).reduce(function (a, _, i) {
+    var _fullRow20, _fullRow21;
+    var ce = gNum((_fullRow20 = fullRow(pD[sk(i)])) === null || _fullRow20 === void 0 ? void 0 : _fullRow20.CE);
+    var hp = gNum((_fullRow21 = fullRow(pD[sk(i)])) === null || _fullRow21 === void 0 ? void 0 : _fullRow21.휴대폰);
+    return a + (ce > 0 ? ce : 0);
+  }, 0) : 0;
+  var ceShareYtd = selKey !== "CE" && ceYtdV > 0 ? (ytdP / ceYtdV * 100).toFixed(1) : null;
+  var cePrevYtdV = selKey !== "CE" && mPrev ? MONTHS.slice(0, emi + 1).reduce(function (a, _, i) {
+    var _fullRow22;
+    var ce = gNum((_fullRow22 = fullRow(prevP === null || prevP === void 0 ? void 0 : prevP[sk(i)])) === null || _fullRow22 === void 0 ? void 0 : _fullRow22.CE);
+    return a + (ce > 0 ? ce : 0);
+  }, 0) : 0;
+  var cePrevShareYtd = selKey !== "CE" && cePrevYtdV > 0 && ytdPrev > 0 ? (ytdPrev / cePrevYtdV * 100).toFixed(1) : null;
 
   // 그로스 차트 offset
   var allGrVals = [].concat(_toConsumableArray(mGr || []), _toConsumableArray(cumGr || [])).filter(function (v) {
@@ -5388,111 +5408,526 @@ function Analysis(_ref39) {
     });
   }))), /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "grid",
-      gridTemplateColumns: "repeat(".concat(isMobile ? 2 : 4, ",1fr)"),
-      gap: 8
+      display: "flex",
+      gap: 8,
+      flexWrap: "wrap"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
+      flex: "1 1 180px",
       background: C.card,
-      border: "1px solid ".concat(color, "30"),
-      borderRadius: 10,
-      padding: "10px 12px",
+      border: "1px solid ".concat(color, "40"),
+      borderRadius: 14,
+      padding: "12px 16px",
+      borderTop: "3px solid ".concat(color),
       display: "flex",
       flexDirection: "column",
-      gap: 3
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: C.muted,
-      fontSize: 9,
-      fontWeight: 700
-    }
-  }, "\uB204\uACC4 \uC2E4\uC801", avgPerf > 0 ? " (\uC6D4\uD3C9\uADE0 ".concat(avgPerf, "\uC5B5)") : ""), /*#__PURE__*/React.createElement("span", {
     style: {
       color: color,
-      fontSize: 18,
-      fontWeight: 900
+      fontSize: 11,
+      fontWeight: 800
     }
-  }, ytdP > 0 ? Math.round(ytdP) + "억" : "─")), /*#__PURE__*/React.createElement("div", {
+  }, "\u25CF ", selKey, " \uB204\uACC4 \uC2E4\uC801"), /*#__PURE__*/React.createElement("span", {
     style: {
-      background: C.card,
-      border: "1px solid ".concat(C.orange, "30"),
-      borderRadius: 10,
-      padding: "10px 12px",
+      color: C.muted,
+      fontSize: 9
+    }
+  }, MONTHS[emi], " \uB9C8\uAC10\uAE30\uC900")), /*#__PURE__*/React.createElement("div", {
+    style: {
       display: "flex",
-      flexDirection: "column",
-      gap: 3
+      alignItems: "baseline",
+      gap: 4
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      color: C.muted,
-      fontSize: 9,
-      fontWeight: 700
+      color: C.text,
+      fontSize: 24,
+      fontWeight: 900,
+      letterSpacing: "-0.04em"
     }
-  }, "\uC5F0\uAC04 \uBAA9\uD45C"), /*#__PURE__*/React.createElement("span", {
+  }, ytdP > 0 ? Math.round(ytdP).toLocaleString() : "─"), ytdP > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.muted2,
+      fontSize: 12
+    }
+  }, "\uC5B5")), ytdT > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 4,
+      background: C.b1,
+      borderRadius: 2,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100%",
+      width: "".concat(Math.min(gNum(ytdAr) || 0, 100), "%"),
+      background: "linear-gradient(90deg,".concat(color, ",").concat(color, "aa)"),
+      borderRadius: 2,
+      transition: "width .6s"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 4,
+      marginTop: 2
+    }
+  }, [{
+    l: "목표",
+    v: ytdT > 0 ? Math.round(ytdT).toLocaleString() + "억" : "─",
+    c: C.orange
+  }, {
+    l: "달성률",
+    v: ytdAr ? Math.round(gNum(ytdAr)) + "%" : "─",
+    c: ytdAr ? pctC(ytdAr) : C.muted
+  }, {
+    l: "월평균",
+    v: avgPerf > 0 ? avgPerf.toLocaleString() + "억" : "─",
+    c: C.accent
+  }].map(function (_ref40) {
+    var l = _ref40.l,
+      v = _ref40.v,
+      c = _ref40.c;
+    return /*#__PURE__*/React.createElement("div", {
+      key: l,
+      style: {
+        background: theme === "light" ? "rgba(0,0,0,.04)" : "rgba(0,0,0,.2)",
+        borderRadius: 6,
+        padding: "4px 6px",
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.muted,
+        fontSize: 8,
+        marginBottom: 2
+      }
+    }, l), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: c,
+        fontSize: 10,
+        fontWeight: 700
+      }
+    }, v));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: "1 1 180px",
+      background: C.card,
+      border: "1px solid ".concat(C.orange, "40"),
+      borderRadius: 14,
+      padding: "12px 16px",
+      borderTop: "3px solid ".concat(C.orange),
+      display: "flex",
+      flexDirection: "column",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       color: C.orange,
-      fontSize: 15,
-      fontWeight: 900
+      fontSize: 11,
+      fontWeight: 800
     }
-  }, annT > 0 ? Math.round(annT) + "억" : "─")), /*#__PURE__*/React.createElement("div", {
+  }, "\u25CF \uC5F0\uAC04 \uBAA9\uD45C"), needPM > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
-      background: C.card,
-      border: "1px solid ".concat(ytdAr ? pctC(ytdAr) : C.muted, "30"),
-      borderRadius: 10,
-      padding: "10px 12px",
+      color: C.orange,
+      fontSize: 9,
+      background: C.orange + "18",
+      borderRadius: 4,
+      padding: "2px 6px",
+      fontWeight: 700
+    }
+  }, "\uC6D4\uD3C9\uADE0 ", needPM, "\uC5B5 \uD544\uC694")), /*#__PURE__*/React.createElement("div", {
+    style: {
       display: "flex",
-      flexDirection: "column",
-      gap: 3
+      alignItems: "baseline",
+      gap: 4
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      color: C.muted,
-      fontSize: 9,
-      fontWeight: 700
+      color: C.text,
+      fontSize: 24,
+      fontWeight: 900,
+      letterSpacing: "-0.04em"
     }
-  }, MONTHS[emi], " \uB204\uACC4\uB2EC\uC131"), /*#__PURE__*/React.createElement("span", {
+  }, annT > 0 ? Math.round(annT).toLocaleString() : "─"), annT > 0 && /*#__PURE__*/React.createElement("span", {
     style: {
-      color: ytdAr ? pctC(ytdAr) : C.muted,
-      fontSize: 15,
-      fontWeight: 900
+      color: C.muted2,
+      fontSize: 12
     }
-  }, ytdAr ? Math.round(gNum(ytdAr)) + "%" : "─"), ytdP > 0 && annT > 0 && /*#__PURE__*/React.createElement("span", {
+  }, "\uC5B5")), annT > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
-      color: ytdP - ytdT >= 0 ? C.green : C.red,
-      fontSize: 9,
-      fontWeight: 700
+      height: 4,
+      background: C.b1,
+      borderRadius: 2,
+      overflow: "hidden"
     }
-  }, "\uCC28\uC774 ", ytdP - ytdT >= 0 ? "+" : "", Math.round(ytdP - ytdT), "\uC5B5")), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
+      height: "100%",
+      width: "".concat(Math.min(ytdP / annT * 100, 100), "%"),
+      background: "linear-gradient(90deg,".concat(C.orange, ",").concat(C.orange, "aa)"),
+      borderRadius: 2,
+      transition: "width .6s"
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 4,
+      marginTop: 2
+    }
+  }, [{
+    l: "전년대비",
+    v: annPrevA > 0 ? ((annT - annPrevA) / annPrevA * 100).toFixed(1) + "%" : "─",
+    c: annT >= annPrevA ? C.green : C.red
+  }, {
+    l: "누계 실적",
+    v: ytdP > 0 ? Math.round(ytdP).toLocaleString() + "억" : "─",
+    c: color
+  }, {
+    l: "잔여",
+    v: remT > 0 ? Math.round(remT).toLocaleString() + "억" : "달성!",
+    c: remT > 0 ? C.orange : C.green
+  }].map(function (_ref41) {
+    var l = _ref41.l,
+      v = _ref41.v,
+      c = _ref41.c;
+    return /*#__PURE__*/React.createElement("div", {
+      key: l,
+      style: {
+        background: theme === "light" ? "rgba(0,0,0,.04)" : "rgba(0,0,0,.2)",
+        borderRadius: 6,
+        padding: "4px 6px",
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.muted,
+        fontSize: 8,
+        marginBottom: 2
+      }
+    }, l), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: c,
+        fontSize: 10,
+        fontWeight: 700
+      }
+    }, v));
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: "1 1 180px",
       background: C.card,
-      border: "1px solid ".concat(ytdGr ? grwC(ytdGr) : C.muted, "30"),
-      borderRadius: 10,
-      padding: "10px 12px",
+      border: "1px solid ".concat(ytdGr ? grwC(ytdGr) : C.muted, "40"),
+      borderRadius: 14,
+      padding: "12px 16px",
+      borderTop: "3px solid ".concat(ytdGr ? grwC(ytdGr) : C.muted),
       display: "flex",
       flexDirection: "column",
-      gap: 3
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
     }
   }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: C.muted,
-      fontSize: 9,
-      fontWeight: 700
-    }
-  }, "\uC804\uB144\uBE44 \uC131\uC7A5"), /*#__PURE__*/React.createElement("span", {
     style: {
       color: ytdGr ? grwC(ytdGr) : C.muted,
-      fontSize: 15,
+      fontSize: 11,
+      fontWeight: 800
+    }
+  }, "\u25CF \uC804\uB144\uBE44 \uC131\uC7A5"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.muted,
+      fontSize: 9
+    }
+  }, "\uC804\uB144 ", ytdPrev > 0 ? Math.round(ytdPrev).toLocaleString() : "─", "\uC5B5")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "baseline",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: ytdGr ? grwC(ytdGr) : C.muted,
+      fontSize: 24,
       fontWeight: 900
     }
-  }, ytdGr ? grwT(ytdGr) : "─"), ytdP > 0 && ytdPrev > 0 && /*#__PURE__*/React.createElement("span", {
+  }, ytdGr ? grwT(ytdGr) : "─")), ytdPrev > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
-      color: ytdP - ytdPrev >= 0 ? C.green : C.red,
-      fontSize: 9,
-      fontWeight: 700
+      height: 4,
+      background: C.b1,
+      borderRadius: 2,
+      overflow: "hidden"
     }
-  }, "\uCC28\uC774 ", ytdP - ytdPrev >= 0 ? "+" : "", Math.round(ytdP - ytdPrev), "\uC5B5"))), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100%",
+      width: "".concat(Math.min(ytdP / ytdPrev * 100, 100), "%"),
+      background: ytdGr ? "linear-gradient(90deg,".concat(grwC(ytdGr), ",").concat(grwC(ytdGr), "aa)") : "linear-gradient(90deg,".concat(C.muted, ",").concat(C.muted, "aa)"),
+      borderRadius: 2
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 4,
+      marginTop: 2
+    }
+  }, [{
+    l: "전년 실적",
+    v: ytdPrev > 0 ? Math.round(ytdPrev).toLocaleString() + "억" : "─",
+    c: C.muted2
+  }, {
+    l: "차이",
+    v: ytdP > 0 && ytdPrev > 0 ? (ytdP - ytdPrev >= 0 ? "+" : "") + Math.round(ytdP - ytdPrev) + "억" : "─",
+    c: ytdP >= ytdPrev ? C.green : C.red
+  }, {
+    l: "현재",
+    v: ytdP > 0 ? Math.round(ytdP).toLocaleString() + "억" : "─",
+    c: color
+  }].map(function (_ref42) {
+    var l = _ref42.l,
+      v = _ref42.v,
+      c = _ref42.c;
+    return /*#__PURE__*/React.createElement("div", {
+      key: l,
+      style: {
+        background: theme === "light" ? "rgba(0,0,0,.04)" : "rgba(0,0,0,.2)",
+        borderRadius: 6,
+        padding: "4px 6px",
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.muted,
+        fontSize: 8,
+        marginBottom: 2
+      }
+    }, l), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: c,
+        fontSize: 10,
+        fontWeight: 700
+      }
+    }, v));
+  }))), selKey !== "CE" && /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: "1 1 180px",
+      background: C.card,
+      border: "1px solid ".concat(KC.CE, "40"),
+      borderRadius: 14,
+      padding: "12px 16px",
+      borderTop: "3px solid ".concat(KC.CE),
+      display: "flex",
+      flexDirection: "column",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: KC.CE,
+      fontSize: 11,
+      fontWeight: 800
+    }
+  }, "\u25CF CE \uBE44\uC911"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.muted,
+      fontSize: 9
+    }
+  }, "\uC804\uB144 ", cePrevShareYtd ? cePrevShareYtd + "%" : "─")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "baseline",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: KC.CE,
+      fontSize: 24,
+      fontWeight: 900
+    }
+  }, ceShareYtd ? ceShareYtd + "%" : "─")), ceShareYtd && cePrevShareYtd && /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 4,
+      background: C.b1,
+      borderRadius: 2,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100%",
+      width: "".concat(Math.min(gNum(ceShareYtd), 100), "%"),
+      background: "linear-gradient(90deg,".concat(KC.CE, ",").concat(KC.CE, "aa)"),
+      borderRadius: 2
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr 1fr",
+      gap: 4,
+      marginTop: 2
+    }
+  }, [{
+    l: "CE 대비 비중",
+    v: ceShareYtd ? ceShareYtd + "%" : "─",
+    c: KC.CE
+  }, {
+    l: "전년",
+    v: cePrevShareYtd ? cePrevShareYtd + "%" : "─",
+    c: C.muted2
+  }, {
+    l: "변화",
+    v: ceShareYtd && cePrevShareYtd ? (gNum(ceShareYtd) - gNum(cePrevShareYtd) >= 0 ? "+" : "") + (gNum(ceShareYtd) - gNum(cePrevShareYtd)).toFixed(1) + "p" : "─",
+    c: ceShareYtd && cePrevShareYtd ? gNum(ceShareYtd) >= gNum(cePrevShareYtd) ? C.green : C.red : C.muted
+  }].map(function (_ref43) {
+    var l = _ref43.l,
+      v = _ref43.v,
+      c = _ref43.c;
+    return /*#__PURE__*/React.createElement("div", {
+      key: l,
+      style: {
+        background: theme === "light" ? "rgba(0,0,0,.04)" : "rgba(0,0,0,.2)",
+        borderRadius: 6,
+        padding: "4px 6px",
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.muted,
+        fontSize: 8,
+        marginBottom: 2
+      }
+    }, l), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: c,
+        fontSize: 10,
+        fontWeight: 700
+      }
+    }, v));
+  }))), mPrev && /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: "1 1 180px",
+      background: C.card,
+      border: "1px solid ".concat(C.muted, "30"),
+      borderRadius: 14,
+      padding: "12px 16px",
+      borderTop: "3px solid ".concat(C.muted),
+      display: "flex",
+      flexDirection: "column",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.muted2,
+      fontSize: 11,
+      fontWeight: 800
+    }
+  }, "\u25CF \uB204\uACC4 \uC804\uB144"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.muted,
+      fontSize: 9
+    }
+  }, "\uC804\uB144 \uAE30\uC900")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "baseline",
+      gap: 4
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.text,
+      fontSize: 24,
+      fontWeight: 900,
+      letterSpacing: "-0.04em"
+    }
+  }, ytdPrev > 0 ? Math.round(ytdPrev).toLocaleString() : "─"), ytdPrev > 0 && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.muted2,
+      fontSize: 12
+    }
+  }, "\uC5B5")), annPrevA > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 4,
+      background: C.b1,
+      borderRadius: 2,
+      overflow: "hidden"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: "100%",
+      width: "".concat(Math.min(ytdPrev / annPrevA * 100, 100), "%"),
+      background: "linear-gradient(90deg,".concat(C.muted, ",").concat(C.muted, "aa)"),
+      borderRadius: 2
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 4,
+      marginTop: 2
+    }
+  }, [{
+    l: "월평균",
+    v: ytdPrev > 0 ? Math.round(ytdPrev / (emi + 1)).toLocaleString() + "억" : "─",
+    c: C.muted2
+  }, {
+    l: "전년비",
+    v: ytdPrev > 0 && ytdP > 0 ? (ytdP / ytdPrev * 100).toFixed(1) + "%" : "─",
+    c: ytdP >= ytdPrev ? C.green : C.red
+  }].map(function (_ref44) {
+    var l = _ref44.l,
+      v = _ref44.v,
+      c = _ref44.c;
+    return /*#__PURE__*/React.createElement("div", {
+      key: l,
+      style: {
+        background: theme === "light" ? "rgba(0,0,0,.04)" : "rgba(0,0,0,.2)",
+        borderRadius: 6,
+        padding: "4px 6px",
+        textAlign: "center"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: C.muted,
+        fontSize: 8,
+        marginBottom: 2
+      }
+    }, l), /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: c,
+        fontSize: 10,
+        fontWeight: 700
+      }
+    }, v));
+  })))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: C.card,
       border: "2px solid ".concat(C.b1),
@@ -5641,7 +6076,7 @@ function Analysis(_ref39) {
       fontWeight: 700,
       fontSize: 11
     }
-  }, annT > 0 ? Math.round(annT).toLocaleString() + "억" : "─"))), annT > 0 && /*#__PURE__*/React.createElement("tr", {
+  }, ytdT > 0 ? Math.round(ytdT).toLocaleString() + "억" : "─"))), annT > 0 && /*#__PURE__*/React.createElement("tr", {
     style: {
       borderBottom: "1px solid ".concat(C.b1, "30")
     }
@@ -5725,7 +6160,7 @@ function Analysis(_ref39) {
       color: C.muted2,
       fontSize: 11
     }
-  }, ytdPrev > 0 ? Math.round(ytdPrev).toLocaleString() + "억" : "─"))), mGr && /*#__PURE__*/React.createElement("tr", {
+  }, annPrevA > 0 ? Math.round(annPrevA).toLocaleString() + "억" : "─"))), mGr && /*#__PURE__*/React.createElement("tr", {
     style: {
       borderBottom: "1px solid ".concat(C.b1, "40")
     }
@@ -6117,10 +6552,10 @@ function Analysis(_ref39) {
     }
     → 연도 / 모드 / perf|target / 월(0~11) / 항목 키 구조
 */
-function ImportModal(_ref40) {
-  var onClose = _ref40.onClose,
-    currentData = _ref40.currentData,
-    onMerge = _ref40.onMerge;
+function ImportModal(_ref45) {
+  var onClose = _ref45.onClose,
+    currentData = _ref45.currentData,
+    onMerge = _ref45.onMerge;
   var _useState27 = useState(""),
     _useState28 = _slicedToArray(_useState27, 2),
     jsonText = _useState28[0],
@@ -6155,10 +6590,10 @@ function ImportModal(_ref40) {
     var _walk = function walk(newObj, curObj) {
       var path = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
       if (_typeof(newObj) !== "object" || newObj === null) return;
-      Object.entries(newObj).forEach(function (_ref41) {
-        var _ref42 = _slicedToArray(_ref41, 2),
-          k = _ref42[0],
-          v = _ref42[1];
+      Object.entries(newObj).forEach(function (_ref46) {
+        var _ref47 = _slicedToArray(_ref46, 2),
+          k = _ref47[0],
+          v = _ref47[1];
         var cur = curObj === null || curObj === void 0 ? void 0 : curObj[k];
         if (_typeof(v) === "object" && v !== null) {
           _walk(v, cur, [].concat(_toConsumableArray(path), [k]));
@@ -6187,10 +6622,10 @@ function ImportModal(_ref40) {
   var _deepMerge = function deepMerge(base, incoming) {
     if (_typeof(incoming) !== "object" || incoming === null) return incoming;
     var result = _objectSpread({}, base);
-    Object.entries(incoming).forEach(function (_ref43) {
-      var _ref44 = _slicedToArray(_ref43, 2),
-        k = _ref44[0],
-        v = _ref44[1];
+    Object.entries(incoming).forEach(function (_ref48) {
+      var _ref49 = _slicedToArray(_ref48, 2),
+        k = _ref49[0],
+        v = _ref49[1];
       if (_typeof(v) === "object" && v !== null && !Array.isArray(v)) {
         result[k] = _deepMerge((base === null || base === void 0 ? void 0 : base[k]) || {}, v);
       } else {
@@ -6489,10 +6924,10 @@ function ImportModal(_ref40) {
       fontWeight: 700,
       marginBottom: 8
     }
-  }, "\uC801\uC6A9 \uB300\uC0C1"), Object.entries(preview.parsed).map(function (_ref45) {
-    var _ref46 = _slicedToArray(_ref45, 2),
-      yr = _ref46[0],
-      modes = _ref46[1];
+  }, "\uC801\uC6A9 \uB300\uC0C1"), Object.entries(preview.parsed).map(function (_ref50) {
+    var _ref51 = _slicedToArray(_ref50, 2),
+      yr = _ref51[0],
+      modes = _ref51[1];
     return /*#__PURE__*/React.createElement("div", {
       key: yr,
       style: {
@@ -6503,10 +6938,10 @@ function ImportModal(_ref40) {
         color: C.accent,
         fontWeight: 700
       }
-    }, yr, "\uB144"), Object.entries(modes).map(function (_ref47) {
-      var _ref48 = _slicedToArray(_ref47, 2),
-        m = _ref48[0],
-        types = _ref48[1];
+    }, yr, "\uB144"), Object.entries(modes).map(function (_ref52) {
+      var _ref53 = _slicedToArray(_ref52, 2),
+        m = _ref53[0],
+        types = _ref53[1];
       return /*#__PURE__*/React.createElement("span", {
         key: m,
         style: {
@@ -6603,10 +7038,10 @@ function ImportModal(_ref40) {
     }
   }, "\uB2EB\uAE30"))));
 }
-function ReportModal(_ref49) {
-  var onClose = _ref49.onClose,
-    mode = _ref49.mode,
-    tab = _ref49.tab;
+function ReportModal(_ref54) {
+  var onClose = _ref54.onClose,
+    mode = _ref54.mode,
+    tab = _ref54.tab;
   var _useState35 = useState(""),
     _useState36 = _slicedToArray(_useState35, 2),
     msg = _useState36[0],
@@ -6618,7 +7053,7 @@ function ReportModal(_ref49) {
     return "실적입력";
   };
   var downloadExcelImg = /*#__PURE__*/function () {
-    var _ref50 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5() {
+    var _ref55 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5() {
       var el, canvas, wb, ws, a, _t4;
       return _regenerator().w(function (_context5) {
         while (1) switch (_context5.p = _context5.n) {
@@ -6660,11 +7095,11 @@ function ReportModal(_ref49) {
       }, _callee5, null, [[1, 3]]);
     }));
     return function downloadExcelImg() {
-      return _ref50.apply(this, arguments);
+      return _ref55.apply(this, arguments);
     };
   }();
   var downloadExcelData = /*#__PURE__*/function () {
-    var _ref51 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
+    var _ref56 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
       var reportData, wb, months, keys, calcVal, _t5;
       return _regenerator().w(function (_context6) {
         while (1) switch (_context6.p = _context6.n) {
@@ -6729,16 +7164,16 @@ function ReportModal(_ref49) {
       }, _callee6, null, [[0, 2]]);
     }));
     return function downloadExcelData() {
-      return _ref51.apply(this, arguments);
+      return _ref56.apply(this, arguments);
     };
   }();
-  var BtnRow = function BtnRow(_ref52) {
-    var icon = _ref52.icon,
-      label = _ref52.label,
-      desc = _ref52.desc,
-      onClick = _ref52.onClick,
-      c = _ref52.c,
-      badge = _ref52.badge;
+  var BtnRow = function BtnRow(_ref57) {
+    var icon = _ref57.icon,
+      label = _ref57.label,
+      desc = _ref57.desc,
+      onClick = _ref57.onClick,
+      c = _ref57.c,
+      badge = _ref57.badge;
     return /*#__PURE__*/React.createElement("button", {
       onClick: onClick,
       style: {
@@ -6883,7 +7318,11 @@ function ReportModal(_ref49) {
   }, msg))));
 }
 function App() {
-  var _useState37 = useState("dashboard"),
+  var initTab = function () {
+    var h = window.location.hash.replace("#", "");
+    return ["analysis", "input", "dashboard"].includes(h) ? h : "dashboard";
+  }();
+  var _useState37 = useState(initTab),
     _useState38 = _slicedToArray(_useState37, 2),
     tab = _useState38[0],
     setTab = _useState38[1];
@@ -7011,7 +7450,7 @@ function App() {
     // Firebase 백그라운드 로드
     var retries = 2;
     var loadFirebase = /*#__PURE__*/function () {
-      var _ref53 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7() {
+      var _ref58 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7() {
         var snap, _loaded$, raw, loaded, ce24, isTimeout, _t6;
         return _regenerator().w(function (_context7) {
           while (1) switch (_context7.p = _context7.n) {
@@ -7068,7 +7507,7 @@ function App() {
         }, _callee7, null, [[1, 3]]);
       }));
       return function loadFirebase() {
-        return _ref53.apply(this, arguments);
+        return _ref58.apply(this, arguments);
       };
     }();
     loadFirebase();
@@ -7119,7 +7558,7 @@ function App() {
 
   // JSON 딥머지 후 즉시 Firebase 저장
   var handleMerge = useCallback(/*#__PURE__*/function () {
-    var _ref55 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(merged) {
+    var _ref60 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(merged) {
       var _t8;
       return _regenerator().w(function (_context9) {
         while (1) switch (_context9.p = _context9.n) {
@@ -7152,7 +7591,7 @@ function App() {
       }, _callee9, null, [[1, 3]]);
     }));
     return function (_x2) {
-      return _ref55.apply(this, arguments);
+      return _ref60.apply(this, arguments);
     };
   }(), []);
   var mColor = C[mode];
@@ -7305,7 +7744,7 @@ function App() {
         setDbStatus("🔄 연결중...");
         var retries = 2;
         var retry = /*#__PURE__*/function () {
-          var _ref56 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0() {
+          var _ref61 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0() {
             var snap, _loaded$2, raw, loaded, ce24, _t9;
             return _regenerator().w(function (_context0) {
               while (1) switch (_context0.p = _context0.n) {
@@ -7361,7 +7800,7 @@ function App() {
             }, _callee0, null, [[1, 3]]);
           }));
           return function retry() {
-            return _ref56.apply(this, arguments);
+            return _ref61.apply(this, arguments);
           };
         }();
         retry();
@@ -7567,7 +8006,7 @@ function App() {
         setDbStatus("🔄 연결중...");
         var retries = 2;
         var retry = /*#__PURE__*/function () {
-          var _ref57 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1() {
+          var _ref62 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1() {
             var snap, _loaded$3, raw, loaded, ce24, _t0;
             return _regenerator().w(function (_context1) {
               while (1) switch (_context1.p = _context1.n) {
@@ -7622,7 +8061,7 @@ function App() {
             }, _callee1, null, [[1, 3]]);
           }));
           return function retry() {
-            return _ref57.apply(this, arguments);
+            return _ref62.apply(this, arguments);
           };
         }();
         retry();
@@ -7739,11 +8178,11 @@ function App() {
       fontWeight: 700,
       flexShrink: 0
     }
-  }, "\uC0B0\uCD9C\uAE30\uC900"), [["대외영업", "혼수+입주+이사+SMB+농협+거주중+휴대폰", C.blue], ["뉴홈", "입주+이사", C.green], ["B2B", "SMB+농협+휴대폰", C.orange], ["CE비중", "각항목÷CE", C.accent], ["달성률", "실적÷목표×100", C.teal]].map(function (_ref58) {
-    var _ref59 = _slicedToArray(_ref58, 3),
-      k = _ref59[0],
-      v = _ref59[1],
-      c = _ref59[2];
+  }, "\uC0B0\uCD9C\uAE30\uC900"), [["대외영업", "혼수+입주+이사+SMB+농협+거주중+휴대폰", C.blue], ["뉴홈", "입주+이사", C.green], ["B2B", "SMB+농협+휴대폰", C.orange], ["CE비중", "각항목÷CE", C.accent], ["달성률", "실적÷목표×100", C.teal]].map(function (_ref63) {
+    var _ref64 = _slicedToArray(_ref63, 3),
+      k = _ref64[0],
+      v = _ref64[1],
+      c = _ref64[2];
     return /*#__PURE__*/React.createElement("span", {
       key: k,
       style: {
