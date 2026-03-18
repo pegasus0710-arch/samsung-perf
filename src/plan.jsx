@@ -633,6 +633,10 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
     if(v.indexOf("<")!==-1&&v.indexOf(">")!==-1) return v;
     return v.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").split("\n").join("<br>");
   };
+
+  // ← 반드시 readOnly return 앞에 선언
+  const [editorH, setEditorH] = useState(minHeight);
+
   if(readOnly){
     return(
       <>
@@ -654,8 +658,6 @@ function RichEditor({value,onChange,placeholder,minHeight=220,readOnly=false,fon
       </>
     );
   }
-
-  const [editorH, setEditorH] = useState(minHeight);
 
   return(
     <div style={{borderRadius:8,border:"1px solid rgba(56,182,245,.3)",...style}}>
