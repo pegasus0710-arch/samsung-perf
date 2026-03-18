@@ -2481,11 +2481,25 @@ function PlanApp(){
                     </button>
                   </>
                 ):(
-                  <button onClick={()=>{setIsEditing(true);setEditorKey(k=>k+1);}} style={{
-                    padding:"5px 16px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:11,
-                    fontFamily:"inherit",border:`1px solid ${C.accent}`,background:C.accent+"22",color:C.accent}}>
-                    ✏️ 수정
-                  </button>
+                  <>
+                    <button onClick={()=>{setIsEditing(true);setEditorKey(k=>k+1);}}
+                      disabled={dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")}
+                      style={{
+                        padding:"5px 16px",borderRadius:7,fontWeight:700,fontSize:11,fontFamily:"inherit",
+                        border:`1px solid ${dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?C.b1:C.accent}`,
+                        background:dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?C.b2:C.accent+"22",
+                        color:dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?C.muted:C.accent,
+                        cursor:dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?"not-allowed":"pointer",
+                        opacity:dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?.5:1,
+                      }}>
+                      ✏️ 수정
+                    </button>
+                    {dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")&&(
+                      <span style={{color:C.orange,fontSize:10,fontWeight:600}}>
+                        ⚠ 데이터 로드 미완료
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -2550,11 +2564,25 @@ function PlanApp(){
                   </button>
                 </>
               ):(
-                <button onClick={()=>{setIsEditing(true);setEditorKey(k=>k+1);}} style={{
-                  padding:"8px 22px",borderRadius:7,cursor:"pointer",fontWeight:700,fontSize:12,
-                  fontFamily:"inherit",border:`1px solid ${C.accent}`,background:C.accent+"22",color:C.accent}}>
-                  ✏️ 수정
-                </button>
+                <>
+                  <button onClick={()=>{setIsEditing(true);setEditorKey(k=>k+1);}}
+                    disabled={dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")}
+                    style={{
+                      padding:"8px 22px",borderRadius:7,fontWeight:700,fontSize:12,fontFamily:"inherit",
+                      border:`1px solid ${dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?C.b1:C.accent}`,
+                      background:dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?C.b2:C.accent+"22",
+                      color:dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?C.muted:C.accent,
+                      cursor:dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?"not-allowed":"pointer",
+                      opacity:dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")?.5:1,
+                    }}>
+                    ✏️ 수정
+                  </button>
+                  {dbStatus&&!dbStatus.startsWith("✅")&&!dbStatus.startsWith("⚠ 문서없음")&&(
+                    <span style={{color:C.orange,fontSize:10,fontWeight:600}}>
+                      ⚠ 데이터 로드 미완료
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>

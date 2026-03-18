@@ -5419,25 +5419,33 @@ function PlanApp() {
       color: hasDraft ? "#fff" : C.muted,
       opacity: saveState === "saving" ? .6 : 1
     }
-  }, saveState === "saving" ? "저장 중..." : "💾 저장")) : /*#__PURE__*/React.createElement("button", {
+  }, saveState === "saving" ? "저장 중..." : "💾 저장")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     onClick: function onClick() {
       setIsEditing(true);
       setEditorKey(function (k) {
         return k + 1;
       });
     },
+    disabled: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음"),
     style: {
       padding: "5px 16px",
       borderRadius: 7,
-      cursor: "pointer",
       fontWeight: 700,
       fontSize: 11,
       fontFamily: "inherit",
-      border: "1px solid ".concat(C.accent),
-      background: C.accent + "22",
-      color: C.accent
+      border: "1px solid ".concat(dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? C.b1 : C.accent),
+      background: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? C.b2 : C.accent + "22",
+      color: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? C.muted : C.accent,
+      cursor: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? "not-allowed" : "pointer",
+      opacity: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? .5 : 1
     }
-  }, "\u270F\uFE0F \uC218\uC815"))), /*#__PURE__*/React.createElement(RichEditor, {
+  }, "\u270F\uFE0F \uC218\uC815"), dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.orange,
+      fontSize: 10,
+      fontWeight: 600
+    }
+  }, "\u26A0 \uB370\uC774\uD130 \uB85C\uB4DC \uBBF8\uC644\uB8CC")))), /*#__PURE__*/React.createElement(RichEditor, {
     key: "plan-".concat(editorKey, "-").concat(yr, "-").concat(mode, "-").concat(part, "-").concat(selMonth),
     value: currentText,
     onChange: function onChange(e) {
@@ -5568,25 +5576,33 @@ function PlanApp() {
       color: hasDraft ? "#fff" : C.muted,
       opacity: saveState === "saving" ? .6 : 1
     }
-  }, saveState === "saving" ? "저장 중..." : "💾 저장")) : /*#__PURE__*/React.createElement("button", {
+  }, saveState === "saving" ? "저장 중..." : "💾 저장")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     onClick: function onClick() {
       setIsEditing(true);
       setEditorKey(function (k) {
         return k + 1;
       });
     },
+    disabled: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음"),
     style: {
       padding: "8px 22px",
       borderRadius: 7,
-      cursor: "pointer",
       fontWeight: 700,
       fontSize: 12,
       fontFamily: "inherit",
-      border: "1px solid ".concat(C.accent),
-      background: C.accent + "22",
-      color: C.accent
+      border: "1px solid ".concat(dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? C.b1 : C.accent),
+      background: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? C.b2 : C.accent + "22",
+      color: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? C.muted : C.accent,
+      cursor: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? "not-allowed" : "pointer",
+      opacity: dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") ? .5 : 1
     }
-  }, "\u270F\uFE0F \uC218\uC815")))), /*#__PURE__*/React.createElement("div", {
+  }, "\u270F\uFE0F \uC218\uC815"), dbStatus && !dbStatus.startsWith("✅") && !dbStatus.startsWith("⚠ 문서없음") && /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: C.orange,
+      fontSize: 10,
+      fontWeight: 600
+    }
+  }, "\u26A0 \uB370\uC774\uD130 \uB85C\uB4DC \uBBF8\uC644\uB8CC"))))), /*#__PURE__*/React.createElement("div", {
     style: {
       color: C.muted,
       fontSize: 10,
