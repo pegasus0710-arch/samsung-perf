@@ -2284,11 +2284,11 @@ function PlanApp(){
                           {selMonth==="annual"?"연간 목표":`${MONTHS[selMonth]} 목표`}
                         </div>
                         <div style={{color:C.orange,fontSize:20,fontWeight:900,letterSpacing:"-.5px",lineHeight:1}}>
-                          {selTgt_x>0?Math.round(selTgt_x).toLocaleString()+"억":"─"}
+                          {selTgt_x>0?(Math.floor(selTgt_x*10)/10).toLocaleString(undefined,{minimumFractionDigits:selTgt_x%1>0?1:0,maximumFractionDigits:1})+"억":"─"}
                         </div>
                         <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
                           {grBase_x>0&&<span style={{color:C.muted2,fontSize:10}}>
-                            전년 {Math.round(grBase_x).toLocaleString()}억
+                            전년 {(Math.floor(grBase_x*10)/10).toLocaleString(undefined,{minimumFractionDigits:grBase_x%1>0?1:0,maximumFractionDigits:1})}억
                           </span>}
                           {selGr_x!==null&&(
                             <span style={{color:grwC(selGr_x),fontSize:10,fontWeight:700}}>
@@ -2304,7 +2304,7 @@ function PlanApp(){
                             {selMi!==null?`${MONTHS[selMi]} 실적`:`${emiLabel} 누계`}
                           </div>
                           <div style={{color:mc,fontSize:20,fontWeight:900,letterSpacing:"-.5px",lineHeight:1}}>
-                            {Math.round(selPerf_x).toLocaleString()}억
+                            {(Math.floor(selPerf_x*10)/10).toLocaleString(undefined,{minimumFractionDigits:selPerf_x%1>0?1:0,maximumFractionDigits:1})}억
                           </div>
                           <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
                             {selAr_x&&<span style={{

@@ -4967,7 +4967,10 @@ function PlanApp() {
           letterSpacing: "-.5px",
           lineHeight: 1
         }
-      }, selTgt_x > 0 ? Math.round(selTgt_x).toLocaleString() + "억" : "─"), /*#__PURE__*/React.createElement("div", {
+      }, selTgt_x > 0 ? (Math.floor(selTgt_x * 10) / 10).toLocaleString(undefined, {
+        minimumFractionDigits: selTgt_x % 1 > 0 ? 1 : 0,
+        maximumFractionDigits: 1
+      }) + "억" : "─"), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           gap: 6,
@@ -4979,7 +4982,10 @@ function PlanApp() {
           color: C.muted2,
           fontSize: 10
         }
-      }, "\uC804\uB144 ", Math.round(grBase_x).toLocaleString(), "\uC5B5"), selGr_x !== null && /*#__PURE__*/React.createElement("span", {
+      }, "\uC804\uB144 ", (Math.floor(grBase_x * 10) / 10).toLocaleString(undefined, {
+        minimumFractionDigits: grBase_x % 1 > 0 ? 1 : 0,
+        maximumFractionDigits: 1
+      }), "\uC5B5"), selGr_x !== null && /*#__PURE__*/React.createElement("span", {
         style: {
           color: grwC(selGr_x),
           fontSize: 10,
@@ -5011,7 +5017,10 @@ function PlanApp() {
           letterSpacing: "-.5px",
           lineHeight: 1
         }
-      }, Math.round(selPerf_x).toLocaleString(), "\uC5B5"), /*#__PURE__*/React.createElement("div", {
+      }, (Math.floor(selPerf_x * 10) / 10).toLocaleString(undefined, {
+        minimumFractionDigits: selPerf_x % 1 > 0 ? 1 : 0,
+        maximumFractionDigits: 1
+      }), "\uC5B5"), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           gap: 6,
