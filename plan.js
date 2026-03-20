@@ -4968,7 +4968,7 @@ function PlanApp() {
           lineHeight: 1
         }
       }, selTgt_x > 0 ? (Math.floor(selTgt_x * 10) / 10).toLocaleString(undefined, {
-        minimumFractionDigits: selTgt_x % 1 > 0 ? 1 : 0,
+        minimumFractionDigits: 1,
         maximumFractionDigits: 1
       }) + "억" : "─"), /*#__PURE__*/React.createElement("div", {
         style: {
